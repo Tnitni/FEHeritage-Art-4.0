@@ -4,6 +4,7 @@ import router from './routes';
 import { ArtProvider } from './context/ArtContext';
 import { UserProvider } from './context/UserContext';
 import { CartProvider } from './context/CartContext';
+import SocketStatus from './components/SocketStatus';
 
 function App() {
   return (
@@ -11,6 +12,8 @@ function App() {
       <ArtProvider>
         <CartProvider>
           <RouterProvider router={router} />
+          {/* Socket Connection Status Indicator */}
+          <SocketStatus />
           {/* Toast Notifications */}
           <Toaster
             position="top-center"

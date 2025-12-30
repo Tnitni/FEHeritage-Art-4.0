@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useUser } from '../context/UserContext'
-import { authService } from '../services'
-import { validatePassword, getErrorMessage } from '../utils/apiHelpers'
+import { authService, cloudinaryService } from '../services'
+import { validatePassword, getErrorMessage, isValidEmail, isValidIdentityNumber } from '../utils/apiHelpers'
 import './InfoPage.css'
 
 const InfoPage = () => {
@@ -13,6 +13,7 @@ const InfoPage = () => {
   const [userAvatar, setUserAvatar] = useState('https://i.pravatar.cc/150?img=68')
   const [isEditingAvatar, setIsEditingAvatar] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -39,6 +40,10 @@ const InfoPage = () => {
     allowMessages: true
   })
 
+  // Validation states
+  const [validationErrors, setValidationErrors] = useState({})
+  const [touched, setTouched] = useState({})
+
   // Load user data from context
   useEffect(() => {
     if (!isLoggedIn) {
@@ -57,12 +62,109 @@ const InfoPage = () => {
         gender: user.gender || 'Male',
         bio: user.intro || ''
       }))
+
+      // Set avatar from user data or default
+      if (user.avatar) {
+        setUserAvatar(user.avatar)
+      }
     }
   }, [user, isLoggedIn, navigate])
+
+  const validateField = (name, value) => {
+    let error = ''
+
+    switch (name) {
+      case 'fullName':
+        if (!value || value.trim() === '') {
+          error = 'Họ tên là bắt buộc'
+        } else if (value.length < 2) {
+          error = 'Họ tên phải có ít nhất 2 ký tự'
+        }
+        break
+
+      case 'email':
+        if (!value || value.trim() === '') {
+          error = 'Email là bắt buộc'
+        } else if (!isValidEmail(value)) {
+          error = 'Email không hợp lệ'
+        }
+        break
+
+      case 'identityNumber':
+        if (value && !isValidIdentityNumber(value)) {
+          error = 'CMND/CCCD phải có 12 chữ số'
+        }
+        break
+
+      case 'birthday':
+        if (value) {
+          const selectedDate = new Date(value)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          if (selectedDate > today) {
+            error = 'Ngày sinh không được lớn hơn ngày hiện tại'
+          }
+        }
+        break
+
+      case 'currentPassword':
+        if (!value || value.trim() === '') {
+          error = 'Mật khẩu hiện tại là bắt buộc'
+        }
+        break
+
+      case 'newPassword':
+        if (!value || value.trim() === '') {
+          error = 'Mật khẩu mới là bắt buộc'
+        } else {
+          const validation = validatePassword(value)
+          if (!validation.isValid) {
+            error = validation.errors[0]
+          }
+        }
+        break
+
+      case 'confirmPassword':
+        if (!value || value.trim() === '') {
+          error = 'Vui lòng xác nhận mật khẩu'
+        } else if (value !== formData.newPassword) {
+          error = 'Mật khẩu xác nhận không khớp'
+        }
+        break
+
+      default:
+        break
+    }
+
+    return error
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+
+    // Validate field on change if it was touched
+    if (touched[name]) {
+      const error = validateField(name, value)
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: error
+      }))
+    }
+  }
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }))
+
+    const error = validateField(name, value)
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: error
+    }))
   }
 
   const handleNotificationChange = (key) => {
@@ -73,23 +175,70 @@ const InfoPage = () => {
     setPrivacy(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setUserAvatar(reader.result)
-        setIsEditingAvatar(false)
+    if (!file) return
+
+    try {
+      // Validate file
+      const validation = cloudinaryService.validateFile(file)
+      if (!validation.isValid) {
+        toast.error(validation.error)
+        return
       }
-      reader.readAsDataURL(file)
+
+      setUploadingAvatar(true)
+      setIsEditingAvatar(false)
+      toast.loading('Đang tải ảnh lên...', { id: 'upload-avatar' })
+
+      // Upload via backend API
+      const result = await cloudinaryService.uploadImage(file)
+
+      // Update avatar in backend
+      const response = await authService.updateProfile({
+        avatar: result.url
+      })
+
+      if (response.success) {
+        setUserAvatar(result.url)
+        toast.success('Cập nhật ảnh đại diện thành công!', { id: 'upload-avatar' })
+        await refreshProfile()
+      } else {
+        throw new Error(response.message || 'Cập nhật avatar thất bại')
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error)
+      toast.error(getErrorMessage(error) || 'Không thể tải ảnh lên', { id: 'upload-avatar' })
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
-  const handleAvatarURL = () => {
+  const handleAvatarURL = async () => {
     const url = prompt('Nhập URL ảnh đại diện:')
-    if (url) {
-      setUserAvatar(url)
+    if (!url) return
+
+    try {
+      setUploadingAvatar(true)
       setIsEditingAvatar(false)
+
+      // Update avatar in backend
+      const response = await authService.updateProfile({
+        avatar: url
+      })
+
+      if (response.success) {
+        setUserAvatar(url)
+        toast.success('Cập nhật ảnh đại diện thành công!')
+        await refreshProfile()
+      } else {
+        throw new Error(response.message || 'Cập nhật avatar thất bại')
+      }
+    } catch (error) {
+      console.error('Avatar update error:', error)
+      toast.error(getErrorMessage(error) || 'Không thể cập nhật ảnh')
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
@@ -111,16 +260,31 @@ const InfoPage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Validate birthday
-      if (formData.birthday) {
-        const selectedDate = new Date(formData.birthday)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+      // Mark fields as touched
+      setTouched({
+        fullName: true,
+        email: true,
+        identityNumber: true,
+        birthday: true
+      })
 
-        if (selectedDate > today) {
-          toast.error('Ngày sinh không được lớn hơn ngày hiện tại')
-          return
-        }
+      // Validate all fields
+      const errors = {}
+      errors.fullName = validateField('fullName', formData.fullName)
+      errors.email = validateField('email', formData.email)
+      errors.identityNumber = validateField('identityNumber', formData.identityNumber)
+      errors.birthday = validateField('birthday', formData.birthday)
+
+      // Remove empty errors
+      Object.keys(errors).forEach(key => {
+        if (!errors[key]) delete errors[key]
+      })
+
+      setValidationErrors(errors)
+
+      if (Object.keys(errors).length > 0) {
+        toast.error('Vui lòng kiểm tra lại thông tin nhập vào')
+        return
       }
 
       setLoading(true)
@@ -152,26 +316,28 @@ const InfoPage = () => {
 
   const handleChangePassword = async () => {
     try {
-      // Validate input
-      if (!formData.currentPassword) {
-        toast.error('Vui lòng nhập mật khẩu hiện tại')
-        return
-      }
+      // Mark password fields as touched
+      setTouched({
+        currentPassword: true,
+        newPassword: true,
+        confirmPassword: true
+      })
 
-      if (!formData.newPassword) {
-        toast.error('Vui lòng nhập mật khẩu mới')
-        return
-      }
+      // Validate all password fields
+      const errors = {}
+      errors.currentPassword = validateField('currentPassword', formData.currentPassword)
+      errors.newPassword = validateField('newPassword', formData.newPassword)
+      errors.confirmPassword = validateField('confirmPassword', formData.confirmPassword)
 
-      if (formData.newPassword !== formData.confirmPassword) {
-        toast.error('Mật khẩu xác nhận không khớp')
-        return
-      }
+      // Remove empty errors
+      Object.keys(errors).forEach(key => {
+        if (!errors[key]) delete errors[key]
+      })
 
-      // Validate password strength
-      const passwordValidation = validatePassword(formData.newPassword)
-      if (!passwordValidation.valid) {
-        toast.error(passwordValidation.errors[0] || 'Mật khẩu không hợp lệ')
+      setValidationErrors(errors)
+
+      if (Object.keys(errors).length > 0) {
+        toast.error(errors[Object.keys(errors)[0]])
         return
       }
 
@@ -185,13 +351,15 @@ const InfoPage = () => {
       if (response.success) {
         toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.')
 
-        // Clear password fields
+        // Clear password fields and validation
         setFormData(prev => ({
           ...prev,
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         }))
+        setValidationErrors({})
+        setTouched({})
 
         // Logout and redirect to login
         setTimeout(async () => {
@@ -307,11 +475,20 @@ const InfoPage = () => {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Nhập họ và tên"
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.fullName && validationErrors.fullName ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.fullName && validationErrors.fullName && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.fullName}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Email</label>
@@ -332,11 +509,20 @@ const InfoPage = () => {
                       name="identityNumber"
                       value={formData.identityNumber}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Nhập số CCCD/CMND"
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.identityNumber && validationErrors.identityNumber ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.identityNumber && validationErrors.identityNumber && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.identityNumber}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Ngày sinh</label>
@@ -345,11 +531,20 @@ const InfoPage = () => {
                       name="birthday"
                       value={formData.birthday}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       max={new Date().toISOString().split('T')[0]}
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.birthday && validationErrors.birthday ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.birthday && validationErrors.birthday && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.birthday}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Giới tính</label>
@@ -410,11 +605,20 @@ const InfoPage = () => {
                       name="currentPassword"
                       value={formData.currentPassword}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Nhập mật khẩu hiện tại"
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.currentPassword && validationErrors.currentPassword ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.currentPassword && validationErrors.currentPassword && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.currentPassword}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Mật khẩu mới</label>
@@ -423,11 +627,20 @@ const InfoPage = () => {
                       name="newPassword"
                       value={formData.newPassword}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Nhập mật khẩu mới"
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.newPassword && validationErrors.newPassword ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.newPassword && validationErrors.newPassword && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.newPassword}
+                      </div>
+                    )}
                     {formData.newPassword && (
                       <div style={{ marginTop: '8px' }}>
                         <div style={{
@@ -467,11 +680,20 @@ const InfoPage = () => {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Nhập lại mật khẩu mới"
                       disabled={loading}
                       className="form-textarea"
-                      style={{ minHeight: '45px' }}
+                      style={{
+                        minHeight: '45px',
+                        borderColor: touched.confirmPassword && validationErrors.confirmPassword ? '#dc3545' : undefined
+                      }}
                     />
+                    {touched.confirmPassword && validationErrors.confirmPassword && (
+                      <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+                        {validationErrors.confirmPassword}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="info-box">

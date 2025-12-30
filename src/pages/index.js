@@ -21,7 +21,6 @@ export {default as TaoTranh} from './TaoTranh';
 export {default as TraiNghiem} from './TraiNghiem';
 
 // Account & Support Pages
-export { default as ProfilePage } from './ProfilePage';
 export { default as InfoPage } from './InfoPage';
 export { default as FriendsPage } from './FriendsPage';
 export { default as ContactPage } from './ContactPage';

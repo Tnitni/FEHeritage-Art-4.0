@@ -1,6 +1,6 @@
 // src/context/UserContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { authService } from "../services";
+import { authService, socketService } from "../services";
 
 export const UserContext = createContext();
 
@@ -29,13 +29,19 @@ export function UserProvider({ children }) {
   // 🔄 Load user profile khi app khởi động (nếu có token)
   useEffect(() => {
     const loadUserProfile = async () => {
-      if (authService.isAuthenticated() && !user) {
+      if (authService.isAuthenticated()) {
         try {
           setLoading(true);
           const response = await authService.getProfile();
+          console.log('📥 [UserContext] Profile loaded:', response.data?.user);
+          
           if (response.success && response.data.user) {
             setUser(response.data.user);
             setIsLoggedIn(true);
+
+            // Connect socket with user ID
+            console.log('🔌 [UserContext] Connecting socket for user:', response.data.user.id);
+            socketService.connect(response.data.user.id);
           }
         } catch (error) {
           console.error("Failed to load user profile:", error);
@@ -48,8 +54,25 @@ export function UserProvider({ children }) {
       }
     };
 
-    loadUserProfile();
+    // Nếu có token, luôn load profile và connect socket
+    if (authService.isAuthenticated()) {
+      // Nếu đã có user trong localStorage (reload page), connect socket ngay
+      if (user) {
+        console.log('🔌 [UserContext] User exists from localStorage, connecting socket:', user.id);
+        socketService.connect(user.id);
+      } else {
+        // Nếu chưa có user, load profile từ server
+        loadUserProfile();
+      }
+    }
   }, []);
+
+  // Disconnect socket only when explicitly logging out
+  useEffect(() => {
+    if (!isLoggedIn && user === null) {
+      socketService.disconnect();
+    }
+  }, [isLoggedIn, user]);
 
   // 🟢 Đăng nhập
   const login = async (email, password) => {
@@ -63,6 +86,10 @@ export function UserProvider({ children }) {
         setUser(response.data.user);
         setIsLoggedIn(true);
         localStorage.setItem("userProfile", JSON.stringify(response.data.user));
+
+        // Connect socket
+        socketService.connect(response.data.user.id);
+
         return { success: true, data: response.data };
       } else {
         throw new Error(response.message || "Đăng nhập thất bại");
@@ -88,6 +115,10 @@ export function UserProvider({ children }) {
         setUser(response.data.user);
         setIsLoggedIn(true);
         localStorage.setItem("userProfile", JSON.stringify(response.data.user));
+
+        // Connect socket
+        socketService.connect(response.data.user.id);
+
         return { success: true, data: response.data };
       } else {
         throw new Error(response.message || "Đăng ký thất bại");
@@ -106,6 +137,9 @@ export function UserProvider({ children }) {
     try {
       setLoading(true);
       await authService.logout();
+
+      // Disconnect socket
+      socketService.disconnect();
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

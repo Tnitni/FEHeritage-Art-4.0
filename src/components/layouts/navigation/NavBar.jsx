@@ -352,10 +352,18 @@ const NavBar = () => {
                     aria-expanded={openSubmenu === menuItems.length}
                     aria-haspopup="true"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffd54f] to-[#ffb84d] flex items-center justify-center text-[#3b2412] font-bold text-sm">
-                      U
-                    </div>
-                    <span>Tài khoản</span>
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-[#ffd54f]"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffd54f] to-[#ffb84d] flex items-center justify-center text-[#3b2412] font-bold text-sm">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <span>{user?.name || 'Tài khoản'}</span>
                     <svg
                       className={`w-4 h-4 transition-transform duration-300 ease-out ${openSubmenu === menuItems.length ? "rotate-180" : ""
                         }`}

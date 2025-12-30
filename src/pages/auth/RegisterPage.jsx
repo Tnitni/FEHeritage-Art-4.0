@@ -107,7 +107,7 @@ const RegisterPage = () => {
       })
 
       setTimeout(() => {
-        navigate('/profile', { replace: true })
+        navigate('/info', { replace: true })
       }, 500)
 
     } catch (error) {

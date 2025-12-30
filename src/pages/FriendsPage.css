@@ -103,6 +103,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -325,6 +326,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -584,10 +586,6 @@
 }
 
 @media (max-width: 480px) {
-  .header-icon {
-    width: 48px;
-    height: 48px;
-  }
 
   .header-icon .icon {
     width: 28px;

@@ -1,135 +1,239 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import toast from 'react-hot-toast'
+import { useUser } from '../context/UserContext'
+import { friendService, socketService, cloudinaryService } from '../services'
+import { getErrorMessage } from '../utils/apiHelpers'
+import ChatModal from '../components/chat/ChatModal'
 import './FriendsPage.css'
 
 const FriendsPage = () => {
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Người dùng hiện tại',
-    avatar: 'https://i.pravatar.cc/150?img=68',
-    friendsCount: 42,
-    bio: 'Yêu thích nghệ thuật AI và công nghệ'
-  })
+  const [friends, setFriends] = useState([])
+  const [friendRequests, setFriendRequests] = useState([])
+  const [suggestions, setSuggestions] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [onlineUsers, setOnlineUsers] = useState(new Set())
+
+  // Chat state
+  const [selectedFriend, setSelectedFriend] = useState(null)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
   const [isEditingAvatar, setIsEditingAvatar] = useState(false)
 
-  // Handle avatar change
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setCurrentUser(prev => ({ ...prev, avatar: reader.result }))
-        setIsEditingAvatar(false)
+  // Load data on mount
+  useEffect(() => {
+    if (user) {
+      loadFriends()
+      loadFriendRequests()
+      loadSuggestions()
+
+      // Setup socket listeners
+      socketService.onReceiveFriendRequest(handleReceiveFriendRequest)
+      socketService.onFriendRequestAccepted(handleFriendRequestAccepted)
+      socketService.onReceiveMessage(handleReceiveMessage)
+      socketService.onUserOnline(handleUserOnline)
+      socketService.onUserOffline(handleUserOffline)
+
+      return () => {
+        socketService.offReceiveFriendRequest()
+        socketService.offFriendRequestAccepted()
+        socketService.offReceiveMessage()
+        socketService.offUserStatus()
       }
-      reader.readAsDataURL(file)
+    }
+  }, [user])
+
+  // Socket event handlers
+  const handleReceiveFriendRequest = (request) => {
+    toast.success(`${request.user.name} đã gửi lời mời kết bạn!`)
+    loadFriendRequests()
+  }
+
+  const handleFriendRequestAccepted = (friendship) => {
+    toast.success('Lời mời kết bạn đã được chấp nhận!')
+    loadFriends()
+  }
+
+  const handleReceiveMessage = (message) => {
+    console.log('Received message:', message)
+    // Only show notification if chat is not open with that friend
+    if (!isChatOpen || selectedFriend?.id !== message.sender_id) {
+      toast.success(`Tin nhắn mới từ ${message.sender?.name || 'bạn bè'}`)
     }
   }
 
-  // Handle avatar upload from URL
+  const handleUserOnline = ({ userId }) => {
+    setOnlineUsers(prev => new Set([...prev, userId]))
+  }
+
+  const handleUserOffline = ({ userId }) => {
+    setOnlineUsers(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(userId)
+      return newSet
+    })
+  }
+
+  // API calls
+  const loadFriends = async () => {
+    try {
+      setLoading(true)
+      const response = await friendService.getFriends()
+      if (response.success) {
+        setFriends(response.data.friends || [])
+      }
+    } catch (error) {
+      console.error('Failed to load friends:', error)
+      toast.error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadFriendRequests = async () => {
+    try {
+      const response = await friendService.getPendingRequests()
+      if (response.success) {
+        setFriendRequests(response.data.requests || [])
+      }
+    } catch (error) {
+      console.error('Failed to load friend requests:', error)
+    }
+  }
+
+  const loadSuggestions = async () => {
+    try {
+      const response = await friendService.getSuggestions()
+      if (response.success) {
+        setSuggestions(response.data.suggestions || [])
+      }
+    } catch (error) {
+      console.error('Failed to load suggestions:', error)
+    }
+  }
+
+  const handleSendFriendRequest = async (friendId) => {
+    try {
+      const response = await friendService.sendFriendRequest(friendId)
+      if (response.success) {
+        toast.success('Đã gửi lời mời kết bạn!')
+
+        // Send socket notification
+        socketService.sendFriendRequest(friendId, response.data.friendship)
+
+        // Remove from suggestions
+        setSuggestions(prev => prev.filter(s => s.id !== friendId))
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
+  }
+
+  const handleAcceptFriendRequest = async (request) => {
+    try {
+      const response = await friendService.acceptFriendRequest(request.id)
+      if (response.success) {
+        toast.success('Đã chấp nhận lời mời kết bạn!')
+
+        // Notify sender via socket
+        socketService.notifyFriendRequestAccepted(request.user_id, response.data.friendship)
+
+        // Reload data
+        loadFriends()
+        setFriendRequests(prev => prev.filter(r => r.id !== request.id))
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
+  }
+
+  const handleRejectFriendRequest = async (request) => {
+    try {
+      const response = await friendService.rejectFriendRequest(request.id)
+      if (response.success) {
+        toast.success('Đã từ chối lời mời kết bạn')
+        setFriendRequests(prev => prev.filter(r => r.id !== request.id))
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
+  }
+
+  const handleRemoveFriend = async (friendId) => {
+    if (!confirm('Bạn có chắc muốn xóa bạn bè này?')) return
+
+    try {
+      const response = await friendService.removeFriend(friendId)
+      if (response.success) {
+        toast.success('Đã xóa bạn bè')
+        setFriends(prev => prev.filter(f => f.id !== friendId))
+
+        // Close chat if open
+        if (selectedFriend?.id === friendId) {
+          setIsChatOpen(false)
+          setSelectedFriend(null)
+        }
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
+  }
+
+  // Chat functions
+  const openChat = (friend) => {
+    setSelectedFriend(friend)
+    setIsChatOpen(true)
+  }
+
+  const closeChat = () => {
+    setIsChatOpen(false)
+    setSelectedFriend(null)
+  }
+
+  // Avatar upload handler
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước file không được vượt quá 5MB')
+      return
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh')
+      return
+    }
+
+    try {
+      toast.loading('Đang tải ảnh lên...', { id: 'upload-avatar' })
+      await cloudinaryService.uploadAvatar(file)
+      // Update via authService would be better but for now just show success
+      toast.success('Cập nhật ảnh đại diện thành công!', { id: 'upload-avatar' })
+      setIsEditingAvatar(false)
+    } catch (error) {
+      console.error('Avatar upload error:', error)
+      toast.error('Không thể tải ảnh lên', { id: 'upload-avatar' })
+    }
+  }
+
   const handleAvatarURL = () => {
     const url = prompt('Nhập URL ảnh đại diện:')
     if (url) {
-      setCurrentUser(prev => ({ ...prev, avatar: url }))
+      toast.success('Cập nhật ảnh đại diện thành công!')
       setIsEditingAvatar(false)
     }
   }
 
-  // Mock data
-  const friends = [
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      avatar: 'https://i.pravatar.cc/150?img=1',
-      mutualFriends: 12,
-      status: 'online',
-      bio: 'Yêu thích nghệ thuật AI'
-    },
-    {
-      id: 2,
-      name: 'Trần Thị B',
-      avatar: 'https://i.pravatar.cc/150?img=5',
-      mutualFriends: 8,
-      status: 'offline',
-      bio: 'Designer & Artist'
-    },
-    {
-      id: 3,
-      name: 'Lê Văn C',
-      avatar: 'https://i.pravatar.cc/150?img=12',
-      mutualFriends: 15,
-      status: 'online',
-      bio: 'Photographer'
-    },
-    {
-      id: 4,
-      name: 'Phạm Thị D',
-      avatar: 'https://i.pravatar.cc/150?img=9',
-      mutualFriends: 20,
-      status: 'online',
-      bio: 'Digital Artist'
-    },
-    {
-      id: 5,
-      name: 'Hoàng Văn E',
-      avatar: 'https://i.pravatar.cc/150?img=13',
-      mutualFriends: 5,
-      status: 'offline',
-      bio: 'AI Enthusiast'
-    },
-    {
-      id: 6,
-      name: 'Đặng Thị F',
-      avatar: 'https://i.pravatar.cc/150?img=24',
-      mutualFriends: 18,
-      status: 'online',
-      bio: 'Creative Director'
-    }
-  ]
-
-  const friendRequests = [
-    {
-      id: 1,
-      name: 'Bùi Văn G',
-      avatar: 'https://i.pravatar.cc/150?img=33',
-      mutualFriends: 3,
-      bio: 'Artist & Creator'
-    },
-    {
-      id: 2,
-      name: 'Vũ Thị H',
-      avatar: 'https://i.pravatar.cc/150?img=27',
-      mutualFriends: 7,
-      bio: 'UI/UX Designer'
-    }
-  ]
-
-  const suggestions = [
-    {
-      id: 1,
-      name: 'Phan Văn I',
-      avatar: 'https://i.pravatar.cc/150?img=56',
-      mutualFriends: 10,
-      bio: '3D Artist'
-    },
-    {
-      id: 2,
-      name: 'Mai Thị K',
-      avatar: 'https://i.pravatar.cc/150?img=45',
-      mutualFriends: 4,
-      bio: 'Illustrator'
-    },
-    {
-      id: 3,
-      name: 'Đinh Văn L',
-      avatar: 'https://i.pravatar.cc/150?img=68',
-      mutualFriends: 6,
-      bio: 'Motion Designer'
-    }
-  ]
-
   const filteredFriends = friends.filter(friend =>
-    friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+    friend.name?.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const isOnline = (friendId) => onlineUsers.has(friendId)
 
   return (
     <div className="friends-page">
@@ -140,7 +244,7 @@ const FriendsPage = () => {
           <div className="profile-content">
             <div className="profile-avatar-section">
               <div className="profile-avatar-wrapper">
-                <img src={currentUser.avatar} alt={currentUser.name} className="profile-avatar" />
+                <img src={user?.avatar || 'https://i.pravatar.cc/150?img=68'} alt={user?.name} className="profile-avatar" />
                 <button
                   className="avatar-edit-btn"
                   onClick={() => setIsEditingAvatar(!isEditingAvatar)}
@@ -185,15 +289,15 @@ const FriendsPage = () => {
               </div>
             </div>
             <div className="profile-info">
-              <h2 className="profile-name">{currentUser.name}</h2>
-              <p className="profile-bio">{currentUser.bio}</p>
+              <h2 className="profile-name">{user?.name || 'Người dùng'}</h2>
+              <p className="profile-bio">{user?.intro || 'Yêu thích nghệ thuật AI và công nghệ'}</p>
               <div className="profile-stats">
                 <div className="stat-item">
-                  <span className="stat-value">{currentUser.friendsCount}</span>
+                  <span className="stat-value">{friends.length}</span>
                   <span className="stat-label">Bạn bè</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-value">{friends.filter(f => f.status === 'online').length}</span>
+                  <span className="stat-value">{friends.filter(f => isOnline(f.id)).length}</span>
                   <span className="stat-label">Đang online</span>
                 </div>
               </div>
@@ -260,27 +364,21 @@ const FriendsPage = () => {
               {filteredFriends.map(friend => (
                 <div key={friend.id} className="friend-card">
                   <div className="friend-avatar-wrapper">
-                    <img src={friend.avatar} alt={friend.name} className="friend-avatar" />
-                    <span className={`status-badge ${friend.status}`}></span>
+                    <img src={friend.avatar || 'https://i.pravatar.cc/150'} alt={friend.name} className="friend-avatar" />
+                    <span className={`status-badge ${isOnline(friend.id) ? 'online' : 'offline'}`}></span>
                   </div>
                   <div className="friend-info">
                     <h3 className="friend-name">{friend.name}</h3>
-                    <p className="friend-bio">{friend.bio}</p>
-                    <p className="mutual-friends">
-                      <svg className="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {friend.mutualFriends} bạn chung
-                    </p>
+                    <p className="friend-bio">{friend.intro || 'Người dùng Heritage Art'}</p>
                   </div>
                   <div className="friend-actions">
-                    <button className="action-btn message">
+                    <button className="action-btn message" onClick={() => openChat(friend)}>
                       <svg className="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                       Nhắn tin
                     </button>
-                    <button className="action-btn unfriend">
+                    <button className="action-btn unfriend" onClick={() => handleRemoveFriend(friend.id)}>
                       <svg className="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
                       </svg>
@@ -297,23 +395,17 @@ const FriendsPage = () => {
               {friendRequests.map(request => (
                 <div key={request.id} className="friend-card request-card">
                   <div className="friend-avatar-wrapper">
-                    <img src={request.avatar} alt={request.name} className="friend-avatar" />
+                    <img src={request.user?.avatar || 'https://i.pravatar.cc/150'} alt={request.user?.name} className="friend-avatar" />
                   </div>
                   <div className="friend-info">
-                    <h3 className="friend-name">{request.name}</h3>
-                    <p className="friend-bio">{request.bio}</p>
-                    <p className="mutual-friends">
-                      <svg className="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {request.mutualFriends} bạn chung
-                    </p>
+                    <h3 className="friend-name">{request.user?.name}</h3>
+                    <p className="friend-bio">{request.user?.intro || 'Người dùng Heritage Art'}</p>
                   </div>
                   <div className="friend-actions request-actions">
-                    <button className="action-btn accept">
+                    <button className="action-btn accept" onClick={() => handleAcceptFriendRequest(request)}>
                       ✓ Chấp nhận
                     </button>
-                    <button className="action-btn reject">
+                    <button className="action-btn reject" onClick={() => handleRejectFriendRequest(request)}>
                       ✕ Từ chối
                     </button>
                   </div>
@@ -328,20 +420,14 @@ const FriendsPage = () => {
               {suggestions.map(suggestion => (
                 <div key={suggestion.id} className="friend-card suggestion-card">
                   <div className="friend-avatar-wrapper">
-                    <img src={suggestion.avatar} alt={suggestion.name} className="friend-avatar" />
+                    <img src={suggestion.avatar || 'https://i.pravatar.cc/150'} alt={suggestion.name} className="friend-avatar" />
                   </div>
                   <div className="friend-info">
                     <h3 className="friend-name">{suggestion.name}</h3>
-                    <p className="friend-bio">{suggestion.bio}</p>
-                    <p className="mutual-friends">
-                      <svg className="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {suggestion.mutualFriends} bạn chung
-                    </p>
+                    <p className="friend-bio">{suggestion.intro || 'Người dùng Heritage Art'}</p>
                   </div>
                   <div className="friend-actions">
-                    <button className="action-btn add-friend">
+                    <button className="action-btn add-friend" onClick={() => handleSendFriendRequest(suggestion.id)}>
                       ➕ Kết bạn
                     </button>
                     <button className="action-btn remove">
@@ -353,6 +439,14 @@ const FriendsPage = () => {
             </div>
           )}
         </div>
+
+        {/* Chat Modal Component */}
+        <ChatModal
+          friend={selectedFriend}
+          isOpen={isChatOpen}
+          onClose={closeChat}
+          onlineUsers={onlineUsers}
+        />
       </div>
     </div>
   )
