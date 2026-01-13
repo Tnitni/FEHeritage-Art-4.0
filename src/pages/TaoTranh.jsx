@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import {
     Sparkles, Wand2, Palette, Download, X, Loader2,
     Star, ExternalLink, AlertTriangle,
@@ -178,7 +178,7 @@ const ImageCreator = () => {
     const [resultUrl, setResultUrl] = useState(null);
     const [showLoginPopup, setShowLoginPopup] = useState(false);
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn] = useState(false);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
