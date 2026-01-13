@@ -5,9 +5,7 @@ import "aos/dist/aos.css";
 import ImageModal from "../components/ImageModal";
 
 // Import ảnh từ thư mục assets
-import hoanKiem from "../assets/hoankiem.jpg";
-import diaDao from "../assets/diadao.png";
-import ceo from "../assets/ceo.jpg";
+
 import filterIcon from "../assets/filter.png";
 import halongImg from "../assets/halong.jpg";
 

@@ -402,22 +402,22 @@ const TaoTranh = () => {
         <>
             {/* CSS Toàn cục */}
             <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
-        }
-        .float { animation: float 6s ease-in-out infinite; }
+ @keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+ }
+ .float { animation: float 6s ease-in-out infinite; }
 
-        .particle {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          background: #fbbf24;
-          border-radius: 50%;
-          pointer-events: none;
-          animation: float 8s infinite linear;
-        }
-      `}</style>
+ .particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fbbf24;
+  border-radius: 50%;
+ pointer-events: none;
+  animation: float 8s infinite linear;
+ }
+ `}</style>
 
             <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 font-body text-amber-900 overflow-hidden">
                 {/* Hạt ánh sáng nền */}
