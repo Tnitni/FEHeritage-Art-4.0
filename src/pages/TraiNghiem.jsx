@@ -3270,26 +3270,32 @@ const TraiNghiem = () => {
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     ">
       <div style="position:relative;height:180px;background:#f7f7f7;">
-        <img src="${event.images?.[0] || ""}" alt="${
-    event.name
-  }" style="width:100%;height:100%;object-fit:cover;" />
+        <img src="${event.images?.[0] || ""}" alt="${event.name}" style="width:100%;height:100%;object-fit:cover;" />
         <div style="position:absolute;bottom:8px;left:12px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;">
           ${event.period} · ${event.region} Bộ · ${event.province ?? ""}
         </div>
       </div>
       <div style="padding:12px 14px 14px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <h3 style="margin:0;font-size:18px;line-height:1.3;color:#1f2937;font-weight:700;">${
-            event.name
-          }</h3>
+          <h3 style="margin:0;font-size:18px;line-height:1.3;color:#1f2937;font-weight:700;">${event.name}</h3>
+          <div style="display:flex;gap:8px;">
+            <button title="Yêu thích" style="background:rgba(0,0,0,0.08);border:none;border-radius:50%;padding:6px;cursor:pointer;transition:background .2s;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#dc8154" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+            </button>
+            <button title="Dislike" style="background:rgba(0,0,0,0.08);border:none;border-radius:50%;padding:6px;cursor:pointer;transition:background .2s;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#888" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.682 17.682a4.5 4.5 0 01-6.364 0L12 16.364l-1.318 1.318a4.5 4.5 0 01-6.364-6.364l7.682-7.682 7.682 7.682a4.5 4.5 0 010 6.364z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <p style="margin:8px 0 12px;color:#4b5563;font-size:14px;line-height:1.5;">
           ${event.description}
         </p>
         <a
-          href="https://www.google.com/maps/dir/?api=1&destination=${
-            event.lat
-          },${event.lng}"
+          href="https://www.google.com/maps/dir/?api=1&destination=${event.lat},${event.lng}"
           target="_blank" rel="noopener noreferrer"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:#2e1e10;color:#fff;font-weight:600;text-decoration:none;"
         >
@@ -4140,28 +4146,52 @@ const TraiNghiem = () => {
                     </svg>
                     Edit
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                    title="Thêm vào yêu thích"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
+                      title="Thêm vào yêu thích"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
+                      title="Dislike"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19.682 17.682a4.5 4.5 0 01-6.364 0L12 16.364l-1.318 1.318a4.5 4.5 0 01-6.364-6.364l7.682-7.682 7.682 7.682a4.5 4.5 0 010 6.364z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="relative z-10 flex justify-between items-center">
                   <div className="flex items-center gap-2 text-white text-sm font-semibold">
@@ -4210,6 +4240,8 @@ const TraiNghiem = () => {
         onClose={closeModal}
         onNext={showNextImage}
         onPrev={showPrevImage}
+        currentIndex={selectedImageIndex}
+        totalImages={galleryData.length}
       />
     </>
   );
