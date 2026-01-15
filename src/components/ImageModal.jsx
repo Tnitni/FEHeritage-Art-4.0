@@ -197,28 +197,32 @@ const ImageModal = ({ imageData, onClose, onNext, onPrev, onImageSelect, current
         className="bg-amber-50 rounded-3xl shadow-2xl w-full max-w-7xl max-h-[94vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-6 flex items-center justify-between border-b border-amber-200">
-          <div className="flex items-center gap-4">
-            <img src={author.avatar} alt="" className="w-14 h-14 rounded-full ring-4 ring-amber-200 shadow-md" />
-            <div>
-              <p className="font-bold text-amber-900 text-xl">{author.name}</p>
-              <p className="text-amber-700">Đồng hành cùng dòng chảy lịch sử</p>
+        {/* Header - Responsive layout */}
+        <div className="bg-gradient-to-r from-amber-100 to-orange-100 p-4 md:p-6 border-b border-amber-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Author info */}
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-shrink">
+              <img src={author.avatar} alt="" className="w-10 h-10 md:w-14 md:h-14 rounded-full ring-2 md:ring-4 ring-amber-200 shadow-md flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold text-amber-900 text-base md:text-xl truncate">{author.name}</p>
+                <p className="text-amber-700 text-sm md:text-base truncate">Đồng hành cùng dòng chảy lịch sử</p>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-4">
-            <button className="px-6 py-3 bg-amber-200 text-amber-900 rounded-xl font-semibold hover:bg-amber-300 transition shadow">
-              Like
-            </button>
-            <button className="px-6 py-3 bg-amber-200 text-amber-900 rounded-xl font-semibold hover:bg-amber-300 transition shadow">
-              Dislike
-            </button>
-            <button
-              onClick={handleDownload}
-              className="px-7 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2"
-            >
-              {downloading ? "Đang tải..." : "Tải xuống"}
-            </button>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2 md:gap-4 flex-shrink-0 w-full sm:w-auto justify-start sm:justify-end">
+              <button className="px-4 md:px-6 py-2 md:py-3 bg-amber-200 text-amber-900 rounded-xl font-semibold hover:bg-amber-300 transition shadow text-sm md:text-base">
+                Like
+              </button>
+              <button className="px-4 md:px-6 py-2 md:py-3 bg-amber-200 text-amber-900 rounded-xl font-semibold hover:bg-amber-300 transition shadow text-sm md:text-base">
+                Dislike
+              </button>
+              <button
+                onClick={handleDownload}
+                className="px-5 md:px-7 py-2 md:py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-lg transition flex items-center gap-2 text-sm md:text-base"
+              >
+                {downloading ? "Đang tải..." : "Tải xuống"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -324,8 +328,8 @@ const ImageModal = ({ imageData, onClose, onNext, onPrev, onImageSelect, current
                           <button
                             onClick={() => handleLikeComment(comment.id)}
                             className={`flex items-center gap-1.5 text-sm font-medium transition ${comment.isLiked
-                                ? 'text-red-500'
-                                : 'text-amber-600 hover:text-red-500'
+                              ? 'text-red-500'
+                              : 'text-amber-600 hover:text-red-500'
                               }`}
                           >
                             <svg
