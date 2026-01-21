@@ -13,6 +13,7 @@ import {
 
 const ITEMS_PER_TOOL_PAGE = 10;
 
+// Dữ liệu mock các danh mục và công cụ AI
 const initialCategories = [
     {
         id: "content",
@@ -1424,6 +1425,7 @@ const initialCategories = [
     },
 ];
 
+// Màn hình quản trị danh mục & công cụ Công nghệ AI
 const AdminCongNgheAI = () => {
     const [categories, setCategories] = useState(initialCategories || []);
     const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategories[0]?.id || '');

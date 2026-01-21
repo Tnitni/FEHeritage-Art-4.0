@@ -1,19 +1,33 @@
-import React, { useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import React from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { SideBar } from "../sidebar/SideBar";
+import "../../pages/admin/adminStyles.css";
 
 const AdminLayout = () => {
-    useEffect(() => {
-        import("@coreui/coreui/dist/css/coreui.min.css");
-    }, []);
+    const location = useLocation();
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-
+        <div className="admin-shell">
             <SideBar />
 
-            <div className="flex-1 p-8 overflow-y-auto">
-                <Outlet />
+            <div className="admin-main">
+                <header className="admin-header">
+                    <div>
+                        <div className="title">Heritage Art 4.0 • Admin</div>
+                        <div className="breadcrumbs">{location.pathname}</div>
+                    </div>
+                    <div className="admin-profile">
+                        <div>
+                            <div style={{ fontWeight: 700 }}>Admin</div>
+                            <div style={{ fontSize: 12, color: "#87684a" }}>Giám sát nội dung</div>
+                        </div>
+                        <div className="admin-avatar">HA</div>
+                    </div>
+                </header>
+
+                <main className="admin-content">
+                    <Outlet />
+                </main>
             </div>
         </div>
     );
