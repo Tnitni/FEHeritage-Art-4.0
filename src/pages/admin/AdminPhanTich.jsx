@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import CKEditorField from "../../components/common/CKEditorField";
 const initialArticles = [
     {
         id: "A-01",
@@ -20,6 +20,7 @@ const initialArticles = [
 const emptyForm = { title: "", author: "", content: "", date: "" };
 
 const AdminPhanTich = () => {
+    const [viewItem, setViewItem] = useState(null);
     const [articles, setArticles] = useState(initialArticles);
     const [form, setForm] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
@@ -55,7 +56,7 @@ const AdminPhanTich = () => {
         <div className="stacked">
             <div className="panel-head">
                 <div>
-                    <h3 style={{ margin: 0 }}>Phân tích – Góc nhìn</h3>
+                    <h3 style={{ margin: 0 }}>Phân tích</h3>
                     <p className="panel-description"> (tiêu đề, nội dung, tác giả, ngày)</p>
                 </div>
                 <button className="btn primary" onClick={() => onEdit({ ...emptyForm })}>
@@ -82,6 +83,12 @@ const AdminPhanTich = () => {
                                     </button>
                                     <button className="btn danger" onClick={() => onDelete(item.id)}>
                                         Xóa
+                                    </button>
+                                    <button
+                                        className="btn ghost"
+                                        onClick={() => setViewItem(item)}
+                                    >
+                                        Xem chi tiết
                                     </button>
                                 </div>
                             </div>
@@ -126,13 +133,14 @@ const AdminPhanTich = () => {
                                 />
                             </div>
                         </div>
-                        <div>
+                        <div  >
                             <label>Nội dung</label>
-                            <textarea
-                                className="textarea"
+                            <CKEditorField
                                 value={form.content}
-                                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                                required
+                                onChange={(content) =>
+                                    setForm({ ...form, content })
+                                }
+                                placeholder="Nhập nội dung ..."
                             />
                         </div>
 
@@ -154,6 +162,45 @@ const AdminPhanTich = () => {
                     </form>
                 </div>
             </div>
+             {/* ===== MODAL XEM CHI TIẾT ===== */}
+             {viewItem && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-head">
+                            <h3>{viewItem.title}</h3>
+                            <button
+                                className="btn danger"
+                                onClick={() => setViewItem(null)}
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        {viewItem.thumbnail && (
+                            <img
+                                src={viewItem.thumbnail}
+                                alt={viewItem.title}
+                                style={{
+                                    width: "100%",
+                                    maxHeight: 300,
+                                    objectFit: "cover",
+                                    borderRadius: 8,
+                                    marginBottom: 16,
+                                }}
+                            />
+                        )}
+
+                        <p style={{ opacity: 0.8 }}>{viewItem.summary}</p>
+
+                        <div
+                            className="ck-content"
+                            dangerouslySetInnerHTML={{
+                                __html: viewItem.content,
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

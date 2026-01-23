@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 // Dữ liệu thống kê tổng quan trên dashboard
 const stats = [
     { label: "Người dùng", value: 12450, sub: "+320 mới / 30 ngày", path: "/admin/users" },
-    { label: "Bài cộng đồng", value: 860, sub: "Tin tức, bài viết, diễn đàn", path: "/admin/news-events" },
+    { label: "Bài cộng đồng", value: 860, sub: "Tin tức, bài viết, diễn đàn", path: "/admin/news" },
     { label: "Cần duyệt", value: 42, sub: "Bài chờ duyệt & báo cáo", path: "/admin/forum" },
     { label: "Tương tác", value: "12.4K", sub: "Lượt xem & phản hồi", path: "/admin/analysis" },
 ];

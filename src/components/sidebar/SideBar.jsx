@@ -15,9 +15,11 @@ const menu = [
     {
         title: "Cộng đồng",
         items: [
-            { label: "Tin tức – Sự kiện", path: "/admin/news-events" },
-            { label: "Văn hóa – Lịch sử", path: "/admin/culture-history" },
-            { label: "Phân tích – Góc nhìn", path: "/admin/analysis" },
+            { label: "Tin tức", path: "/admin/news" },
+            { label: "Sự kiện", path: "/admin/events" },
+            { label: "Hành Trình Lịch Sử", path: "/admin/culture-history" },
+            { label: "Phân tích ", path: "/admin/analysis" },
+            { label: "Góc nhìn", path: "/admin/viewpoint" },
             { label: "Diễn đàn", path: "/admin/forum" },
         ],
     },

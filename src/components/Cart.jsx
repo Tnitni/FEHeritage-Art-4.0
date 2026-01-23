@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { motion } from "framer-motion";
 
 export default function Cart() {
   // Lấy các hàm và state từ context

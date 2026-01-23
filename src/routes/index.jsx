@@ -35,9 +35,12 @@ import AdminLayout from '../components/layouts/AdminLayout.jsx';
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
 import AdminNguoiDung from '../pages/admin/AdminNguoiDung.jsx';
 import AdminTinTuc from '../pages/admin/AdminTinTuc.jsx';
+import AdminSuKien from '../pages/admin/AdminSuKien.jsx';
 import AdminVanHoaLichSu from '../pages/admin/AdminVanHoaLichSu.jsx';
 import AdminPhanTich from '../pages/admin/AdminPhanTich.jsx';
 import AdminForum from '../pages/admin/AdminForum.jsx';
+import AdminGocNhin from '../pages/admin/AdminGocNhin.jsx';
+
 
 const router = createBrowserRouter([
   {
@@ -271,8 +274,12 @@ const router = createBrowserRouter([
             element: <AdminNguoiDung />,
           },
           {
-            path: 'news-events',
+            path: 'news',
             element: <AdminTinTuc />,
+          },
+          {
+            path: 'events',
+            element: <AdminSuKien />,
           },
           {
             path: 'culture-history',
@@ -281,7 +288,9 @@ const router = createBrowserRouter([
           {
             path: 'analysis',
             element: <AdminPhanTich />,
+            
           },
+          { path: 'viewpoint', element: <AdminGocNhin /> },
           {
             path: 'forum',
             element: <AdminForum />,

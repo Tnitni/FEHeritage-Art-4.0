@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import CKEditorField from "../../components/common/CKEditorField";
 
-// Dữ liệu mock nội dung văn hóa – lịch sử
+/* ===== DỮ LIỆU MẪU ===== */
 const initialCulture = [
     {
         id: "C-01",
@@ -8,7 +9,7 @@ const initialCulture = [
         topic: "Văn hóa",
         period: "Thế kỷ 7 - 15",
         image: "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=600&q=80",
-        content: "Điêu khắc đá và kiến trúc tháp gạch đặc sắc của vương quốc Chăm pa.",
+        content: "<p>Điêu khắc đá và kiến trúc tháp gạch đặc sắc của vương quốc Chăm pa.</p>",
     },
     {
         id: "C-02",
@@ -16,83 +17,127 @@ const initialCulture = [
         topic: "Lịch sử",
         period: "1418 - 1427",
         image: "https://images.unsplash.com/photo-1478088702442-5a17d94b241c?auto=format&fit=crop&w=600&q=80",
-        content: "Cuộc khởi nghĩa giải phóng dân tộc, đặt nền móng cho triều đại Hậu Lê.",
+        content: "<p>Cuộc khởi nghĩa giải phóng dân tộc, đặt nền móng cho triều đại Hậu Lê.</p>",
     },
 ];
 
-// Các chủ đề phân loại nội dung
 const topics = [
     { label: "Văn hóa", value: "Văn hóa" },
     { label: "Lịch sử", value: "Lịch sử" },
 ];
 
-// Mẫu form rỗng để reset / khởi tạo
-const emptyForm = { title: "", topic: "Văn hóa", period: "", image: "", content: "" };
+const emptyForm = {
+    id: "",
+    title: "",
+    topic: "Văn hóa",
+    period: "",
+    image: "",
+    content: "",
+};
 
-// Màn hình quản trị nội dung Văn hóa – Lịch sử
 const AdminVanHoaLichSu = () => {
     const [items, setItems] = useState(initialCulture);
     const [selectedId, setSelectedId] = useState(initialCulture[0]?.id || null);
     const [form, setForm] = useState(emptyForm);
+    const [viewItem, setViewItem] = useState(null);
 
-    // Nội dung đang được chọn để hiển thị & chỉnh sửa
-    const selected = useMemo(() => items.find((i) => i.id === selectedId), [items, selectedId]);
+    const selected = useMemo(
+        () => items.find((i) => i.id === selectedId),
+        [items, selectedId]
+    );
 
-    // Khi chọn item mới thì đồng bộ dữ liệu vào form
+    /* ===== đồng bộ form khi đổi item ===== */
     useEffect(() => {
-        if (selected) {
-            setForm(selected);
-        }
-    }, [selected]);
+        if (selected) setForm(selected);
+    }, [selectedId]); // ❗ không phụ thuộc items
 
-    // Lưu cập nhật nội dung đang chỉnh sửa
+    /* ===== LƯU ===== */
     const updateItem = (e) => {
         e.preventDefault();
         if (!selected) return;
-        setItems((prev) => prev.map((i) => (i.id === selected.id ? { ...selected, ...form } : i)));
+
+        setItems((prev) =>
+            prev.map((i) => (i.id === selected.id ? { ...form } : i))
+        );
     };
 
-    // Chọn một nội dung để xem chi tiết & sửa
-    const onSelect = (item) => {
-        setSelectedId(item.id);
-        setForm(item);
+    /* ===== XÓA ===== */
+    const deleteItem = (id) => {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        if (id === selectedId) {
+            setSelectedId(null);
+            setForm(emptyForm);
+        }
     };
 
     return (
         <div className="stacked">
-            {/* Tiêu đề trang nội dung Văn hóa – Lịch sử */}
+            {/* ===== HEADER ===== */}
             <div className="panel-head">
                 <div>
-                    <h3 style={{ margin: 0 }}>Văn hóa – Lịch sử</h3>
-                    <p className="panel-description">Quản lý nội dung, chỉnh sửa và cập nhật hình ảnh</p>
+                    <h3>Hành trình lịch sử</h3>
+                    <p className="panel-description">
+                        Quản lý nội dung văn hóa – lịch sử
+                    </p>
                 </div>
             </div>
 
-            {/* cột: Danh sách & Form chi tiết */}
             <div className="admin-grid-2">
-                {/* Panel: danh sách nội dung */}
+                {/* ===== DANH SÁCH ===== */}
                 <div className="admin-panel">
                     <div className="panel-head">
                         <h3>Danh sách</h3>
                         <span className="badge warning">{items.length} nội dung</span>
                     </div>
-                    {/* Thẻ hiển thị từng nội dung văn hóa – lịch sử */}
+
                     <div className="list-cards">
                         {items.map((item) => (
-                            <div key={item.id} className="item-card" onClick={() => onSelect(item)} style={{ cursor: "pointer" }}>
+                            <div
+                                key={item.id}
+                                className="item-card"
+                                onClick={() => setSelectedId(item.id)}
+                                style={{ cursor: "pointer" }}
+                            >
                                 <h4>{item.title}</h4>
                                 <div className="item-meta">
-                                    Chủ đề: {item.topic} • Thời gian: {item.period}
+                                    {item.topic} • {item.period}
                                 </div>
-                                <div className="item-meta" style={{ marginTop: 6 }}>
-                                    {item.content}
+
+                                <div className="card-actions">
+                                    <button
+                                        className="btn ghost"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setViewItem(item);
+                                        }}
+                                    >
+                                        Xem chi tiết
+                                    </button>
+                                    <button
+                                        className="btn secondary"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedId(item.id);
+                                        }}
+                                    >
+                                        Chỉnh sửa
+                                    </button>
+                                    <button
+                                        className="btn danger"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteItem(item.id);
+                                        }}
+                                    >
+                                        Xóa
+                                    </button>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Panel: chi tiết & form chỉnh sửa nội dung */}
+                {/* ===== FORM ===== */}
                 <div className="admin-panel">
                     <div className="panel-head">
                         <h3>Chi tiết & chỉnh sửa</h3>
@@ -100,7 +145,6 @@ const AdminVanHoaLichSu = () => {
                     </div>
 
                     {selected ? (
-                        /* Form chỉnh sửa thông tin chi tiết */
                         <form className="stacked" onSubmit={updateItem}>
                             <div className="form-grid">
                                 <div>
@@ -108,16 +152,21 @@ const AdminVanHoaLichSu = () => {
                                     <input
                                         className="input"
                                         value={form.title}
-                                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                                        onChange={(e) =>
+                                            setForm({ ...form, title: e.target.value })
+                                        }
                                         required
                                     />
                                 </div>
+
                                 <div>
                                     <label>Chủ đề</label>
                                     <select
                                         className="select"
                                         value={form.topic}
-                                        onChange={(e) => setForm({ ...form, topic: e.target.value })}
+                                        onChange={(e) =>
+                                            setForm({ ...form, topic: e.target.value })
+                                        }
                                     >
                                         {topics.map((t) => (
                                             <option key={t.value} value={t.value}>
@@ -126,39 +175,59 @@ const AdminVanHoaLichSu = () => {
                                         ))}
                                     </select>
                                 </div>
+
                                 <div>
                                     <label>Thời gian</label>
                                     <input
                                         className="input"
                                         value={form.period}
-                                        onChange={(e) => setForm({ ...form, period: e.target.value })}
+                                        onChange={(e) =>
+                                            setForm({ ...form, period: e.target.value })
+                                        }
                                     />
                                 </div>
                             </div>
+
                             <div>
                                 <label>Nội dung chi tiết</label>
-                                <textarea
-                                    className="textarea"
+                                <CKEditorField
                                     value={form.content}
-                                    onChange={(e) => setForm({ ...form, content: e.target.value })}
-                                    required
+                                    onChange={(content) =>
+                                        setForm({ ...form, content })
+                                    }
                                 />
                             </div>
+
                             <div>
-                                <label>Hình ảnh (URL)</label>
+                                <label>Hình ảnh</label>
                                 <input
                                     className="input"
-                                    value={form.image}
-                                    onChange={(e) => setForm({ ...form, image: e.target.value })}
-                                    placeholder="https://..."
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const url = URL.createObjectURL(file);
+                                            setForm({ ...form, image: url });
+                                        }
+                                    }}
                                 />
+                                {form.image && (
+                                    <div className="thumb-preview thumb-preview-inline">
+                                        <img src={form.image} alt="preview" />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="responsive-stack">
                                 <button className="btn primary" type="submit">
                                     Lưu cập nhật
                                 </button>
-                                <button className="btn secondary" type="button" onClick={() => setForm(selected)}>
+                                <button
+                                    className="btn secondary"
+                                    type="button"
+                                    onClick={() => setForm(selected)}
+                                >
                                     Hoàn tác
                                 </button>
                             </div>
@@ -168,6 +237,48 @@ const AdminVanHoaLichSu = () => {
                     )}
                 </div>
             </div>
+
+            {/* ===== MODAL ===== */}
+            {viewItem && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-head">
+                            <h3>{viewItem.title}</h3>
+                            <button
+                                className="btn ghost"
+                                onClick={() => setViewItem(null)}
+                            >
+                                Đóng
+                            </button>
+                        </div>
+
+                        {viewItem.image && (
+                            <img
+                                src={viewItem.image}
+                                alt={viewItem.title}
+                                style={{
+                                    width: "100%",
+                                    maxHeight: 300,
+                                    objectFit: "cover",
+                                    borderRadius: 8,
+                                    marginBottom: 16,
+                                }}
+                            />
+                        )}
+
+                        <p style={{ opacity: 0.7 }}>
+                            {viewItem.topic} • {viewItem.period}
+                        </p>
+
+                        <div
+                            className="ck-content"
+                            dangerouslySetInnerHTML={{
+                                __html: viewItem.content,
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
