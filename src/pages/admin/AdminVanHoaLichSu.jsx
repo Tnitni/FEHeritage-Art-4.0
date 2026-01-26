@@ -49,7 +49,7 @@ const AdminVanHoaLichSu = () => {
     /* ===== đồng bộ form khi đổi item ===== */
     useEffect(() => {
         if (selected) setForm(selected);
-    }, [selectedId]); // ❗ không phụ thuộc items
+    }, [selectedId]); // ❗
 
     /* ===== LƯU ===== */
     const updateItem = (e) => {

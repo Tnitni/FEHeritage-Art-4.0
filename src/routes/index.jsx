@@ -40,6 +40,7 @@ import AdminVanHoaLichSu from '../pages/admin/AdminVanHoaLichSu.jsx';
 import AdminPhanTich from '../pages/admin/AdminPhanTich.jsx';
 import AdminForum from '../pages/admin/AdminForum.jsx';
 import AdminGocNhin from '../pages/admin/AdminGocNhin.jsx';
+import AdminTraiNghiem from '../pages/admin/AdminTraiNghiem.jsx';
 
 
 const router = createBrowserRouter([
@@ -290,7 +291,10 @@ const router = createBrowserRouter([
             element: <AdminPhanTich />,
             
           },
-          { path: 'viewpoint', element: <AdminGocNhin /> },
+          { path: 'TraiNghiem', 
+            element: <AdminTraiNghiem /> },
+          { path: 'viewpoint',
+             element: <AdminGocNhin /> },
           {
             path: 'forum',
             element: <AdminForum />,

@@ -20,6 +20,7 @@ const menu = [
             { label: "Hành Trình Lịch Sử", path: "/admin/culture-history" },
             { label: "Phân tích ", path: "/admin/analysis" },
             { label: "Góc nhìn", path: "/admin/viewpoint" },
+            { label: "Trải Nghiệm", path: "/admin/TraiNghiem" },
             { label: "Diễn đàn", path: "/admin/forum" },
         ],
     },
