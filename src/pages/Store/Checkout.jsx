@@ -4,9 +4,8 @@ import PaymentMethods from "../../components/PaymentMethods";
 import { Link } from "react-router-dom";
 
 export default function Checkout() {
-	// Lấy dữ liệu giỏ hàng và các hàm xử lý
 	const { cart, getTotalPrice, clearCart } = useCart();
-	// State thông tin khách hàng
+
 	const [customer, setCustomer] = useState({
 		name: "",
 		email: "",
@@ -15,16 +14,53 @@ export default function Checkout() {
 		note: "",
 	});
 
-	// Tính toán tổng tiền
 	const subtotal = useMemo(() => getTotalPrice(), [getTotalPrice]);
-	const shipping = 0; // Có thể cấu hình sau
+	const shipping = 0;
 	const total = subtotal + shipping;
 
-	// Kiểm tra hợp lệ thông tin
 	const isValid = () =>
 		customer.name.trim() && customer.phone.trim() && customer.address.trim();
 
-	// Xử lý thanh toán
+	// ─── LƠU VÀO paymentHistory ───
+	const savePaymentHistory = (order) => {
+		try {
+			const now = new Date();
+			const record = {
+				id: order.id,
+				customerName: order.customer.name,
+				email: order.customer.email || "",
+				phone: order.customer.phone || "",
+				address: order.customer.address || "",
+				note: order.customer.note || "",
+				items: order.items.map((item) => ({
+					title: item.title,
+					selectedType: item.selectedType,
+					quantity: item.quantity,
+					price: item.price,
+				})),
+				totalAmount: order.amounts.total,
+				paymentMethod: order.payment.method,
+				bankName: order.payment.bankInfo?.bankName || order.payment.card?.type || "",
+				date: now.toLocaleDateString("vi-VN"),
+				time: now.toLocaleTimeString("vi-VN"),
+				timestamp: now.toISOString(),
+				status: order.payment.status === "success" ? "Thành công" : "Đang xử lý",
+			};
+
+			// Đọc array hiện tại, push thêm, lưu lại
+			let history = [];
+			const raw = localStorage.getItem("paymentHistory");
+			if (raw) {
+				history = JSON.parse(raw);
+			}
+			history.push(record);
+			localStorage.setItem("paymentHistory", JSON.stringify(history));
+		} catch (err) {
+			console.error("Lỗi lưu paymentHistory:", err);
+		}
+	};
+
+	// ─── XỬ LÝ THANH TOÁN ───
 	const onPay = (method, details) => {
 		const order = {
 			id: `ORD-${Date.now()}`,
@@ -33,20 +69,22 @@ export default function Checkout() {
 			amounts: { subtotal, shipping, total },
 			customer,
 			payment: {
-				// sử dụng structure tương tự DonatUngHo -> PaymentMethods
 				amount: details.amount,
 				method: details.method,
 				card: details.card,
 				bankInfo: details.bankInfo,
 				status: details.status,
 			},
-			// metadata demo
 			source: "store-checkout",
 		};
 
 		try {
+			// Giữ lastOrder cho ThankYou page
 			localStorage.setItem("lastOrder", JSON.stringify(order));
 		} catch (_) {}
+
+		// ─── LƠU VÀO LỊCH SỬ PAYMENT ───
+		savePaymentHistory(order);
 
 		// Dọn giỏ hàng sau thanh toán
 		clearCart();
@@ -59,7 +97,6 @@ export default function Checkout() {
 			<div className="mx-auto max-w-6xl px-4 py-8">
 				<h1 className="mb-6 text-2xl font-bold text-gray-800">Thanh toán</h1>
 
-				{/* Nếu giỏ hàng rỗng */}
 				{cart.length === 0 ? (
 					<div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
 						<p className="mb-4 text-gray-600">Giỏ hàng trống. Hãy thêm sản phẩm trước khi thanh toán.</p>
@@ -132,7 +169,7 @@ export default function Checkout() {
 								)}
 							</div>
 
-							{/* Phương thức thanh toán - như DonatUngHo */}
+							{/* Phương thức thanh toán */}
 							<div className="rounded-xl border bg-white p-5 shadow-sm">
 								<h2 className="mb-4 text-lg font-semibold text-gray-800">Phương thức thanh toán</h2>
 								<PaymentMethods
@@ -198,4 +235,3 @@ export default function Checkout() {
 		</div>
 	);
 }
-

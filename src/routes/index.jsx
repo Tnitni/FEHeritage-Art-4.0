@@ -41,6 +41,8 @@ import AdminPhanTich from '../pages/admin/AdminPhanTich.jsx';
 import AdminForum from '../pages/admin/AdminForum.jsx';
 import AdminGocNhin from '../pages/admin/AdminGocNhin.jsx';
 import AdminTraiNghiem from '../pages/admin/AdminTraiNghiem.jsx';
+import AdminDonate from '../pages/admin/AdminDonate.jsx';
+import AdminVIP from '../pages/admin/AdminVIP.jsx';
 
 
 const router = createBrowserRouter([
@@ -298,6 +300,14 @@ const router = createBrowserRouter([
           {
             path: 'forum',
             element: <AdminForum />,
+          },
+          {
+            path: 'cuahang/payment-donate',
+            element: <AdminDonate />,
+          },
+          {
+            path: 'cuahang/vip-packages',
+            element: <AdminVIP />,
           },
         ],
       },

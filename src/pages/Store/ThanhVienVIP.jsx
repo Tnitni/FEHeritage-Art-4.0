@@ -7,6 +7,13 @@ export default function ThanhVienVIP() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [autoRenew, setAutoRenew] = useState(false);
+  
+  // State cho thông tin người dùng
+  const [userInfo, setUserInfo] = useState({
+    userName: "",
+    email: "",
+  });
+  
   const discountRate = 0.2;
 
   // Danh sách gói hội viên
@@ -46,6 +53,7 @@ export default function ThanhVienVIP() {
       color: "from-red-500 to-orange-500",
     },
   ];
+
   // Tổng hợp quyền lợi
   const allBenefits = [
     "Tạo ảnh AI giới hạn lượt/ngày",
@@ -68,6 +76,17 @@ export default function ThanhVienVIP() {
     return plan.priceMonthly * 12 * (1 - discountRate);
   };
 
+  // Hàm tính ngày hết hạn
+  const calculateExpiryDate = (cycle) => {
+    const today = new Date();
+    if (cycle === "monthly") {
+      today.setMonth(today.getMonth() + 1);
+    } else {
+      today.setFullYear(today.getFullYear() + 1);
+    }
+    return today.toISOString().split('T')[0];
+  };
+
   // Chọn gói
   const handleSelectPlan = (plan) => {
     if (plan.priceMonthly === 0) {
@@ -76,14 +95,76 @@ export default function ThanhVienVIP() {
     }
     setSelectedPlan(plan);
     setAutoRenew(false);
+    // Reset thông tin người dùng
+    setUserInfo({ userName: "", email: "" });
   };
 
-  // Thanh toán
+  // Validate thông tin người dùng
+  const validateUserInfo = () => {
+    if (!userInfo.userName.trim()) {
+      alert("⚠️ Vui lòng nhập họ tên!");
+      return false;
+    }
+    if (!userInfo.email.trim()) {
+      alert("⚠️ Vui lòng nhập email!");
+      return false;
+    }
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userInfo.email)) {
+      alert("⚠️ Email không hợp lệ!");
+      return false;
+    }
+    return true;
+  };
+
+  // Thanh toán - TÍCH HỢP LOCALSTORAGE
   const handlePayment = (method, details) => {
+    // Validate thông tin trước khi thanh toán
+    if (!validateUserInfo()) {
+      return;
+    }
+
+    // Tạo bản ghi mới cho VIP
+    const newVIPRecord = {
+      id: `VIP-${Date.now()}`,
+      userName: userInfo.userName.trim(),
+      email: userInfo.email.trim(),
+      packageName: selectedPlan.title,
+      packagePrice: getPrice(selectedPlan),
+      billingCycle: billingCycle,
+      purchaseDate: new Date().toISOString().split('T')[0],
+      expiryDate: calculateExpiryDate(billingCycle),
+      status: "active",
+      autoRenew: autoRenew,
+      paymentMethod: method,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Lấy dữ liệu hiện tại từ localStorage
+    const vipHistory = JSON.parse(localStorage.getItem("vipHistory") || "[]");
+    
+    // Thêm bản ghi mới
+    vipHistory.push(newVIPRecord);
+    
+    // Lưu lại vào localStorage
+    localStorage.setItem("vipHistory", JSON.stringify(vipHistory));
+
+    // Thông báo thành công
     alert(
-      `🎉 Cảm ơn bạn đã đăng ký gói "${selectedPlan.title}" (${billingCycle === "monthly" ? "theo tháng" : "theo năm"}) với giá ${details.amount.toLocaleString()}₫ bằng ${method}!\n🔄 Tự động gia hạn: ${autoRenew ? "Bật ✅" : "Tắt ❌"}`
+      `🎉 Cảm ơn bạn đã đăng ký gói "${selectedPlan.title}"!\n\n` +
+      `👤 Tên: ${userInfo.userName}\n` +
+      `📧 Email: ${userInfo.email}\n` +
+      `💰 Giá: ${details.amount.toLocaleString()}₫\n` +
+      `💳 Phương thức: ${method}\n` +
+      `📅 Chu kỳ: ${billingCycle === "monthly" ? "Theo tháng" : "Theo năm"}\n` +
+      `🔄 Tự động gia hạn: ${autoRenew ? "Bật ✅" : "Tắt ❌"}\n\n` +
+      `✨ Lịch sử nâng cấp đã được lưu vào hệ thống!`
     );
+
+    // Reset state
     setSelectedPlan(null);
+    setUserInfo({ userName: "", email: "" });
   };
 
   return (
@@ -94,6 +175,7 @@ export default function ThanhVienVIP() {
           Trải nghiệm sáng tạo không giới hạn với hội viên VIP & Premium! 
           Bắt đầu với gói miễn phí, nâng cấp để mở khóa tính năng sáng tạo và quyền thương mại hóa.
         </p>
+        
         {/* Bộ chọn chu kỳ thanh toán */}
         <div className="flex justify-center mb-12">
           <div className="bg-gray-100 p-2 rounded-lg flex">
@@ -111,6 +193,7 @@ export default function ThanhVienVIP() {
             </button>
           </div>
         </div>
+
         {/* Danh sách gói */}
         {!selectedPlan && (
           <>
@@ -150,6 +233,7 @@ export default function ThanhVienVIP() {
                 );
               })}
             </div>
+
             {/* Bảng so sánh quyền lợi */}
             <div className="mt-16 overflow-x-auto">
               <table className="min-w-full bg-white rounded-xl shadow-lg border border-gray-200">
@@ -186,23 +270,68 @@ export default function ThanhVienVIP() {
             </div>
           </>
         )}
+
         {/* Giao diện thanh toán */}
         {selectedPlan && selectedPlan.priceMonthly > 0 && (
-          <motion.div className="mt-12 bg-white rounded-xl shadow-lg p-8 text-center max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <motion.div className="mt-12 bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
               Thanh toán gói <span className="text-orange-600">{selectedPlan.title}</span>
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-6 text-center">
               {billingCycle === "monthly"
                 ? `${selectedPlan.priceMonthly.toLocaleString()}₫ / tháng`
                 : `${getPrice(selectedPlan).toLocaleString()}₫ / năm`}
             </p>
-            <div className="flex items-center justify-center mb-4">
-              <input type="checkbox" id="autoRenew" checked={autoRenew} onChange={(e) => setAutoRenew(e.target.checked)} className="mr-2 w-4 h-4" />
-              <label htmlFor="autoRenew" className="text-gray-700 text-sm">🔄 Gia hạn tự động mỗi kỳ thanh toán</label>
+
+            {/* Form thông tin người dùng */}
+            <div className="mb-6 space-y-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  👤 Họ và tên <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nhập họ và tên của bạn"
+                  value={userInfo.userName}
+                  onChange={(e) => setUserInfo({ ...userInfo, userName: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  📧 Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="Nhập email của bạn"
+                  value={userInfo.email}
+                  onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
+
+            <div className="flex items-center justify-center mb-6">
+              <input 
+                type="checkbox" 
+                id="autoRenew" 
+                checked={autoRenew} 
+                onChange={(e) => setAutoRenew(e.target.checked)} 
+                className="mr-2 w-4 h-4" 
+              />
+              <label htmlFor="autoRenew" className="text-gray-700 text-sm">
+                🔄 Gia hạn tự động mỗi kỳ thanh toán
+              </label>
+            </div>
+
             <PaymentMethods total={getPrice(selectedPlan)} onPay={handlePayment} />
-            <button onClick={() => setSelectedPlan(null)} className="mt-6 px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all">⬅ Quay lại chọn gói</button>
+
+            <button 
+              onClick={() => setSelectedPlan(null)} 
+              className="mt-6 w-full px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all"
+            >
+              ⬅ Quay lại chọn gói
+            </button>
           </motion.div>
         )}
       </div>
