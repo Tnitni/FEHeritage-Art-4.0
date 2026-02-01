@@ -43,6 +43,8 @@ import AdminGocNhin from '../pages/admin/AdminGocNhin.jsx';
 import AdminTraiNghiem from '../pages/admin/AdminTraiNghiem.jsx';
 import AdminDonate from '../pages/admin/AdminDonate.jsx';
 import AdminVIP from '../pages/admin/AdminVIP.jsx';
+import AdminProducts from '../pages/admin/AdminProducts.jsx';
+import AdminPurchaseHistory from '../pages/admin/AdminPurchaseHistory.jsx';
 
 
 const router = createBrowserRouter([
@@ -302,12 +304,20 @@ const router = createBrowserRouter([
             element: <AdminForum />,
           },
           {
+            path: 'cuahang/products',
+            element: <AdminProducts />,
+          },
+          {
             path: 'cuahang/payment-donate',
             element: <AdminDonate />,
           },
           {
             path: 'cuahang/vip-packages',
             element: <AdminVIP />,
+          },
+          {
+            path: 'cuahang/purchase-history',
+            element: <AdminPurchaseHistory />,
           },
         ],
       },
