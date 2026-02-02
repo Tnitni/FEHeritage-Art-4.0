@@ -465,7 +465,7 @@ const AdminDonate = () => {
                                                                             <span style={{ fontSize: "12px", color: "#000000", background: "#ede9fe", padding: "2px 8px", borderRadius: "8px" }}>{item.selectedType}</span>
                                                                             <span style={{ fontSize: "12px", color: "#666" }}>x{item.quantity}</span>
                                                                             <span style={{ fontSize: "13px", fontWeight: "700", color: "#000000" }}>{(item.price * item.quantity).toLocaleString()}₫</span>
-                                                                            
+                                                                            <span className="dashboard-price">{(item.price * item.quantity).toLocaleString()}₫</span>
                                                                         </div>
                                                                     ))}
                                                                 </div>
@@ -597,7 +597,7 @@ const AdminDonate = () => {
                                                 </td>
 
                                                 <td><span style={{ fontWeight: "700", color: "#000000", fontSize: "14px" }}>{donation.amount.toLocaleString()}₫</span></td>
-                                                <td><span className="dashboard-price">{donation.amount.toLocaleString()}₫</span></td>
+                                               
                                                 <td>
                                                     <span style={{
                                                         padding: "3px 10px", backgroundColor: "#A8266D", color: "#fff",
