@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 
+import imgHalong from "../../assets/halong.jpg";
+import imgHue from "../../assets/hue.jpg";
+import imgHoankiem from "../../assets/hoankiem.jpg";
+import img123 from "../../assets/123.jpg";
+import imgBanner from "../../assets/banner.png";
+
 const STORAGE_KEY = "adminProducts";
+const MOCK_IMAGES = [imgHalong, imgHue, imgHoankiem, img123, imgBanner];
 const CATEGORIES = ["Tranh Canvas", "Tranh Gỗ", "Tranh Sơn Dầu", "Tranh In"];
 const TOPICS = ["Phong cảnh", "Chân dung", "Trừu tượng", "Di sản văn hóa"];
 const STYLES = ["Cổ điển", "Hiện đại", "Dân gian", "Đương đại"];
@@ -39,14 +46,23 @@ export default function AdminProducts() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setProducts(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        const patched = parsed.map((p, i) => ({
+          ...p,
+          image: p.image && p.image.trim() ? p.image : MOCK_IMAGES[i % MOCK_IMAGES.length],
+        }));
+        setProducts(patched);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(patched));
       } catch {
         setProducts([]);
       }
     } else {
       const mock = [
-        { ...defaultProduct(), id: "SP-001", name: "Tranh Phong cảnh Hạ Long", price: 450000, stock_quantity: 20, status: "active", category: "Tranh Canvas", topic: "Phong cảnh", style: "Hiện đại", image: "", description: "Tranh in canvas chất lượng cao." },
-        { ...defaultProduct(), id: "SP-002", name: "Tranh Chân dung Bác Hồ", price: 680000, stock_quantity: 0, status: "inactive", category: "Tranh Gỗ", topic: "Chân dung", style: "Cổ điển", image: "", description: "Tranh gỗ điêu khắc tinh xảo." },
+        { ...defaultProduct(), id: "SP-001", name: "Tranh Phong cảnh Hạ Long", price: 450000, stock_quantity: 20, status: "active", category: "Tranh Canvas", topic: "Phong cảnh", style: "Hiện đại", image: MOCK_IMAGES[0], description: "Tranh in canvas chất lượng cao." },
+        { ...defaultProduct(), id: "SP-002", name: "Tranh Chân dung Bác Hồ", price: 680000, stock_quantity: 0, status: "inactive", category: "Tranh Gỗ", topic: "Chân dung", style: "Cổ điển", image: MOCK_IMAGES[1], description: "Tranh gỗ điêu khắc tinh xảo." },
+        { ...defaultProduct(), id: "SP-003", name: "Tranh Phong cảnh Hồ Hoàn Kiếm", price: 380000, stock_quantity: 15, status: "active", category: "Tranh In", topic: "Phong cảnh", style: "Hiện đại", image: MOCK_IMAGES[2], description: "Tranh in chất lượng cao." },
+        { ...defaultProduct(), id: "SP-004", name: "Tranh Di sản Huế", price: 520000, stock_quantity: 8, status: "active", category: "Tranh Canvas", topic: "Di sản văn hóa", style: "Cổ điển", image: MOCK_IMAGES[3], description: "Tranh canvas di sản văn hóa." },
+        { ...defaultProduct(), id: "SP-005", name: "Tranh Trừu tượng", price: 290000, stock_quantity: 25, status: "active", category: "Tranh Sơn Dầu", topic: "Trừu tượng", style: "Đương đại", image: MOCK_IMAGES[4], description: "Tranh sơn dầu trừu tượng." },
       ];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mock));
       setProducts(mock);
@@ -155,24 +171,24 @@ export default function AdminProducts() {
       </div>
 
       <div className="dashboard-stats-row">
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #2563eb" }}>
+        <div className="dashboard-stat-card">
           <h5>Tổng sản phẩm</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.total}</div>
+          <div className="stat-value">{stats.total}</div>
           <div className="stat-sub">Tất cả sản phẩm trong kho</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #10b981" }}>
+        <div className="dashboard-stat-card">
           <h5>Đang bán</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.active}</div>
+          <div className="stat-value">{stats.active}</div>
           <div className="stat-sub">Sản phẩm đang hiển thị</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #f59e0b" }}>
+        <div className="dashboard-stat-card">
           <h5>Hết hàng</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.outOfStock}</div>
+          <div className="stat-value">{stats.outOfStock}</div>
           <div className="stat-sub">Cần nhập thêm</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #8b5cf6" }}>
+        <div className="dashboard-stat-card">
           <h5>Tổng giá trị kho</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.totalValue.toLocaleString()}₫</div>
+          <div className="stat-value">{stats.totalValue.toLocaleString()}₫</div>
           <div className="stat-sub">Theo giá × tồn kho</div>
         </div>
       </div>
@@ -258,7 +274,7 @@ export default function AdminProducts() {
                       <strong style={{ color: "#374151", fontSize: "13px" }}>{p.name || "—"}</strong>
                     </td>
                     <td><span style={{ fontSize: "0.9rem", color: "#374151" }}>{p.category || "—"}</span></td>
-                    <td><span style={{ fontWeight: "700", color: "#f97316", fontSize: "14px" }}>{(p.price || 0).toLocaleString()}₫</span></td>
+                    <td><span className="dashboard-price">{(p.price || 0).toLocaleString()}₫</span></td>
                     <td style={{ fontWeight: "600", color: (p.stock_quantity || 0) <= 0 ? "#dc2626" : "#374151" }}>{p.stock_quantity ?? 0}</td>
                     <td>
                       <span

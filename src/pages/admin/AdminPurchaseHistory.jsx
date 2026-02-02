@@ -142,24 +142,24 @@ export default function AdminPurchaseHistory() {
       </div>
 
       <div className="dashboard-stats-row">
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #2563eb" }}>
+        <div className="dashboard-stat-card">
           <h5>Tổng số giao dịch</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.total}</div>
+          <div className="stat-value">{stats.total}</div>
           <div className="stat-sub">Tất cả lần mua gói</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #10b981" }}>
+        <div className="dashboard-stat-card">
           <h5>Đang hoạt động</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.active}</div>
+          <div className="stat-value">{stats.active}</div>
           <div className="stat-sub">Gói còn hiệu lực</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #f59e0b" }}>
+        <div className="dashboard-stat-card">
           <h5>Đã hết hạn</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.expired}</div>
+          <div className="stat-value">{stats.expired}</div>
           <div className="stat-sub">Gói hết hiệu lực</div>
         </div>
-        <div className="dashboard-stat-card" style={{ borderLeft: "4px solid #8b5cf6" }}>
+        <div className="dashboard-stat-card">
           <h5>Doanh thu (gói đang hoạt động)</h5>
-          <div className="stat-value" style={{ color: "#87684a" }}>{stats.revenue.toLocaleString()}₫</div>
+          <div className="stat-value">{stats.revenue.toLocaleString()}₫</div>
           <div className="stat-sub">Tổng giá trị gói đang dùng</div>
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function AdminPurchaseHistory() {
                       <div style={{ fontWeight: "600", color: "#374151", fontSize: "13px" }}>{item.packageName || "—"}</div>
                       <div style={{ fontSize: "0.85rem", color: "#64748b" }}>{item.billingCycle === "monthly" ? "Theo tháng" : "Theo năm"}</div>
                     </td>
-                    <td style={{ fontWeight: "700", color: "#f97316", fontSize: "14px" }}>{(item.packagePrice || 0).toLocaleString()}₫</td>
+                    <td><span className="dashboard-price">{(item.packagePrice || 0).toLocaleString()}₫</span></td>
                     <td style={{ fontSize: "0.9rem", color: "#374151" }}>{item.purchaseDate ? new Date(item.purchaseDate).toLocaleDateString("vi-VN") : "—"}</td>
                     <td style={{ fontSize: "0.9rem", color: "#374151" }}>{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString("vi-VN") : "—"}</td>
                     <td>

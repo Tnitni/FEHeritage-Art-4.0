@@ -220,17 +220,7 @@ export default function AdminVIP() {
     return matchSearch && matchTier;
   });
 
-  // Thống kê
-  const stats = {
-    total: subscriptions.length,
-    active: subscriptions.filter((item) => item.status === "active").length,
-    expired: subscriptions.filter((item) => item.status === "expired").length,
-    cancelled: subscriptions.filter((item) => item.status === "cancelled").length,
-    premium: subscriptions.filter((item) => item.tier === "premium" && item.status === "active").length,
-    patron: subscriptions.filter((item) => item.tier === "patron" && item.status === "active").length,
-  };
-
-  // Tính billing cycle
+// Tính billing cycle - DI CHUYỂN LÊN TRƯỚC
   const getBillingCycle = (subscription) => {
     if (!subscription.assignDate || !subscription.expirationDate) return "-";
     
@@ -240,6 +230,28 @@ export default function AdminVIP() {
                        (expiry.getMonth() - assign.getMonth());
     
     return diffMonths >= 12 ? "Năm" : "Tháng";
+  };
+
+  // Bây giờ stats mới có thể sử dụng getBillingCycle
+  const stats = {
+    total: subscriptions.length,
+    active: subscriptions.filter((i) => i.status === "active").length,
+    expired: subscriptions.filter((i) => i.status === "expired").length,
+    cancelled: subscriptions.filter((i) => i.status === "cancelled").length,
+    premium: subscriptions.filter((i) => i.tier === "premium" && i.status === "active").length,
+    patron: subscriptions.filter((i) => i.tier === "patron" && i.status === "active").length,
+
+    revenue: subscriptions.reduce((sum, item) => {
+      if (item.status !== "active") return sum;
+
+      const tier = VIP_TIERS[item.tier];
+      if (!tier) return sum;
+
+      const cycle = getBillingCycle(item); // ✅ Bây giờ đã OK
+      const price = cycle === "Năm" ? tier.priceYearly : tier.priceMonthly;
+
+      return sum + (price || 0);
+    }, 0),
   };
 
   // Helper function to truncate text
