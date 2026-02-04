@@ -669,7 +669,7 @@ export default function AdminVIP() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ margin: "0 0 20px", fontSize: "20px", color: "#1f2937", textAlign: "center" }}>
-              ✏️ Chỉnh sửa Subscription
+              ✏️ Chỉnh sửa thông tin gói
             </h3>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -695,7 +695,7 @@ export default function AdminVIP() {
 
               <div>
                 <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#374151" }}>
-                  Tier
+                  Gói
                 </label>
                 <select
                   value={editingSubscription.tier}
@@ -758,7 +758,7 @@ export default function AdminVIP() {
 
               <div>
                 <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#374151" }}>
-                  AI Generation Limit (-1 = unlimited)
+                  AI Generation 
                 </label>
                 <input
                   type="number"
@@ -777,7 +777,7 @@ export default function AdminVIP() {
 
               <div>
                 <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#374151" }}>
-                  Payment Method
+                  Phương thức thanh toán
                 </label>
                 <select
                   value={editingSubscription.payment_method || ""}
@@ -802,7 +802,7 @@ export default function AdminVIP() {
 
               <div>
                 <label style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#374151" }}>
-                  Status
+                  Trạng thái
                 </label>
                 <select
                   value={editingSubscription.status}

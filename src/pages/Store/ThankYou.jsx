@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 // Trang cảm ơn sau thanh toán - 3 giao diện: VIP, Sản phẩm, Donate
 export default function ThankYou() {
   const [order, setOrder] = useState(null);
   const [orderType, setOrderType] = useState(null); // "vip" | "product" | "donation"
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Lấy thông tin đơn hàng từ localStorage
@@ -23,11 +24,27 @@ export default function ThankYou() {
         } else {
           setOrderType("product");
         }
+      } else {
+        // Nếu không có đơn hàng, redirect về trang chủ
+        navigate("/");
       }
     } catch (error) {
       console.error("Error loading order:", error);
+      navigate("/");
     }
-  }, []);
+  }, [navigate]);
+
+  // Hiển thị loading khi chưa có dữ liệu
+  if (!order || !orderType) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // GIAO DIỆN ĐƠN GIẢN CHO DONATE - CHỈ CÓ LỜI CẢM ƠN

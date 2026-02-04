@@ -74,7 +74,7 @@ const NavBar = () => {
       {
         label: "Cửa hàng",
         submenu: [
-          { label: "Mua tranh in", link: "/mua-tranh-in" },
+          { label: "Đồ lưu niệm", link: "/mua-tranh-in" },
           { label: "Donate / Ủng hộ", link: "/donat-ung-ho" },
           { label: "Thành viên VIP", link: "/thanh-vien-vip" },
         ],

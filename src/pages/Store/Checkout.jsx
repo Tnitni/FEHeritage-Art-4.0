@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import PaymentMethods from "../../components/PaymentMethods";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Checkout() {
 	const { cart, getTotalPrice, clearCart } = useCart();
+	const navigate = useNavigate();
 
 	const [customer, setCustomer] = useState({
 		name: "",
@@ -13,6 +14,17 @@ export default function Checkout() {
 		address: "",
 		note: "",
 	});
+
+	// State để theo dõi việc đang xử lý thanh toán
+	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+	// Kiểm tra nếu giỏ hàng trống và KHÔNG đang xử lý thanh toán thì redirect
+	useEffect(() => {
+		if (cart.length === 0 && !isProcessingPayment) {
+			// Có thể redirect về trang shop hoặc giữ nguyên
+			// navigate("/mua-tranh-in");
+		}
+	}, [cart, isProcessingPayment, navigate]);
 
 	const subtotal = useMemo(() => getTotalPrice(), [getTotalPrice]);
 	const shipping = 0;
@@ -62,6 +74,9 @@ export default function Checkout() {
 
 	// ─── XỬ LÝ THANH TOÁN ───
 	const onPay = (method, details) => {
+		// Đánh dấu đang xử lý thanh toán
+		setIsProcessingPayment(true);
+
 		const order = {
 			id: `ORD-${Date.now()}`,
 			createdAt: new Date().toISOString(),
@@ -88,9 +103,27 @@ export default function Checkout() {
 
 		// Dọn giỏ hàng sau thanh toán
 		clearCart();
-		// PaymentMethods sẽ tự redirect /thank-you sau 3s
+		
+		// Redirect ngay lập tức đến trang thank you
+		setTimeout(() => {
+			navigate("/thank-you");
+		}, 1500); // Đợi 1.5s để hiển thị animation
+		
 		console.log("Order created:", order);
 	};
+
+	// Nếu đang xử lý thanh toán, hiển thị loading thay vì giỏ hàng trống
+	if (isProcessingPayment) {
+		return (
+			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+				<div className="text-center">
+					<div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+					<p className="text-gray-600 text-lg font-medium">Đang xử lý thanh toán...</p>
+					<p className="text-gray-500 text-sm mt-2">Vui lòng không tắt trang này</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="min-h-screen bg-gray-50">
