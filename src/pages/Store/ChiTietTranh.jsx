@@ -281,31 +281,6 @@ export default function ChiTietTranh() {
         </div>
       </div>
 
-      {/* Chi tiết sản phẩm */}
-      {art.details && (
-        <div className="max-w-7xl mx-auto mt-8 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-md p-6 border border-gray-100">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-            <span className="text-indigo-600">{isSouvenir ? "🎁" : "🖼️"}</span> Chi tiết sản phẩm
-          </h2>
-          <ul className="space-y-2 text-gray-700">
-            {[
-              { label: "Bảo hành", value: art.details.warrantyType },
-              { label: "Hạn bảo hành", value: art.details.warrantyPeriod },
-              { label: "Phong cách", value: art.details.style },
-              { label: "Chất liệu", value: art.details.material },
-              { label: "Xuất xứ", value: art.details.origin },
-              art.details.glassType && { label: "Loại kính", value: art.details.glassType },
-              { label: "Giao hàng từ", value: art.details.shipFrom }
-            ].filter(Boolean).map((item, i) => (
-              <li key={i} className="flex items-start border-gray-200 pb-2 last:border-none">
-                <span className="font-medium text-gray-900 w-32">{item.label}:</span>
-                <span>{item.value}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {/* Mô tả chi tiết */}
       <div className="max-w-7xl mx-auto mt-8 bg-white rounded-2xl shadow-md p-6 border border-gray-100">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 flex items-center gap-2"><span className="text-indigo-600">📖</span> Mô tả chi tiết</h2>

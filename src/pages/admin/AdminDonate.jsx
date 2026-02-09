@@ -268,381 +268,585 @@ const AdminDonate = () => {
         setExportEndDate("");
     };
 
-    const handleExportExcel = () => {
-        let dataToExport = exportType === "payment" ? payments : donations;
-        
-        // Filter by date range if custom range is selected
-        if (exportRange === "custom" && exportStartDate && exportEndDate) {
-            const start = new Date(exportStartDate);
-            const end = new Date(exportEndDate);
-            end.setHours(23, 59, 59, 999);
-            
-            dataToExport = dataToExport.filter(item => {
-                const itemDate = new Date(item.timestamp);
-                return itemDate >= start && itemDate <= end;
-            });
-        } else if (exportRange === "today") {
-            const today = new Date().toDateString();
-            dataToExport = dataToExport.filter(item => new Date(item.timestamp).toDateString() === today);
-        } else if (exportRange === "week") {
-            const weekAgo = new Date(Date.now() - 7 * 86400000);
-            dataToExport = dataToExport.filter(item => new Date(item.timestamp) >= weekAgo);
-        } else if (exportRange === "month") {
-            const monthAgo = new Date(Date.now() - 30 * 86400000);
-            dataToExport = dataToExport.filter(item => new Date(item.timestamp) >= monthAgo);
-        }
+   const handleExportExcel = () => {
+  let dataToExport = exportType === "payment" ? payments : donations;
+  
+  // Filter by date range
+  if (exportRange === "custom" && exportStartDate && exportEndDate) {
+    const start = new Date(exportStartDate);
+    const end = new Date(exportEndDate);
+    end.setHours(23, 59, 59, 999);
+    
+    dataToExport = dataToExport.filter(item => {
+      const itemDate = new Date(item.timestamp);
+      return itemDate >= start && itemDate <= end;
+    });
+  } else if (exportRange === "today") {
+    const today = new Date().toDateString();
+    dataToExport = dataToExport.filter(item => new Date(item.timestamp).toDateString() === today);
+  } else if (exportRange === "week") {
+    const weekAgo = new Date(Date.now() - 7 * 86400000);
+    dataToExport = dataToExport.filter(item => new Date(item.timestamp) >= weekAgo);
+  } else if (exportRange === "month") {
+    const monthAgo = new Date(Date.now() - 30 * 86400000);
+    dataToExport = dataToExport.filter(item => new Date(item.timestamp) >= monthAgo);
+  }
 
-        // Sắp xếp donations theo thứ tự: Bảo trợ > Lớn > Vừa > Nhỏ
-        if (exportType === "donation") {
-            const levelOrder = {
-                "Nhà bảo trợ nghệ thuật": 1,
-                "Ủng hộ lớn": 2,
-                "Ủng hộ vừa": 3,
-                "Ủng hộ nhỏ": 4
-            };
-            dataToExport = [...dataToExport].sort((a, b) => {
-                const levelA = getAmountLevel(a.amount);
-                const levelB = getAmountLevel(b.amount);
-                return levelOrder[levelA] - levelOrder[levelB];
-            });
-        }
+  // Sắp xếp donations theo thứ tự: Bảo trợ > Lớn > Vừa > Nhỏ
+  if (exportType === "donation") {
+    const levelOrder = {
+      "Nhà bảo trợ nghệ thuật": 1,
+      "Ủng hộ lớn": 2,
+      "Ủng hộ vừa": 3,
+      "Ủng hộ nhỏ": 4
+    };
+    dataToExport = [...dataToExport].sort((a, b) => {
+      const levelA = getAmountLevel(a.amount);
+      const levelB = getAmountLevel(b.amount);
+      const orderDiff = levelOrder[levelA] - levelOrder[levelB];
+      if (orderDiff === 0) {
+        return b.amount - a.amount;
+      }
+      return orderDiff;
+    });
+  }
 
-        if (dataToExport.length === 0) {
-            alert("Không có dữ liệu để xuất trong khoảng thời gian này!");
-            return;
-        }
+  // Sắp xếp payments theo ngày mới nhất
+  if (exportType === "payment") {
+    dataToExport = [...dataToExport].sort((a, b) => 
+      new Date(b.timestamp) - new Date(a.timestamp)
+    );
+  }
 
-        // Create Excel-compatible HTML with enhanced styling
-        let html = `
+  if (dataToExport.length === 0) {
+    alert("Không có dữ liệu để xuất trong khoảng thời gian này!");
+    return;
+  }
+
+  // Create Excel-compatible HTML with ENHANCED styling
+  let html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background: #f5f5f5;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f8f9fa;
+            padding: 30px;
         }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* ===== HEADER ===== */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px 10px 0 0;
+            padding: 40px;
             text-align: center;
+            position: relative;
         }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4, #667eea);
+        }
+        
         .header h1 {
-            margin: 0;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.5px;
         }
-        .header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
+        
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+            margin: 0 0 8px 0;
+        }
+        
+        .header .export-info {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
             font-size: 14px;
+            margin-top: 8px;
+            backdrop-filter: blur(10px);
         }
+        
+        /* ===== SUMMARY SECTION ===== */
         .summary {
-            background: white;
-            padding: 20px;
+            padding: 30px 40px;
+            background: linear-gradient(to bottom, #f8f9fa 0%, white 100%);
+            border-bottom: 3px solid #f1f3f5;
+        }
+        
+        .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            border-left: 3px solid #667eea;
-            border-right: 3px solid #667eea;
+            gap: 20px;
         }
-        .summary-item {
-            padding: 15px;
-            background: #f8f9ff;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+        
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+        }
+        
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+        
         .summary-label {
-            font-size: 12px;
-            color: #666;
+            font-size: 13px;
+            color: #6c757d;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            font-weight: 600;
+            margin-bottom: 8px;
         }
+        
         .summary-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: #333;
+            color: #212529;
+            margin-bottom: 4px;
         }
+        
+        .summary-sub {
+            font-size: 13px;
+            color: #868e96;
+        }
+        
+        /* ===== TABLE ===== */
+        .table-container {
+            padding: 0;
+            overflow-x: auto;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 0 0 10px 10px;
+            font-size: 14px;
         }
+        
         thead {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        th {
-            padding: 15px 12px;
+        
+        thead th {
+            padding: 16px 14px;
             text-align: left;
             font-weight: 600;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 14px;
+        
+        tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s ease;
         }
+        
         tbody tr:hover {
             background: #f8f9ff;
         }
+        
         tbody tr:nth-child(even) {
-            background: #fafafa;
+            background: #fafbfc;
         }
+        
+        tbody tr:nth-child(even):hover {
+            background: #f8f9ff;
+        }
+        
+        td {
+            padding: 14px;
+            color: #495057;
+        }
+        
+        /* Row number */
+        td:first-child {
+            font-weight: 700;
+            color: #667eea;
+            text-align: center;
+            width: 50px;
+        }
+        
+        /* ===== BADGES & LABELS ===== */
         .amount {
             font-weight: 700;
-            color: #2ecc71;
+            color: #10b981;
             text-align: right;
+            font-size: 15px;
         }
+        
+        .level-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
         .level-patron {
             background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             color: #854d0e;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 700;
-            display: inline-block;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
+        
         .level-large {
-            background: #dbeafe;
-            color: #1e40af;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
+        
         .level-medium {
-            background: #e0e7ff;
-            color: #4f46e5;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
         }
+        
         .level-small {
-            background: #f3f4f6;
-            color: #6b7280;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
         }
-        .status {
+        
+        .status-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 5px 12px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
         }
+        
         .status-success {
-            background: #d4edda;
-            color: #155724;
+            background: #d1fae5;
+            color: #065f46;
         }
-        .footer {
-            margin-top: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            text-align: center;
-            color: #666;
+        
+        .payment-method {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #ede9fe;
+            color: #5b21b6;
+            border-radius: 12px;
             font-size: 12px;
-            border: 2px solid #e0e0e0;
+            font-weight: 600;
         }
+        
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 40px;
+            padding: 30px 40px;
+            background: linear-gradient(to top, #f8f9fa 0%, white 100%);
+            border-top: 3px solid #f1f3f5;
+            text-align: center;
+        }
+        
+        .footer-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 10px;
+        }
+        
+        .footer-subtitle {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        
+        .footer-note {
+            background: ${exportType === "donation" ? "#fef3c7" : "#dbeafe"};
+            border-left: 4px solid ${exportType === "donation" ? "#f59e0b" : "#3b82f6"};
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .footer-note strong {
+            color: ${exportType === "donation" ? "#92400e" : "#1e40af"};
+            display: block;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        
+        .footer-note ul {
+            margin: 0;
+            padding-left: 20px;
+            color: ${exportType === "donation" ? "#78350f" : "#1e3a8a"};
+            line-height: 1.8;
+        }
+        
+        .footer-note li {
+            margin-bottom: 6px;
+        }
+        
+        .footer-copyright {
+            font-size: 12px;
+            color: #adb5bd;
+            margin-top: 15px;
+        }
+        
+        /* ===== PRINT STYLES ===== */
         @media print {
-            body { background: white; }
-            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+            .summary-card:hover { transform: none; box-shadow: none; }
+            tbody tr:hover { background: inherit; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📊 BÁO CÁO ${exportType === "payment" ? "MUA HÀNG" : "ỦNG HỘ"}</h1>
-        <p>Heritage Art 4.0 - Dự án Nghệ Thuật Di Sản</p>
-        <p>Xuất ngày: ${new Date().toLocaleDateString("vi-VN", { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })}</p>
-    </div>
-    <div class="summary">
-        <div class="summary-item">
-            <div class="summary-label">Tổng số giao dịch</div>
-            <div class="summary-value">${dataToExport.length}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-label">Tổng giá trị</div>
-            <div class="summary-value">${dataToExport.reduce((sum, item) => sum + (item.totalAmount || item.amount || 0), 0).toLocaleString("vi-VN")}₫</div>
-        </div>`;
-
-        // Thêm thống kê chi tiết cho donation
-        if (exportType === "donation") {
-            const patronCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Nhà bảo trợ nghệ thuật").length;
-            const largeCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ lớn").length;
-            const mediumCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ vừa").length;
-            const smallCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ nhỏ").length;
-
-            html += `
-        <div class="summary-item">
-            <div class="summary-label">Bảo trợ nghệ thuật</div>
-            <div class="summary-value" style="color: #d97706;">${patronCount}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-label">Ủng hộ lớn</div>
-            <div class="summary-value" style="color: #2563eb;">${largeCount}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-label">Ủng hộ vừa</div>
-            <div class="summary-value" style="color: #4f46e5;">${mediumCount}</div>
-        </div>
-        <div class="summary-item">
-            <div class="summary-label">Ủng hộ nhỏ</div>
-            <div class="summary-value" style="color: #6b7280;">${smallCount}</div>
-        </div>`;
-        }
-
-        html += `
-        <div class="summary-item">
-            <div class="summary-label">Khoảng thời gian</div>
-            <div class="summary-value" style="font-size: 16px;">
-                ${exportRange === "custom" && exportStartDate && exportEndDate 
-                    ? `${new Date(exportStartDate).toLocaleDateString("vi-VN")} - ${new Date(exportEndDate).toLocaleDateString("vi-VN")}`
-                    : exportRange === "all" ? "Toàn bộ"
-                    : exportRange === "today" ? "Hôm nay"
-                    : exportRange === "week" ? "7 ngày qua"
-                    : "30 ngày qua"
-                }
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>📊 BÁO CÁO ${exportType === "payment" ? "LỊCH SỬ MUA HÀNG" : "LỊCH SỬ ỦNG HỘ"}</h1>
+            <p class="subtitle">Heritage Art 4.0 - Dự Án Bảo Tồn Nghệ Thuật Di Sản Việt Nam</p>
+            <div class="export-info">
+                📅 Xuất lúc: ${new Date().toLocaleDateString("vi-VN", { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
             </div>
         </div>
-    </div>
-    <table>`;
+        
+        <!-- SUMMARY -->
+        <div class="summary">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-label">📦 Tổng giao dịch</div>
+                    <div class="summary-value">${dataToExport.length}</div>
+                    <div class="summary-sub">${exportType === "payment" ? "Đơn hàng" : "Khoản ủng hộ"}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">💰 Tổng giá trị</div>
+                    <div class="summary-value">${dataToExport.reduce((sum, item) => sum + (item.totalAmount || item.amount || 0), 0).toLocaleString("vi-VN")}₫</div>
+                    <div class="summary-sub">Tổng thu</div>
+                </div>`;
 
-        if (exportType === "payment") {
-            html += `
-        <thead>
-            <tr>
-                <th>STT</th>
-                <th>Mã GD</th>
-                <th>Khách hàng</th>
-                <th>Sản phẩm</th>
-                <th>Số lượng</th>
-                <th>Tổng tiền</th>
-                <th>Phương thức</th>
-                <th>Ngân hàng</th>
-                <th>Ngày GD</th>
-                <th>Trạng thái</th>
-            </tr>
-        </thead>
-        <tbody>`;
-            dataToExport.forEach((p, i) => {
-                const products = p.items?.map(item => `${item.title} (${item.selectedType})`).join(", ") || "N/A";
-                const totalItems = p.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-                html += `
-            <tr>
-                <td>${i + 1}</td>
-                <td style="font-family: monospace; font-size: 11px;">${p.id}</td>
-                <td><strong>${p.customerName || "Không rõ"}</strong></td>
-                <td>${products}</td>
-                <td style="text-align: center;">${totalItems}</td>
-                <td class="amount">${(p.totalAmount || 0).toLocaleString("vi-VN")}₫</td>
-                <td>${p.paymentMethod || "N/A"}</td>
-                <td>${p.bankName || "—"}</td>
-                <td>${p.date} ${p.time}</td>
-                <td><span class="status status-success">${p.status || "Thành công"}</span></td>
-            </tr>`;
-            });
-        } else {
-            html += `
-        <thead>
-            <tr>
-                <th>STT</th>
-                <th>Mã GD</th>
-                <th>Người ủng hộ</th>
-                <th>Số tiền</th>
-                <th>Phương thức</th>
-                <th>Ngân hàng</th>
-                <th>Ngày GD</th>
-                <th>Mức độ</th>
-            </tr>
-        </thead>
-        <tbody>`;
-            dataToExport.forEach((d, i) => {
-                const level = getAmountLevel(d.amount);
-                const levelClass = level === "Nhà bảo trợ nghệ thuật" ? "level-patron" 
-                    : level === "Ủng hộ lớn" ? "level-large"
-                    : level === "Ủng hộ vừa" ? "level-medium"
-                    : "level-small";
-                
-                html += `
-            <tr>
-                <td>${i + 1}</td>
-                <td style="font-family: monospace; font-size: 11px;">${d.id}</td>
-                <td><strong>${d.isAnonymous ? "🎭 Ẩn danh" : d.donorName}</strong></td>
-                <td class="amount">${d.amount.toLocaleString("vi-VN")}₫</td>
-                <td>${d.method}</td>
-                <td>${d.bankName || "—"}</td>
-                <td>${d.date} ${d.time}</td>
-                <td><span class="${levelClass}">${level}</span></td>
-            </tr>`;
-            });
-        }
+  // Thêm thống kê chi tiết cho donation
+  if (exportType === "donation") {
+    const patronCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Nhà bảo trợ nghệ thuật").length;
+    const largeCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ lớn").length;
+    const mediumCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ vừa").length;
+    const smallCount = dataToExport.filter(d => getAmountLevel(d.amount) === "Ủng hộ nhỏ").length;
 
-        html += `
-        </tbody>
-    </table>
-    <div class="footer">
-        <p><strong>Heritage Art 4.0</strong> - Dự án Bảo Tồn và Phát Triển Nghệ Thuật Truyền Thống Việt Nam</p>
-        <p>Báo cáo được tạo tự động từ hệ thống quản lý • Mọi thông tin trong báo cáo này là bảo mật</p>`;
+    html += `
+                <div class="summary-card">
+                    <div class="summary-label">🌟 Nhà bảo trợ</div>
+                    <div class="summary-value" style="color: #d97706;">${patronCount}</div>
+                    <div class="summary-sub">≥ 1,000,000₫</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">💎 Ủng hộ lớn</div>
+                    <div class="summary-value" style="color: #2563eb;">${largeCount}</div>
+                    <div class="summary-sub">500k - 999k</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">💚 Ủng hộ vừa</div>
+                    <div class="summary-value" style="color: #7c3aed;">${mediumCount}</div>
+                    <div class="summary-sub">100k - 499k</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">💙 Ủng hộ nhỏ</div>
+                    <div class="summary-value" style="color: #64748b;">${smallCount}</div>
+                    <div class="summary-sub">0 - 99k</div>
+                </div>`;
+  }
 
-        if (exportType === "donation") {
-            html += `
-        <div style="margin-top: 15px; padding: 12px; background: #fef3c7; border-left: 4px solid #f59e0b; text-align: left; border-radius: 5px;">
-            <strong style="color: #92400e;">📋 Phân loại mức ủng hộ:</strong>
-            <ul style="margin: 8px 0; padding-left: 20px; color: #78350f;">
-                <li>Ủng hộ nhỏ: 0₫ - 99,000₫</li>
-                <li>Ủng hộ vừa: 100,000₫ - 499,000₫</li>
-                <li>Ủng hộ lớn: 500,000₫ - 999,000₫</li>
-                <li>Nhà bảo trợ nghệ thuật: từ 1,000,000₫ trở lên</li>
-            </ul>
-        </div>`;
-        }
+  html += `
+                <div class="summary-card">
+                    <div class="summary-label">📊 Khoảng thời gian</div>
+                    <div class="summary-value" style="font-size: 16px;">
+                        ${exportRange === "custom" && exportStartDate && exportEndDate 
+                            ? `${new Date(exportStartDate).toLocaleDateString("vi-VN")} - ${new Date(exportEndDate).toLocaleDateString("vi-VN")}`
+                            : exportRange === "all" ? "Toàn bộ"
+                            : exportRange === "today" ? "Hôm nay"
+                            : exportRange === "week" ? "7 ngày qua"
+                            : "30 ngày qua"
+                        }
+                    </div>
+                    <div class="summary-sub">Thời gian xuất</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TABLE -->
+        <div class="table-container">
+            <table>`;
 
-        html += `
-        <p style="margin-top: 10px; color: #999; font-size: 11px;">
-            © ${new Date().getFullYear()} Heritage Art 4.0. All rights reserved.
-        </p>
+  if (exportType === "payment") {
+    html += `
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Sản phẩm</th>
+                        <th>SL</th>
+                        <th>Tổng tiền</th>
+                        <th>Phương thức</th>
+                        <th>Ngân hàng</th>
+                        <th>Ngày GD</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    dataToExport.forEach((p, i) => {
+      const products = p.items?.map(item => `${item.title} (${item.selectedType})`).join(", ") || "N/A";
+      const totalItems = p.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+      html += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td style="font-family: 'Courier New', monospace; font-size: 11px; color: #667eea;">${p.id}</td>
+                        <td><strong>${p.customerName || "Không rõ"}</strong></td>
+                        <td style="max-width: 300px;">${products}</td>
+                        <td style="text-align: center; font-weight: 600;">${totalItems}</td>
+                        <td class="amount">${(p.totalAmount || 0).toLocaleString("vi-VN")}₫</td>
+                        <td><span class="payment-method">${p.paymentMethod || "N/A"}</span></td>
+                        <td>${p.bankName || "—"}</td>
+                        <td style="white-space: nowrap;">${p.date} ${p.time}</td>
+                        <td><span class="status-badge status-success">${p.status || "Thành công"}</span></td>
+                    </tr>`;
+    });
+  } else {
+    html += `
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã giao dịch</th>
+                        <th>Người ủng hộ</th>
+                        <th>Số tiền</th>
+                        <th>Phương thức</th>
+                        <th>Ngân hàng</th>
+                        <th>Ngày GD</th>
+                        <th>Mức độ</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    dataToExport.forEach((d, i) => {
+      const level = getAmountLevel(d.amount);
+      const levelClass = level === "Nhà bảo trợ nghệ thuật" ? "level-patron" 
+          : level === "Ủng hộ lớn" ? "level-large"
+          : level === "Ủng hộ vừa" ? "level-medium"
+          : "level-small";
+      
+      html += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td style="font-family: 'Courier New', monospace; font-size: 11px; color: #667eea;">${d.id}</td>
+                        <td><strong>${d.isAnonymous ? "🎭 Ẩn danh" : d.donorName}</strong></td>
+                        <td class="amount">${d.amount.toLocaleString("vi-VN")}₫</td>
+                        <td><span class="payment-method">${d.method}</span></td>
+                        <td>${d.bankName || "—"}</td>
+                        <td style="white-space: nowrap;">${d.date} ${d.time}</td>
+                        <td><span class="level-badge ${levelClass}">${level}</span></td>
+                    </tr>`;
+    });
+  }
+
+  html += `
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="footer-title">Heritage Art 4.0</div>
+            <div class="footer-subtitle">Dự Án Bảo Tồn và Phát Triển Nghệ Thuật Truyền Thống Việt Nam</div>`;
+
+  if (exportType === "donation") {
+    html += `
+            <div class="footer-note">
+                <strong>📋 Phân loại mức ủng hộ:</strong>
+                <ul>
+                    <li>💙 Ủng hộ nhỏ: 0₫ - 99,000₫</li>
+                    <li>💚 Ủng hộ vừa: 100,000₫ - 499,000₫</li>
+                    <li>💎 Ủng hộ lớn: 500,000₫ - 999,000₫</li>
+                    <li>🌟 Nhà bảo trợ nghệ thuật: từ 1,000,000₫ trở lên</li>
+                </ul>
+            </div>`;
+  } else {
+    html += `
+            <div class="footer-note">
+                <strong>📋 Thông tin chi tiết:</strong>
+                <ul>
+                    <li>Báo cáo này bao gồm toàn bộ lịch sử mua hàng trong khoảng thời gian đã chọn</li>
+                    <li>Tất cả các giao dịch đã được sắp xếp theo thứ tự từ mới nhất đến cũ nhất</li>
+                    <li>Dữ liệu được xuất từ hệ thống Heritage Art 4.0 - Mọi thông tin là bảo mật</li>
+                </ul>
+            </div>`;
+  }
+
+  html += `
+            <div class="footer-copyright">
+                © ${new Date().getFullYear()} Heritage Art 4.0. All rights reserved. | 
+                Báo cáo được tạo tự động • Mọi thông tin trong báo cáo này là bảo mật
+            </div>
+        </div>
     </div>
 </body>
 </html>`;
 
-        // Create and download file
-        const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
-        const link = document.createElement("a");
-        const fileName = exportType === "payment" 
-            ? `BaoCao_MuaHang_${new Date().toISOString().split('T')[0]}.xls`
-            : `BaoCao_UngHo_${new Date().toISOString().split('T')[0]}.xls`;
-        
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        link.click();
+  // Create and download file
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  const link = document.createElement("a");
+  const fileName = exportType === "payment" 
+      ? `BaoCao_MuaHang_${new Date().toISOString().split('T')[0]}.xls`
+      : `BaoCao_UngHo_${new Date().toISOString().split('T')[0]}.xls`;
+  
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
 
-        setShowExportModal(false);
-        showSuccess(`✅ Đã xuất ${dataToExport.length} giao dịch thành công!`);
-    };
+  setShowExportModal(false);
+  showSuccess(`✅ Đã xuất ${dataToExport.length} giao dịch thành công!`);
+};
 
     // ─── SHARED STYLES ───
     const overlayStyle = {
