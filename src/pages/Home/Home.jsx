@@ -283,9 +283,9 @@ const Home = () => {
         />
         <div className="overlay" />
         <div className="content">
-          <h1>Khám phá &amp; Bảo tồn văn hóa Việt bằng công nghệ AI</h1>
+          <h1>Triễn lãm số</h1>
           <p className="subheading subheading-blur">
-            Kết nối quá khứ, sáng tạo tương lai
+            Triễn lãm tranh di tích lịch sử văn hóa, tạo tranh AI và giáo dục cộng đồng.
           </p>
           <div className="cta-buttons">
             <Link className="btn-pill btn-gold" to="/gioithieu">
