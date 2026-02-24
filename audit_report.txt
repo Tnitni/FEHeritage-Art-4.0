@@ -1,0 +1,61 @@
+﻿# npm audit report
+
+minimatch  <10.2.1
+Severity: high
+minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern - https://github.com/advisories/GHSA-3ppc-4f35-3m26
+fix available via `npm audit fix --force`
+Will install eslint@10.0.2, which is a breaking change
+node_modules/minimatch
+node_modules/readdir-glob/node_modules/minimatch
+  @eslint/config-array  <=0.22.0
+  Depends on vulnerable versions of minimatch
+  node_modules/@eslint/config-array
+    eslint  0.7.1 - 2.0.0-rc.1 || 4.1.0 - 10.0.0-rc.2
+    Depends on vulnerable versions of @eslint/config-array
+    Depends on vulnerable versions of @eslint/eslintrc
+    Depends on vulnerable versions of minimatch
+    node_modules/eslint
+      @eslint-community/eslint-utils  4.1.0 - 4.1.2 || >=5.0.0-alpha.1
+      Depends on vulnerable versions of eslint
+      node_modules/@eslint-community/eslint-utils
+      eslint-plugin-react-hooks  
+      Depends on vulnerable versions of eslint
+      node_modules/eslint-plugin-react-hooks
+      eslint-plugin-react-refresh  
+      Depends on vulnerable versions of eslint
+      node_modules/eslint-plugin-react-refresh
+  @eslint/eslintrc  0.0.1 || >=0.1.1
+  Depends on vulnerable versions of minimatch
+  node_modules/@eslint/eslintrc
+  glob  3.0.0 - 10.5.0
+  Depends on vulnerable versions of minimatch
+  node_modules/glob
+    archiver-utils  >=0.2.0
+    Depends on vulnerable versions of glob
+    node_modules/archiver-utils
+    node_modules/zip-stream/node_modules/archiver-utils
+      archiver  >=0.20.0
+      Depends on vulnerable versions of archiver-utils
+      Depends on vulnerable versions of readdir-glob
+      Depends on vulnerable versions of zip-stream
+      node_modules/archiver
+        exceljs  >=4.2.0
+        Depends on vulnerable versions of archiver
+        node_modules/exceljs
+      zip-stream  0.8.0 - 6.0.1
+      Depends on vulnerable versions of archiver-utils
+      node_modules/zip-stream
+    rimraf  2.3.0 - 3.0.2 || 4.2.0 - 5.0.10
+    Depends on vulnerable versions of glob
+    node_modules/rimraf
+  readdir-glob  <=2.0.1 || 2.0.3
+  Depends on vulnerable versions of minimatch
+  node_modules/readdir-glob
+
+14 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
