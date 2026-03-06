@@ -1,31 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import CKEditorField from "../../components/common/CKEditorField";
-
-// Dữ liệu mẫu cho tin tức
-const initialNews = [
-  {
-    id: "N-001",
-    title: "Khám phá nghệ thuật Đông Sơn",
-    summary: "Tìm hiểu về nền văn hóa Đông Sơn qua các hiện vật khảo cổ.",
-    content:
-      "<p>Nền văn hóa Đông Sơn là một trong những nền văn hóa cổ đại quan trọng của Việt Nam.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=480&q=80",
-  },
-  {
-    id: "N-002",
-    title: "Bảo tồn di sản văn hóa phi vật thể",
-    summary: "Các biện pháp bảo tồn và phát huy giá trị di sản văn hóa.",
-    content:
-      "<p>Việc bảo tồn di sản văn hóa phi vật thể đóng vai trò quan trọng trong việc duy trì bản sắc dân tộc.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=480&q=80",
-  },
-];
+import { getNews, createNews, updateNews, deleteNews } from "../../services/api";
 
 const ITEMS_PER_PAGE = 5;
 
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent?.trim() || "";
+};
+
+const mapNewsToItem = (raw) => ({
+  id: raw.id,
+  title: raw.tag || stripHtml(raw.content).slice(0, 50) || "Tin tức",
+  summary: stripHtml(raw.content).slice(0, 150) || "",
+  content: raw.content || "",
+  thumbnail: raw.thumbnail_url || "",
+  status: raw.status,
+  created_date: raw.created_date,
+});
+
 const AdminTinTuc = () => {
-  // State tin tức, form nhập, các modal và phân trang
-  const [items, setItems] = useState(initialNews);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     id: "",
     title: "",
@@ -39,6 +38,30 @@ const AdminTinTuc = () => {
   const [viewItem, setViewItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadNews = async () => {
+    setLoading(true);
+    try {
+      // Backend giới hạn limit trong khoảng 1-100, nên dùng 100
+      const res = await getNews({ page: 1, limit: 100 });
+      if (res?.success && Array.isArray(res.data)) {
+        setItems(res.data.map(mapNewsToItem));
+      } else {
+        setItems([]);
+      }
+    } catch (err) {
+      console.error("Lỗi tải tin tức:", err);
+      toast.error(err?.message || "Không tải được danh sách tin tức.");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNews();
+  }, []);
 
   // Đặt lại form nhập tin
   const resetForm = () => {
@@ -84,60 +107,78 @@ const AdminTinTuc = () => {
     </svg>
   );
 
-  // Xử lý thêm hoặc chỉnh sửa tin
-  const handleSubmit = (e) => {
+  // Xử lý thêm hoặc chỉnh sửa tin (gọi API)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!form.title.trim()) {
-      alert("Vui lòng nhập: Tiêu đề tin tức!");
+    if (!form.content?.trim()) {
+      toast.error("Vui lòng nhập nội dung bài viết (tối thiểu 10 ký tự).");
       return;
     }
-    if (!form.summary.trim()) {
-      alert("Vui lòng nhập: Mô tả ngắn!");
+    if (stripHtml(form.content).length < 10) {
+      toast.error("Nội dung phải ít nhất 10 ký tự.");
       return;
     }
-    if (!form.content.trim()) {
-      alert("Vui lòng nhập: Nội dung bài viết!");
-      return;
-    }
-    if (!form.thumbnail) {
-      alert("Vui lòng upload ảnh đại diện!");
-      return;
-    }
-    if (editingIndex !== null) {
-      // Chỉnh sửa tin
-      const updated = [...items];
-      updated[editingIndex] = { ...form, id: items[editingIndex].id };
-      setItems(updated);
-      resetForm();
-    } else {
-      // Thêm mới tin
-      const lastIdNum = items.length
-        ? Math.max(
-            ...items
-              .map((it) => parseInt(it.id.replace("N-", ""), 10))
-              .filter((x) => !Number.isNaN(x))
-          )
-        : 0;
-      const nextId = `N-${String(lastIdNum + 1).padStart(3, "0")}`;
-      setItems([...items, { ...form, id: nextId }]);
-      resetForm();
+    setSubmitting(true);
+    try {
+      const payload = {
+        content: form.content.trim(),
+        tag: (form.title || form.summary || "Tin tức").trim().slice(0, 200),
+      };
+      if (editingIndex !== null && items[editingIndex]?.id) {
+        const id = items[editingIndex].id;
+        const updatePayload = { ...payload };
+        if (form.thumbnail && form.thumbnail.startsWith("http")) {
+          updatePayload.thumbnail_url = form.thumbnail;
+        }
+        const res = await updateNews(id, updatePayload);
+        if (res?.success !== false) {
+          const updated = [...items];
+          updated[editingIndex] = mapNewsToItem(res?.data || { ...items[editingIndex], ...payload, thumbnail_url: form.thumbnail });
+          setItems(updated);
+          toast.success("Đã cập nhật tin tức.");
+          resetForm();
+        } else {
+          toast.error(res?.message || "Cập nhật thất bại.");
+        }
+      } else {
+        const res = await createNews(payload);
+        if (res?.success !== false && res?.data) {
+          setItems((prev) => [...prev, mapNewsToItem(res.data)]);
+          toast.success("Đã thêm tin tức mới.");
+          resetForm();
+        } else {
+          toast.error(res?.message || "Tạo mới thất bại.");
+        }
+      }
+    } catch (err) {
+      const msg = err?.message || err?.errors?.map((e) => e.message).join(", ") || "Có lỗi xảy ra.";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Xóa tin
-  const handleDelete = (index) => {
-    if (window.confirm("Bạn có chắc muốn xóa bài viết này không?")) {
-      const filtered = items.filter((_, i) => i !== index);
-      setItems(filtered);
-      // Điều chỉnh phân trang khi xóa
-      const filteredTotalPages =
-        Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
-      if (filtered.length && currentPage > filteredTotalPages) {
-        setCurrentPage(filteredTotalPages);
+  // Xóa tin (gọi API)
+  const handleDelete = async (index) => {
+    if (!window.confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+    const item = items[index];
+    const id = item?.id;
+    if (!id) return;
+    try {
+      const res = await deleteNews(id);
+      if (res?.success !== false) {
+        const filtered = items.filter((_, i) => i !== index);
+        setItems(filtered);
+        const filteredTotalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+        if (filtered.length && currentPage > filteredTotalPages) setCurrentPage(filteredTotalPages);
+        if (editingIndex === index) resetForm();
+        if (viewItem?.id === id) setViewItem(null);
+        toast.success("Đã xóa tin tức.");
+      } else {
+        toast.error(res?.message || "Xóa thất bại.");
       }
-      if (editingIndex === index) resetForm();
-      if (viewItem && items[index] && items[index].id === viewItem.id) setViewItem(null);
+    } catch (err) {
+      toast.error(err?.message || "Không xóa được tin tức.");
     }
   };
 
@@ -211,6 +252,7 @@ const AdminTinTuc = () => {
   // Render UI trang quản trị tin tức
   return (
     <div>
+      <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center mb-8 gap-2">
           <span className="inline-block bg-gradient-to-tr from-blue-600 to-green-400 text-white px-3 py-[2px] rounded-lg text-lg font-bold shadow">
@@ -266,6 +308,13 @@ const AdminTinTuc = () => {
 
         {/* Danh sách tin tức dạng bảng */}
         <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden w-full overflow-x-auto pt-1 pb-4">
+          {loading ? (
+            <div className="py-16 text-center text-gray-500">
+              <div className="inline-block w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3" />
+              <p>Đang tải tin tức...</p>
+            </div>
+          ) : (
+          <>
           {/* Header bảng */}
           <div className="min-w-[800px] grid grid-cols-12 items-center bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200 px-6 py-4 text-xs font-bold text-blue-600 tracking-wider uppercase">
             <div className="col-span-1 text-center">STT</div>
@@ -431,6 +480,8 @@ const AdminTinTuc = () => {
               </div>
             </div>
           )}
+          </>
+          )}
         </div>
 
         {/* Modal form thêm/sửa tin */}
@@ -557,10 +608,11 @@ const AdminTinTuc = () => {
                 </div>
                 <div className="flex gap-3 mt-2 justify-end">
                   <button
-                    className="flex items-center gap-2 bg-gradient-to-tr from-sky-600 to-emerald-400 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-xl transition"
+                    className="flex items-center gap-2 bg-gradient-to-tr from-sky-600 to-emerald-400 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-xl transition disabled:opacity-50"
                     type="submit"
+                    disabled={submitting}
                   >
-                    {editingIndex !== null ? "Lưu thay đổi" : "Tạo mới"}
+                    {submitting ? "Đang xử lý..." : editingIndex !== null ? "Lưu thay đổi" : "Tạo mới"}
                   </button>
                   <button
                     className="px-6 py-3 rounded-2xl font-semibold border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50 transition"
