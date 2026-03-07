@@ -8,24 +8,24 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    BASE: '/auth',
-    REGISTER: '/auth/register',
-    LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
-    PROFILE: '/auth/profile',
-    CHANGE_PASSWORD: '/auth/change-password',
+    BASE: "/auth",
+    REGISTER: "/api/auth/register",
+    LOGIN: "/api/auth/login",
+    LOGOUT: "/api/auth/logout",
+    PROFILE: "/api/auth/profile",
+    CHANGE_PASSWORD: "/auth/change-password",
   },
   // Users
   USERS: {
-    BASE: '/users',
+    BASE: "/users",
     BY_ID: (id) => `/users/${id}`,
     ASSIGN_ROLES: (id) => `/users/${id}/roles`,
   },
   // Roles
   ROLES: {
-    BASE: '/roles',
+    BASE: "/roles",
     BY_ID: (id) => `/roles/${id}`,
   },
   // Health
-  HEALTH: '/health',
+  HEALTH: "/health",
 };

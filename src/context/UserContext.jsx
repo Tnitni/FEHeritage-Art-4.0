@@ -1,5 +1,11 @@
 // src/context/UserContext.jsx
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import { authService, socketService } from "../services";
 
 export const UserContext = createContext();
@@ -7,213 +13,153 @@ export const UserContext = createContext();
 export function UserProvider({ children }) {
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("userProfile");
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return authService.isAuthenticated();
-  });
-
-  const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!authService.isAuthenticated());
   const [error, setError] = useState(null);
 
-  // 🧩 Khi user thay đổi → lưu lại vào localStorage
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("userProfile", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("userProfile");
-    }
-  }, [user]);
+  const clearAuthData = useCallback(() => {
+    setUser(null);
+    setIsLoggedIn(false);
+    localStorage.removeItem("userProfile");
+    socketService.disconnect();
+  }, []);
 
-  // 🔄 Load user profile khi app khởi động (nếu có token)
+  // 🔄 HIỆU CHỈNH DỮ LIỆU
   useEffect(() => {
-    const loadUserProfile = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          setLoading(true);
-          const response = await authService.getProfile();
-          console.log('📥 [UserContext] Profile loaded:', response.data?.user);
-          
-          if (response.success && response.data.user) {
-            setUser(response.data.user);
-            setIsLoggedIn(true);
+    const syncAuth = async () => {
+      const hasToken = authService.isAuthenticated();
 
-            // Connect socket with user ID
-            console.log('🔌 [UserContext] Connecting socket for user:', response.data.user.id);
-            socketService.connect(response.data.user.id);
-          }
-        } catch (error) {
-          console.error("Failed to load user profile:", error);
-          // Token có thể đã hết hạn, clear storage
+      if (!hasToken) {
+        if (isLoggedIn) clearAuthData();
+        return;
+      }
+
+      // Kết nối socket ngay nếu đã có user id từ local
+      if (user?.id) {
+        socketService.connect(user.id);
+      }
+
+      try {
+        // Cập nhật thông tin mới nhất từ server
+        const response = await authService.getProfile();
+        if (response.success && response.data?.user) {
+          const freshUser = response.data.user;
+          setUser(freshUser);
+          setIsLoggedIn(true);
+          localStorage.setItem("userProfile", JSON.stringify(freshUser));
+          socketService.connect(freshUser.id);
+        }
+      } catch (err) {
+        if (err.response?.status === 401) {
           authService.logout();
-          setIsLoggedIn(false);
-        } finally {
-          setLoading(false);
+          clearAuthData();
         }
       }
     };
 
-    // Nếu có token, luôn load profile và connect socket
-    if (authService.isAuthenticated()) {
-      // Nếu đã có user trong localStorage (reload page), connect socket ngay
-      if (user) {
-        console.log('🔌 [UserContext] User exists from localStorage, connecting socket:', user.id);
-        socketService.connect(user.id);
-      } else {
-        // Nếu chưa có user, load profile từ server
-        loadUserProfile();
-      }
-    }
+    syncAuth();
   }, []);
 
-  // Disconnect socket only when explicitly logging out
-  useEffect(() => {
-    if (!isLoggedIn && user === null) {
-      socketService.disconnect();
-    }
-  }, [isLoggedIn, user]);
-
-  // 🟢 Đăng nhập
+  // 🟢 ĐĂNG NHẬP
   const login = async (email, password) => {
     try {
-      setLoading(true);
       setError(null);
-
       const response = await authService.login({ email, password });
-
-      if (response.success && response.data.user) {
-        setUser(response.data.user);
+      if (response.success && response.data?.user) {
+        const loggedInUser = response.data.user;
+        setUser(loggedInUser);
         setIsLoggedIn(true);
-        localStorage.setItem("userProfile", JSON.stringify(response.data.user));
-
-        // Connect socket
-        socketService.connect(response.data.user.id);
-
+        localStorage.setItem("userProfile", JSON.stringify(loggedInUser));
+        socketService.connect(loggedInUser.id);
         return { success: true, data: response.data };
-      } else {
-        throw new Error(response.message || "Đăng nhập thất bại");
       }
-    } catch (error) {
-      const errorMessage = error.message || "Đăng nhập thất bại";
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
+      throw new Error(response.message || "Đăng nhập thất bại");
+    } catch (err) {
+      setError(err.message);
+      throw err;
     }
   };
 
-  // 📝 Đăng ký
+  // 📝 ĐĂNG KÝ
   const register = async (userData) => {
     try {
-      setLoading(true);
       setError(null);
-
       const response = await authService.register(userData);
-
-      if (response.success && response.data.user) {
-        setUser(response.data.user);
+      if (response.success && response.data?.user) {
+        const newUser = response.data.user;
+        setUser(newUser);
         setIsLoggedIn(true);
-        localStorage.setItem("userProfile", JSON.stringify(response.data.user));
-
-        // Connect socket
-        socketService.connect(response.data.user.id);
-
+        localStorage.setItem("userProfile", JSON.stringify(newUser));
+        socketService.connect(newUser.id);
         return { success: true, data: response.data };
-      } else {
-        throw new Error(response.message || "Đăng ký thất bại");
       }
-    } catch (error) {
-      const errorMessage = error.message || "Đăng ký thất bại";
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
+      throw new Error(response.message || "Đăng ký thất bại");
+    } catch (err) {
+      setError(err.message);
+      throw err;
     }
   };
 
-  // 🔴 Đăng xuất
+  // 🔴 ĐĂNG XUẤT
   const logout = async () => {
     try {
-      setLoading(true);
       await authService.logout();
-
-      // Disconnect socket
-      socketService.disconnect();
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch (err) {
+      console.error("Logout error:", err);
     } finally {
-      setUser(null);
-      setIsLoggedIn(false);
-      localStorage.removeItem("userProfile");
-      setLoading(false);
+      clearAuthData();
     }
   };
 
-  // ✏️ Cập nhật hồ sơ (sync with server)
+  // ✏️ CẬP NHẬT HỒ SƠ
   const updateProfile = async (newData) => {
     try {
-      setLoading(true);
       setError(null);
-
-      // Nếu có userId, call API update
-      if (user?.id) {
-        const response = await authService.getProfile();
-        if (response.success && response.data.user) {
-          const updatedUser = { ...response.data.user, ...newData };
-          setUser(updatedUser);
-          localStorage.setItem("userProfile", JSON.stringify(updatedUser));
-          return { success: true, data: updatedUser };
-        }
-      } else {
-        // Fallback: chỉ update local
-        const updatedUser = { ...user, ...newData };
-        setUser(updatedUser);
-        localStorage.setItem("userProfile", JSON.stringify(updatedUser));
-        return { success: true, data: updatedUser };
-      }
-    } catch (error) {
-      const errorMessage = error.message || "Cập nhật thông tin thất bại";
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
+      const updatedUser = { ...user, ...newData };
+      setUser(updatedUser);
+      localStorage.setItem("userProfile", JSON.stringify(updatedUser));
+      return { success: true, data: updatedUser };
+    } catch (err) {
+      setError(err.message || "Cập nhật thất bại");
+      throw err;
     }
   };
 
-  // 🔄 Refresh user profile từ server
+  // 🔄 REFRESH PROFILE
   const refreshProfile = async () => {
     try {
-      setLoading(true);
       const response = await authService.getProfile();
-      if (response.success && response.data.user) {
+      if (response.success && response.data?.user) {
         setUser(response.data.user);
         localStorage.setItem("userProfile", JSON.stringify(response.data.user));
         return { success: true, data: response.data.user };
       }
-    } catch (error) {
-      console.error("Failed to refresh profile:", error);
-      throw error;
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Refresh profile failed:", err);
+      throw err;
     }
   };
 
-  const value = {
-    user,
-    setUser,
-    isLoggedIn,
-    loading,
-    error,
-    login,
-    register,
-    logout,
-    updateProfile,
-    refreshProfile,
-  };
-
   return (
-    <UserContext.Provider value={value}>
+    <UserContext.Provider
+      value={{
+        user,
+        setUser,
+        isLoggedIn,
+        error,
+        login,
+        register,
+        logout,
+        updateProfile,
+        refreshProfile,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
