@@ -169,6 +169,11 @@ const forumService = {
       const response = await api.put(
         API_ENDPOINTS.FORUM.UPDATEBYID(postId),
         formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
       );
       return response;
     } catch (error) {
@@ -180,9 +185,9 @@ const forumService = {
     }
   },
 
-  getMyPosts: async () => {
+  getMyPosts: async (userId) => {
     try {
-      const response = await api.get(API_ENDPOINTS.FORUM.FILTERISMINE);
+      const response = await api.get(API_ENDPOINTS.FORUM.FILTERISMINE(userId));
       return response;
     } catch (error) {
       console.error("Fetch my posts error:", error);

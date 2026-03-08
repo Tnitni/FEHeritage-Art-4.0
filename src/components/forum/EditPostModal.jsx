@@ -176,7 +176,7 @@ export default function EditPostModal({ post, onClose, onSubmit }) {
         // };
 
         // Gọi callback onSubmit của Forum truyền xuống
-        onSubmit(response.data || response);
+        onSubmit(response);
 
         toast.success("Cập nhật bài viết thành công!");
         onClose();

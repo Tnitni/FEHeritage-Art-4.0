@@ -763,7 +763,7 @@ export default function Forum() {
           total: (prev.total || 0) + 1,
         }));
         setHasFetchedTotalTags(false);
-        toast.success("Đăng bài viết mới thành công! 🎉");
+        toast.success("Đăng bài viết mới thành công!");
         setIsCreateModalOpen(false);
       }
     } catch (error) {
@@ -773,33 +773,71 @@ export default function Forum() {
     }
   };
 
-  const handleEditPost = async (updatedPost) => {
+  const handleEditPost = async (response) => {
     const currentScrollY = window.scrollY;
+    if (!response || !response.success || !response.data) {
+      toast.error("Dữ liệu phản hồi không hợp lệ");
+      return;
+    }
+    const updatedPostData = response.data;
     try {
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => {
+          const isTarget =
+            String(p.id) === String(updatedPostData.id) ||
+            String(p.post_id) === String(updatedPostData.id);
+
+          if (isTarget) {
+            return {
+              ...p,
+              ...updatedPostData,
+
+              post_id: updatedPostData.id,
+
+              tags: updatedPostData.tags
+                ? updatedPostData.tags.map((t) =>
+                    typeof t === "string" ? t : t.name,
+                  )
+                : [],
+
+              displayImages: (updatedPostData.images || []).map(
+                (img) => img.image_url,
+              ),
+              displayVideos: (updatedPostData.videos || []).map(
+                (vid) => vid.video_url,
+              ),
+
+              category: updatedPostData.post_category?.name,
+            };
+          }
+          return p;
+        }),
+      );
+
       setEditingPost(null);
 
       setHasFetchedTotalTags(false);
 
-      await loadInitialData();
+      setTimeout(() => {
+        window.scrollTo({
+          top: currentScrollY,
+          behavior: "instant",
+        });
+      }, 0);
 
-      window.scrollTo({
-        top: currentScrollY,
-        behavior: "auto",
-      });
+      toast.success("Bài viết ở trang diễn đàn đã được cập nhật!");
 
-      const newStage = {
-        post_stage_id: Date.now(),
-        post_id: updatedPost.post_id || updatedPost.id,
-        stage_name: "edited",
-        created_date: new Date().toISOString(),
-      };
-      setStages((prevStages) => [...prevStages, newStage]);
+      // const newStage = {
+      //   post_stage_id: Date.now(),
+      //   post_id: updatedPost.post_id || updatedPost.id,
+      //   stage_name: "edited",
+      //   created_date: new Date().toISOString(),
+      // };
+      // setStages((prevStages) => [...prevStages, newStage]);
     } catch (error) {
       console.error("Lỗi sau khi chỉnh sửa bài viết:", error);
-      window.scrollTo(0, currentScrollY);
-      toast.error(
-        "Bài viết đã lưu nhưng không thể làm mới danh sách. Vui lòng tải lại trang.",
-      );
+
+      toast.error("Cập nhật giao diện thất bại. Vui lòng tải lại trang.");
     }
   };
 
@@ -1158,7 +1196,7 @@ export default function Forum() {
 
       const [userRes, postsRes] = await Promise.all([
         forumService.getUserById(userId),
-        forumService.getMyPosts(),
+        forumService.getMyPosts(userId),
       ]);
 
       if (userRes.success) {

@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
     DELETECOMMENT: (postId) => `/api/forums/comments/${postId}`,
     GETUSERBYID: (userId) => `/api/users/${userId}`,
     GETTAG: "/api/tag",
-    FILTERISMINE: "/api/forums/myposts",
+    FILTERISMINE: (userId) => `/api/forums/user/${userId}`,
   },
   // Historical periods
   HISTORICAL_PERIODS: {

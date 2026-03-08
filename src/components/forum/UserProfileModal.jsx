@@ -107,7 +107,7 @@ export default function UserProfileModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-2 gap-4 mb-6"
+                  className="grid grid-cols-3 gap-4 mb-6"
                 >
                   {/* Cột 1: Thành tích */}
                   <motion.div
@@ -138,7 +138,7 @@ export default function UserProfileModal({
                   </motion.div>
 
                   {/* Cột 3: Bài viết */}
-                  {/* <motion.div
+                  <motion.div
                     whileHover={{ scale: 1.05, translateY: -5 }}
                     whileTap={{ scale: 0.95 }}
                     className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
@@ -148,7 +148,7 @@ export default function UserProfileModal({
                       {totalPosts}
                     </div>
                     <div className="text-sm text-amber-700">Bài viết</div>
-                  </motion.div> */}
+                  </motion.div>
                 </motion.div>
 
                 {/* Achievements */}
@@ -177,7 +177,7 @@ export default function UserProfileModal({
             </div> */}
 
                 {/* Recent Posts */}
-                {/* <div className="mb-6">
+                <div className="mb-6">
                   <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
                     <FileText className="w-5 h-5 text-orange-600" />
                     Bài viết đã đăng
@@ -203,7 +203,7 @@ export default function UserProfileModal({
                       </p>
                     )}
                   </div>
-                </div> */}
+                </div>
 
                 {/* Action Button */}
                 {/* <div className="flex justify-center pb-4">
