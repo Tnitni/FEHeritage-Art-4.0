@@ -64,14 +64,9 @@ const authService = {
     }
   },
 
-  // Check authentication by trying to get profile
-  isAuthenticated: async () => {
-    try {
-      await api.get(API_ENDPOINTS.AUTH.PROFILE);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  // Check authentication by checking local storage
+  isAuthenticated: () => {
+    return !!localStorage.getItem('userProfile');
   },
 };
 

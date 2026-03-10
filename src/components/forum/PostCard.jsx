@@ -1,7 +1,15 @@
-import { MessageSquare, Eye, Hash, ThumbsUp } from "lucide-react";
+import {
+  MessageSquare,
+  Eye,
+  Hash,
+  ThumbsUp,
+  Play,
+  ThumbsDown,
+} from "lucide-react";
 // import { formatDistanceToNow } from "date-fns";
 // import { vi } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { useRef, useState } from "react";
 
 function getRelativeTimeVi(date) {
   const now = new Date();
@@ -27,20 +35,36 @@ function getRelativeTimeVi(date) {
   return "vừa xong";
 }
 
-const categoryLabels = {
-  technology: "Công nghệ",
-  travel: "Du lịch",
-  discussion: "Thảo luận",
-  education: "Giáo dục",
-  heritage: "Di sản",
-};
+// const categoryLabels = {
+//   technology: "Công nghệ",
+//   travel: "Du lịch",
+//   discussion: "Thảo luận",
+//   education: "Giáo dục",
+//   heritage: "Di sản",
+// };
 
-const categoryColors = {
-  technology: "from-blue-100 to-cyan-100 text-blue-700",
-  travel: "from-green-100 to-emerald-100 text-green-700",
-  discussion: "from-purple-100 to-violet-100 text-purple-700",
-  education: "from-pink-100 to-rose-100 text-pink-700",
-  heritage: "from-yellow-100 to-amber-100 text-yellow-800",
+// const categoryColors = {
+//   technology: "from-blue-100 to-cyan-100 text-blue-700",
+//   travel: "from-green-100 to-emerald-100 text-green-700",
+//   discussion: "from-purple-100 to-violet-100 text-purple-700",
+//   education: "from-pink-100 to-rose-100 text-pink-700",
+//   heritage: "from-yellow-100 to-amber-100 text-yellow-800",
+// };
+
+const getCategoryStyles = (categoryName) => {
+  const styles = {
+    "Công nghệ":
+      "from-blue-500/10 to-cyan-500/10 text-blue-700 border-blue-200",
+    "Du lịch":
+      "from-green-500/10 to-emerald-500/10 text-green-700 border-green-200",
+    "Thảo luận":
+      "from-purple-500/10 to-violet-500/10 text-purple-700 border-purple-200",
+    "Giáo dục": "from-pink-500/10 to-rose-500/10 text-pink-700 border-pink-200",
+    "Di sản":
+      "from-amber-500/10 to-orange-500/10 text-amber-800 border-amber-200",
+    default: "from-gray-500/10 to-slate-500/10 text-gray-700 border-gray-200",
+  };
+  return styles[categoryName] || styles["default"];
 };
 
 export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
@@ -48,7 +72,37 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
   //   addSuffix: true,
   //   locale: vi,
   // });
+  const [playingVideoIndex, setPlayingVideoIndex] = useState(null);
+  const isLiked = post.liked;
+  const isDisliked = post.disliked;
+  const videoRefs = useRef([]);
+
   const timeAgo = getRelativeTimeVi(post.created_date);
+
+  // Gộp chung Image và Video vào một mảng media duy nhất
+  const allMedia = [
+    ...(post.images || []).map((img) => ({
+      type: "image",
+      url: img.image_url,
+    })),
+
+    ...(post.videos || []).map((vid) => ({
+      type: "video",
+      url: vid.video_url,
+    })),
+  ];
+
+  // Lấy dữ liệu category từ API trả về trong bài viết
+  const categoryName = post.post_category?.name || "Thảo luận";
+  const categoryStyle = getCategoryStyles(categoryName);
+
+  const totalMedia = allMedia.length;
+  const displayMedia = allMedia.slice(0, 4);
+
+  const handlePlayVideo = (e, index) => {
+    e.stopPropagation();
+    setPlayingVideoIndex(index);
+  };
 
   return (
     <motion.div
@@ -85,9 +139,9 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
             </div>
           </div>
           <span
-            className={`px-3 py-1 bg-gradient-to-r ${categoryColors[post.category]} text-sm rounded-full font-medium shadow-sm`}
+            className={`px-3 py-1 bg-gradient-to-r ${categoryStyle} text-sm rounded-full font-medium shadow-sm`}
           >
-            {categoryLabels[post.category]}
+            {categoryName}
           </span>
         </div>
 
@@ -99,7 +153,7 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
           <p className="text-amber-700 mb-4 line-clamp-2">{post.content}</p>
 
           {/* Images Preview */}
-          {post.images && post.images.length > 0 && (
+          {/* {post.images && post.images.length > 0 && (
             <div
               className={`grid gap-2 mb-4 ${
                 post.images.length === 1
@@ -129,47 +183,124 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
                 </div>
               ))}
             </div>
+          )} */}
+          {/* Media Grid */}
+          {totalMedia > 0 && (
+            <div
+              className={`grid gap-2 mb-4 ${
+                totalMedia === 1 ? "grid-cols-1" : "grid-cols-2"
+              }`}
+            >
+              {displayMedia.map((item, index) => (
+                <div
+                  key={index}
+                  className="relative overflow-hidden rounded-lg aspect-video bg-zinc-200"
+                >
+                  {item.type === "image" ? (
+                    <motion.img
+                      whileHover={{ scale: 1.15 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      src={item.url}
+                      className="w-full h-full object-cover"
+                      alt="post-media"
+                    />
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <video
+                        ref={(el) => (videoRefs.current[index] = el)}
+                        src={item.url}
+                        className="w-full h-full object-cover"
+                        controls={playingVideoIndex === index}
+                        autoPlay={playingVideoIndex === index}
+                      />
+
+                      {/* Nút Play hiện khi hover (chỉ hiện nếu video chưa phát) */}
+                      {playingVideoIndex !== index && (
+                        <div
+                          onClick={(e) => handlePlayVideo(e, index)}
+                          className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/media:bg-black/40 transition-colors cursor-pointer"
+                        >
+                          <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            whileHover={{ scale: 1.1 }}
+                            whileInView={{ scale: 1, opacity: 1 }}
+                            className="bg-white/90 p-3 rounded-full shadow-lg"
+                          >
+                            <Play className="w-6 h-6 text-orange-600 fill-orange-600" />
+                          </motion.div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Hiển thị lớp phủ +N ở item cuối cùng */}
+                  {index === 3 && totalMedia > 4 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-2xl">
+                      +{totalMedia - 3}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {post.tags.map((tag) => (
-                <motion.span
-                  key={tag}
-                  whileHover={{ scale: 1.1 }}
-                  className="px-3 py-1 bg-amber-100/60 hover:bg-amber-200/50 text-amber-700 text-sm rounded-full flex items-center gap-1 transition-colors shadow-sm"
-                >
-                  <Hash className="w-3 h-3" />
-                  {tag}
-                </motion.span>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {post.tags.map((tag, index) => {
+                const tagName = typeof tag === "object" ? tag.name : tag;
+                const tagKey = typeof tag === "object" ? tag.id : index;
+
+                return (
+                  <motion.span
+                    key={tagKey}
+                    whileHover={{ scale: 1.1 }}
+                    className="px-3 py-1 bg-amber-100/60 hover:bg-amber-200/50 text-amber-700 text-sm rounded-full flex items-center gap-1 shadow-sm cursor-pointer"
+                  >
+                    <Hash className="w-3 h-3" />
+                    {tagName}
+                  </motion.span>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-end gap-6 pt-4 border-t border-amber-200">
+        <div className="flex items-center justify-end gap-6 pt-3 mt-2 border-t border-amber-200">
+          {/* Like Stats */}
           <motion.div
             whileHover={{ scale: 1.1 }}
-            className="flex items-center gap-2 text-red-600"
+            className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
+              isLiked ? "text-blue-600 bg-blue-50" : "text-blue-600"
+            }`}
           >
-            <ThumbsUp className="w-5 h-5" />
-            <span className="font-medium">{post.likes}</span>
+            <ThumbsUp className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
+            <span className="font-bold">{post.likes}</span>
           </motion.div>
+
+          {/* Dislike Stats */}
           <motion.div
             whileHover={{ scale: 1.1 }}
-            className="flex items-center gap-2 text-blue-600"
+            className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-colors ${
+              isDisliked ? "text-red-600 bg-red-50" : "text-red-600"
+            }`}
           >
-            <MessageSquare className="w-5 h-5" />
-            <span className="font-medium">{post.commentsCount || 0}</span>
+            <ThumbsDown
+              className={`w-5 h-5 ${isDisliked ? "fill-current" : ""}`}
+            />
+            <span className="font-bold">{post.dislikes || 0}</span>
           </motion.div>
+
+          {/* Comments Stats */}
           <motion.div
             whileHover={{ scale: 1.1 }}
             className="flex items-center gap-2 text-green-600"
           >
-            <Eye className="w-5 h-5" />
-            <span className="font-medium">{post.views}</span>
+            <MessageSquare className="w-5 h-5" />
+            <span className="font-bold">
+              {post.commentsCount || post.comments?.length || 0}
+            </span>
           </motion.div>
         </div>
       </div>

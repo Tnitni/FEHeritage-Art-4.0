@@ -15,20 +15,69 @@ api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        await axios.post(
-          `${API_CONFIG.BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-        return api(originalRequest);
-      } catch (refreshError) {
-        if (!["/login", "/register"].includes(window.location.pathname)) {
-          window.location.href = "/login";
-        }
-        return Promise.reject(refreshError);
+
+    // Xử lý các lỗi phổ biến
+    if (error.response) {
+      // Server trả về response với status code ngoài 2xx
+      const { status, data } = error.response;
+
+      switch (status) {
+        case 401:
+          // Unauthorized - Token hết hạn hoặc không hợp lệ
+          // Try to refresh token if not already retrying
+          if (!originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+              // Call refresh token endpoint
+              await axios.post(
+                `${API_CONFIG.BASE_URL}/auth/refresh`,
+                {},
+                { withCredentials: true }
+              );
+
+              // Retry original request
+              return api(originalRequest);
+            } catch (refreshError) {
+              // Refresh failed, clear local auth state
+              console.error('Token refresh failed, redirecting to login');
+
+              const wasLoggedIn = !!localStorage.getItem('userProfile');
+              localStorage.removeItem('userProfile');
+              localStorage.removeItem('isLoggedIn');
+
+              // Only redirect to login automatically if the user was previously logged in
+              if (wasLoggedIn && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                window.location.href = '/login';
+              }
+
+              return Promise.reject(refreshError);
+            }
+          }
+          break;
+
+        case 403:
+          // Forbidden - Không có quyền truy cập
+          console.error('Bạn không có quyền truy cập tài nguyên này');
+          break;
+
+        case 404:
+          // Not Found
+          console.error('Tài nguyên không tồn tại');
+          break;
+
+        case 409:
+          // Conflict - Dữ liệu đã tồn tại
+          console.error('Dữ liệu đã tồn tại');
+          break;
+
+        case 500:
+          // Internal Server Error
+          console.error('Lỗi máy chủ, vui lòng thử lại sau');
+          break;
+
+        default:
+          console.error(`Lỗi ${status}: ${data?.message || 'Có lỗi xảy ra'}`);
       }
     }
     return Promise.reject(error.response?.data || error);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 import {
   X,
   Heart,
@@ -12,6 +13,11 @@ import {
   ThumbsDown,
   ChevronRight,
   ChevronLeft,
+  Trash2,
+  Edit,
+  Play,
+  Loader2,
+  FileText,
 } from "lucide-react";
 // import { formatDistanceToNow } from "date-fns";
 // import { vi } from "date-fns/locale";
@@ -41,37 +47,67 @@ function getRelativeTimeVi(date) {
   return "vừa xong";
 }
 
-const categoryLabels = {
-  technology: "Công nghệ",
-  travel: "Du lịch",
-  discussion: "Thảo luận",
-  education: "Giáo dục",
-  heritage: "Di sản",
-};
+// const categoryLabels = {
+//   technology: "Công nghệ",
+//   travel: "Du lịch",
+//   discussion: "Thảo luận",
+//   education: "Giáo dục",
+//   heritage: "Di sản",
+// };
 
-const categoryColors = {
-  technology: "from-blue-100 to-cyan-100 text-blue-700",
-  travel: "from-green-100 to-emerald-100 text-green-700",
-  discussion: "from-purple-100 to-violet-100 text-purple-700",
-  education: "from-pink-100 to-rose-100 text-pink-700",
-  heritage: "from-yellow-100 to-amber-100 text-yellow-800",
+// const categoryColors = {
+//   technology: "from-blue-100 to-cyan-100 text-blue-700",
+//   travel: "from-green-100 to-emerald-100 text-green-700",
+//   discussion: "from-purple-100 to-violet-100 text-purple-700",
+//   education: "from-pink-100 to-rose-100 text-pink-700",
+//   heritage: "from-yellow-100 to-amber-100 text-yellow-800",
+// };
+const getCategoryStyles = (categoryName) => {
+  const styles = {
+    "Công nghệ":
+      "from-blue-500/10 to-cyan-500/10 text-blue-700 border-blue-200",
+    "Du lịch":
+      "from-green-500/10 to-emerald-500/10 text-green-700 border-green-200",
+    "Thảo luận":
+      "from-purple-500/10 to-violet-500/10 text-purple-700 border-purple-200",
+    "Giáo dục": "from-pink-500/10 to-rose-500/10 text-pink-700 border-pink-200",
+    "Di sản":
+      "from-amber-500/10 to-orange-500/10 text-amber-800 border-amber-200",
+    default: "from-gray-500/10 to-slate-500/10 text-gray-700 border-gray-200",
+  };
+  return styles[categoryName] || styles["default"];
 };
 
 export default function PostDetailModal({
   post,
-  author,
+  // author,
   onClose,
   onLike,
   onDislike,
   onShare,
   onAddComment,
+  onDeleteComment,
   currentUser,
   onAvatarClick,
+  onEdit,
+  onDelete,
 }) {
+  console.log("Dữ liệu post trong modal:", post);
+  console.log("Toàn bộ currentUser:", currentUser);
   const [comment, setComment] = useState("");
-  const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // const [liked, setLiked] = useState(false);
+  // const [disliked, setDisliked] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isLiked = post.liked;
+  const isDisliked = post.disliked;
+
+  const allMedia = [
+    ...(post.displayImages || []).map((url) => ({ type: "image", url })),
+    ...(post.displayVideos || []).map((url) => ({ type: "video", url })),
+  ];
 
   const handleNextImage = (e) => {
     e.stopPropagation();
@@ -85,34 +121,30 @@ export default function PostDetailModal({
     );
   };
 
-  const handleLike = () => {
-    if (liked) {
-      setLiked(false);
-    } else {
-      setLiked(true);
-      setDisliked(false);
-      onLike();
-    }
-  };
+  // const handleLike = () => {
+  //   onLike();
+  // };
 
-  const handleDislike = () => {
-    if (disliked) {
-      setDisliked(false);
-    } else {
-      setDisliked(true);
-      setLiked(false);
-      onDislike();
-    }
-  };
+  // const handleDislike = () => {
+  //   onDislike();
+  // };
 
   const handleShare = () => {
     onShare();
   };
 
-  const handleSubmitComment = () => {
-    if (comment.trim()) {
-      onAddComment(comment);
-      setComment("");
+  const handleSubmitComment = async () => {
+    if (comment.trim() && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onAddComment(comment);
+        setComment("");
+        toast.success("Đã gửi bình luận!");
+      } catch (error) {
+        toast.error("Không thể gửi bình luận");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -121,7 +153,23 @@ export default function PostDetailModal({
   //   locale: vi,
   // });
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      // Chờ component cha thực hiện xóa xong qua API
+      await onDelete();
+    } catch (error) {
+      setIsDeleting(false);
+      toast.error("Không thể xóa lúc này");
+    }
+  };
+
+  const displayAuthor = post.author;
   const timeAgo = getRelativeTimeVi(post.created_date);
+
+  // Kiểm tra xem user hiện tại có phải là tác giả không
+  const isAuthor =
+    currentUser && post && String(currentUser.id) === String(post.user_id);
 
   return (
     <AnimatePresence>
@@ -137,130 +185,187 @@ export default function PostDetailModal({
           transition={{ duration: 0.2 }}
           className="bg-zinc-50 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-6 text-white flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onAvatarClick && onAvatarClick(author)}
-                  className="hover:opacity-80 transition-opacity"
-                >
-                  <img
-                    src={author?.avatar}
-                    alt={author?.name}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white cursor-pointer"
-                  />
-                </button>
-                <div>
-                  <h3 className="font-semibold">{author?.name}</h3>
-                  <p className="text-sm opacity-90">{timeAgo}</p>
+          {post.isLoadingDetail ? (
+            /* --- GIAO DIỆN LOADING  --- */
+            <div className="p-20 flex flex-col items-center justify-center space-y-6 min-h-[400px]">
+              <div className="relative">
+                <div className="w-20 h-20 border-4 border-amber-100 border-t-orange-500 rounded-full animate-spin" />
+
+                <FileText className="absolute inset-0 m-auto w-8 h-8 text-amber-300" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-xl font-bold text-amber-900 animate-pulse">
+                  Đang tải nội dung...
+                </p>
+                <p className="text-amber-600/80 text-sm">
+                  Vui lòng chờ trong giây lát
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* --- GIAO DIỆN NỘI DUNG CHÍNH --- */ <>
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-6 text-white flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => onAvatarClick(post.author.id)}
+                      className="hover:opacity-80 transition-opacity"
+                    >
+                      <img
+                        src={displayAuthor?.avatar}
+                        alt={displayAuthor?.name}
+                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white cursor-pointer"
+                      />
+                    </button>
+                    <div>
+                      <h3 className="font-semibold">{displayAuthor?.name}</h3>
+                      <p className="text-sm opacity-90">{timeAgo}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isAuthor && (
+                      <>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={onEdit}
+                          className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </motion.button>
+                      </>
+                    )}
+                    <button
+                      onClick={onClose}
+                      className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-white/40 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Category Badge */}
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-3 py-1 bg-gradient-to-r ${categoryColors[post.category]} text-sm rounded-full font-medium shadow-sm`}
-              >
-                {categoryLabels[post.category]}
-              </span>
-            </div>
-            {/* Title */}
-            <h1 className="text-3xl font-bold text-amber-900">{post.title}</h1>
-
-            {/* Content */}
-            <div className="text-amber-800 leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </div>
-
-            {/* Images */}
-            {post.images && post.images.length > 0 && (
-              <div
-                className={`grid gap-4 ${
-                  post.images.length === 1
-                    ? "grid-cols-1"
-                    : post.images.length === 2
-                      ? "grid-cols-2"
-                      : "grid-cols-2"
-                }`}
-              >
-                {post.images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative overflow-hidden rounded-xl"
-                    onClick={() => setSelectedImageIndex(index)}
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Category Badge */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 bg-gradient-to-r ${getCategoryStyles(post.categoryName)} text-sm rounded-full font-medium shadow-sm`}
                   >
-                    <img
-                      src={image}
-                      alt={`Post image ${index + 1}`}
-                      className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
-                    />
+                    {post.categoryName}
+                  </span>
+                </div>
+                {/* Title */}
+                <h1 className="text-3xl font-bold text-amber-900">
+                  {post.title}
+                </h1>
+
+                {/* Content */}
+                <div className="text-amber-800 leading-relaxed whitespace-pre-wrap">
+                  {post.content}
+                </div>
+
+                <div
+                  className={`grid gap-4 ${allMedia.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+                >
+                  {allMedia.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={`relative overflow-hidden rounded-xl cursor-pointer group bg-zinc-200 
+                  ${
+                    allMedia.length === 1
+                      ? "h-auto min-h-[300px] max-h-[500px]"
+                      : "h-64"
+                  }`}
+                      onClick={() => setSelectedImageIndex(idx)}
+                    >
+                      {item.type === "image" ? (
+                        <img
+                          src={item.url}
+                          className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="relative w-full h-full">
+                          <video
+                            src={item.url}
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <Play className="w-12 h-12 text-white opacity-80" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tags */}
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag, index) => {
+                      const tagName = typeof tag === "object" ? tag.name : tag;
+                      const tagKey = typeof tag === "object" ? tag.id : index;
+
+                      return (
+                        <motion.span
+                          key={tagKey}
+                          whileHover={{ scale: 1.1 }}
+                          className="px-3 py-1 bg-amber-100/60 hover:bg-amber-200/50 text-amber-700 text-sm rounded-full flex items-center gap-1 shadow-sm cursor-pointer"
+                        >
+                          <Hash className="w-3 h-3" />
+                          {tagName}
+                        </motion.span>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            )}
+                )}
 
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
-                  <motion.span
-                    key={tag}
-                    whileHover={{ scale: 1.1 }}
-                    className="px-3 py-1 bg-amber-100/60 hover:bg-amber-200/50 text-amber-700 text-sm rounded-full flex items-center gap-1 hover:from-amber-100 hover:to-orange-100 transition-colors shadow-sm cursor-pointer"
+                {/* Actions */}
+                <div className="flex items-center gap-6 pt-6 border-t border-amber-200">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={onLike}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      isLiked
+                        ? "bg-blue-100 text-blue-600"
+                        : "bg-amber-100/60 text-amber-700 hover:bg-amber-100"
+                    }`}
                   >
-                    <Hash className="w-3 h-3" />
-                    {tag}
-                  </motion.span>
-                ))}
-              </div>
-            )}
+                    <ThumbsUp
+                      className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`}
+                    />
+                    <span className="font-medium">{post.likes}</span>
+                  </motion.button>
 
-            {/* Actions */}
-            <div className="flex items-center gap-6 pt-6 border-t border-amber-200">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  liked
-                    ? "bg-blue-100 text-blue-600"
-                    : "bg-amber-100/60 text-amber-700 hover:bg-amber-100"
-                }`}
-              >
-                <ThumbsUp
-                  className={`w-5 h-5 ${liked ? "fill-current" : ""}`}
-                />
-                <span className="font-medium">{post.likes}</span>
-              </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={onDislike}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      isDisliked
+                        ? "bg-red-100 text-red-600"
+                        : "bg-amber-100/60 text-amber-700 hover:bg-amber-100"
+                    }`}
+                  >
+                    <ThumbsDown
+                      className={`w-5 h-5 ${isDisliked ? "fill-current" : ""}`}
+                    />
+                    <span className="font-medium">{post.dislikes || 0}</span>
+                  </motion.button>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleDislike}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  disliked
-                    ? "bg-red-100 text-red-600"
-                    : "bg-amber-100/60 text-amber-700 hover:bg-amber-100"
-                }`}
-              >
-                <ThumbsDown
-                  className={`w-5 h-5 ${disliked ? "fill-current" : ""}`}
-                />
-                <span className="font-medium">{post.dislikes || 0}</span>
-              </motion.button>
-
-              <motion.button
+                  {/* <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleShare}
@@ -276,104 +381,189 @@ export default function PostDetailModal({
               >
                 <Eye className="w-5 h-5" />
                 <span className="font-medium">{post.views}</span>
-              </motion.div>
-            </div>
+              </motion.div> */}
+                </div>
 
-            {/* Comments Section */}
-            <div className="space-y-4 pt-6 border-t border-amber-200">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-orange-600" />
-                <h3 className="font-semibold text-amber-900">
-                  Bình luận ({post.comments?.length || 0})
-                </h3>
-              </div>
+                {/* Comments Section */}
+                <div className="space-y-4 pt-6 border-t border-amber-200">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-orange-600" />
+                    <h3 className="font-semibold text-amber-900">
+                      Bình luận ({post.comments?.length || 0})
+                    </h3>
+                  </div>
 
-              {/* Comment Input */}
-              <div className="flex gap-3">
-                <img
-                  src={currentUser?.avatar}
-                  alt={currentUser?.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <div className="flex-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSubmitComment()
-                    }
-                    placeholder="Viết bình luận..."
-                    className="flex-1 px-4 py-2 border-2 border-amber-200 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSubmitComment}
-                    disabled={!comment.trim()}
-                    className="px-4 py-2 bg-amber-500 text-zinc-50 rounded-lg hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </motion.button>
+                  {/* Comment Input */}
+                  <div className="flex gap-3">
+                    <img
+                      src={currentUser?.avatar}
+                      alt={currentUser?.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        type="text"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && handleSubmitComment()
+                        }
+                        placeholder="Viết bình luận..."
+                        className="flex-1 px-4 py-2 border-2 border-amber-200 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
+                      />
+                      <motion.button
+                        whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
+                        whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
+                        onClick={handleSubmitComment}
+                        disabled={!comment.trim() || isSubmitting}
+                        className="px-4 py-2 bg-amber-500 text-zinc-50 rounded-lg hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[50px]"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Send className="w-5 h-5" />
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Comments List */}
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {post.comments?.map((comment) => {
+                      const displayCommentAuthor = comment.author || {
+                        name: "Người dùng",
+                        avatar: null,
+                      };
+                      const isCommentOwner =
+                        currentUser &&
+                        String(currentUser.id) === String(comment.user_id);
+                      const commentTimeAgo = getRelativeTimeVi(
+                        comment.created_date,
+                      );
+                      // const commentTimeAgo = formatDistanceToNow(
+                      //   new Date(comment.created_date),
+                      //   {
+                      //     addSuffix: true,
+                      //     locale: vi,
+                      //   },
+                      // );
+
+                      return (
+                        <motion.div
+                          key={comment.id || comment.post_comment_id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ backgroundColor: "#fef3c7" }}
+                          transition={{ duration: 0.2 }}
+                          className="flex gap-3 p-4 bg-amber-50 group rounded-lg relative"
+                        >
+                          <img
+                            src={displayCommentAuthor.avatar}
+                            alt={displayCommentAuthor.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-amber-900">
+                                {displayCommentAuthor.name}
+                              </span>
+                              <span className="text-sm text-amber-600">
+                                {commentTimeAgo}
+                              </span>
+                            </div>
+                            <p className="text-amber-800">{comment.content}</p>
+                          </div>
+                          {isCommentOwner && (
+                            <button
+                              onClick={() =>
+                                onDeleteComment(
+                                  comment.id || comment.post_comment_id,
+                                )
+                              }
+                              className="opacity-0 group-hover:opacity-100 p-2 h-fit self-center text-red-500 hover:bg-red-100 rounded-md aspect-square flex items-center justify-center transition-all"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+
+                    {(!post.comments || post.comments.length === 0) && (
+                      <p className="text-center text-amber-600 py-8">
+                        Chưa có bình luận nào. Hãy là người đầu tiên!
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* Comments List */}
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {post.comments?.map((comment) => {
-                  const commentAuthor = [author, currentUser].find(
-                    (u) => u.user_id === comment.user_id,
-                  );
-                  // const commentTimeAgo = formatDistanceToNow(
-                  //   new Date(comment.created_date),
-                  //   {
-                  //     addSuffix: true,
-                  //     locale: vi,
-                  //   },
-                  // );
-                  const commentTimeAgo = getRelativeTimeVi(
-                    comment.created_date,
-                  );
-
-                  return (
-                    <motion.div
-                      key={comment.post_comment_id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ backgroundColor: "#fef3c7" }}
-                      transition={{ duration: 0.2 }}
-                      className="flex gap-3 p-4 bg-amber-50 rounded-lg"
-                    >
-                      <img
-                        src={commentAuthor?.avatar}
-                        alt={commentAuthor?.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-amber-900">
-                            {commentAuthor?.name}
-                          </span>
-                          <span className="text-sm text-amber-600">
-                            {commentTimeAgo}
-                          </span>
-                        </div>
-                        <p className="text-amber-800">{comment.content}</p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-
-                {(!post.comments || post.comments.length === 0) && (
-                  <p className="text-center text-amber-600 py-8">
-                    Chưa có bình luận nào. Hãy là người đầu tiên!
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </motion.div>
       </div>
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.9 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amber-900">
+                  Xác nhận xóa
+                </h3>
+                <p className="text-sm text-amber-600">
+                  Bạn có chắc chắn muốn xóa bài viết này?
+                </p>
+              </div>
+            </div>
+            <p className="text-amber-700 mb-6">
+              Hành động này không thể hoàn tác. Tất cả bình luận và tương tác sẽ
+              bị xóa vĩnh viễn.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => !isDeleting && setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="px-6 py-2 border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors font-medium"
+              >
+                Hủy
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: isDeleting ? 1 : 1.05 }}
+                whileTap={{ scale: isDeleting ? 1 : 0.95 }}
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-lg font-medium flex items-center justify-center min-w-[120px]"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Đang xóa...
+                  </>
+                ) : (
+                  "Xóa bài viết"
+                )}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
       <AnimatePresence>
         {selectedImageIndex !== null && (
           <motion.div
@@ -385,53 +575,74 @@ export default function PostDetailModal({
             {/* Nút đóng */}
             <button
               className="absolute top-6 right-6 text-white hover:text-gray-300 z-[110] p-2"
-              onClick={(e) => {
-                e?.stopPropagation?.();
-                setSelectedImageIndex(null);
-              }}
+              onClick={() => setSelectedImageIndex(null)}
             >
               <X className="w-10 h-10" />
             </button>
 
-            {/* Nút Previous */}
-            {post.images.length > 1 && (
-              <button
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[110]"
-                onClick={handlePrevImage}
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
+            {/* Nút Điều hướng */}
+            {allMedia.length > 1 && (
+              <>
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) =>
+                      prev === 0 ? allMedia.length - 1 : prev - 1,
+                    );
+                  }}
+                >
+                  <ChevronLeft className="w-8 h-8" />
+                </button>
+
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) =>
+                      prev === allMedia.length - 1 ? 0 : prev + 1,
+                    );
+                  }}
+                >
+                  <ChevronRight className="w-8 h-8" />
+                </button>
+              </>
             )}
 
-            {/* Ảnh */}
+            {/* Hiển thị nội dung (Ảnh hoặc Video) */}
             <div
               className="relative w-full h-full flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
+              onClick={() => setSelectedImageIndex(null)}
             >
-              <motion.img
-                key={`gallery-img-${selectedImageIndex}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                src={post.images[selectedImageIndex]}
-                className="max-w-full max-h-[90vh] object-contain shadow-2xl select-none"
-              />
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="max-w-full max-h-[90vh]"
+              >
+                {allMedia[selectedImageIndex].type === "image" ? (
+                  <motion.img
+                    key={`media-${selectedImageIndex}`}
+                    src={allMedia[selectedImageIndex].url}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="max-w-full max-h-[90vh] object-contain shadow-2xl"
+                  />
+                ) : (
+                  <motion.video
+                    key={`media-${selectedImageIndex}`}
+                    src={allMedia[selectedImageIndex].url}
+                    controls
+                    autoPlay
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="max-w-full max-h-[90vh] object-contain shadow-2xl"
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Nút Next */}
-            {post.images.length > 1 && (
-              <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-[110]"
-                onClick={handleNextImage}
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-            )}
-
-            {/* Chỉ số ảnh */}
-            <div className="absolute bottom-9 text-white/80 font-medium bg-black/20 px-4 py-1 rounded-full">
-              {selectedImageIndex + 1} / {post.images.length}
+            {/* Chỉ số */}
+            <div className="absolute bottom-9 text-white/80 font-medium bg-black/40 px-4 py-1 rounded-full">
+              {selectedImageIndex + 1} / {allMedia.length}
             </div>
           </motion.div>
         )}

@@ -1,11 +1,20 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, FileText, Award, MessageCircle } from "lucide-react";
+import {
+  X,
+  Calendar,
+  FileText,
+  Award,
+  MessageCircle,
+  Mail,
+  User,
+} from "lucide-react";
 // import { format } from "date-fns";
 // import { vi } from "date-fns/locale";
 
 export default function UserProfileModal({
   user,
   posts,
+  totalPosts,
   onClose,
   onSendMessage,
   onPostClick,
@@ -13,12 +22,24 @@ export default function UserProfileModal({
   // const joinedDate = format(new Date(user.joinedDate), "dd MMMM yyyy", {
   //   locale: vi,
   // });
-  const dateObj = new Date(user.joinedDate);
-  const joinedDate = new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(dateObj);
+  if (!user) return null;
+
+  let joinedDate = "Đang cập nhật...";
+  if (!user.isLoading && (user.joinedDate || user.create_at)) {
+    try {
+      const dateObj = new Date(user.joinedDate || user.create_at);
+
+      if (!isNaN(dateObj.getTime())) {
+        joinedDate = new Intl.DateTimeFormat("vi-VN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }).format(dateObj);
+      }
+    } catch (e) {
+      console.error("Lỗi format ngày:", e);
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -34,90 +55,104 @@ export default function UserProfileModal({
           transition={{ duration: 0.2 }}
           className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar"
         >
-          {/* Header with Cover */}
-          <div className="relative">
-            <div className="h-32 bg-gradient-to-r from-orange-300 via-amber-500 to-orange-400" />
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 bg-white/40 hover:bg-white/30 rounded-full transition-colors text-white"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            {/* Avatar */}
-            <div className="absolute left-1/2 -translate-x-1/2 -bottom-16">
+          {user.isLoading ? (
+            /* --- GIAO DIỆN LOADING --- */
+            <div className="p-20 flex flex-col items-center justify-center space-y-4">
               <div className="relative">
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-32 h-32 rounded-full object-cover ring-4 ring-white shadow-xl"
-                />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-500/20 to-transparent" />
+                <div className="w-16 h-16 border-4 border-amber-100 border-t-orange-500 rounded-full animate-spin" />
+                <User className="absolute inset-0 m-auto w-6 h-6 text-amber-200" />
               </div>
+              <p className="text-amber-700 font-medium animate-pulse">
+                Đang tải hồ sơ...
+              </p>
             </div>
-          </div>
+          ) : (
+            /* --- GIAO DIỆN CHÍNH --- */
+            <>
+              {/* Header with Cover */}
+              <div className="relative">
+                <div className="h-32 bg-gradient-to-r from-orange-300 via-amber-500 to-orange-400" />
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 bg-white/40 hover:bg-white/30 rounded-full transition-colors text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
 
-          {/* Content */}
-          <div className="pt-20 px-6 pb-6">
-            {/* User Info */}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-amber-900 mb-2">
-                {user.name}
-              </h2>
-              <p className="text-amber-700 max-w-md mx-auto">{user.bio}</p>
-            </div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="grid grid-cols-3 gap-4 mb-6"
-            >
-              {/* Cột 1: Bài viết */}
-              <motion.div
-                whileHover={{ scale: 1.05, translateY: -5 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
-              >
-                <FileText className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-amber-900">
-                  {posts.length}
+                {/* Avatar */}
+                <div className="absolute left-1/2 -translate-x-1/2 -bottom-16">
+                  <div className="relative">
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-32 h-32 rounded-full object-cover ring-4 ring-white shadow-xl"
+                    />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-500/20 to-transparent" />
+                  </div>
                 </div>
-                <div className="text-sm text-amber-700">Bài viết</div>
-              </motion.div>
+              </div>
 
-              {/* Cột 2: Tham gia */}
-              <motion.div
-                whileHover={{ scale: 1.05, translateY: -5 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Calendar className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                <div className="text-lg font-semibold text-amber-900 mb-1">
-                  Tham gia
+              {/* Content */}
+              <div className="pt-20 px-6 pb-6">
+                {/* User Info */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-amber-900 mb-2">
+                    {user.name}
+                  </h2>
+                  <p className="text-amber-700 max-w-md mx-auto">{user.bio}</p>
                 </div>
-                <div className="text-sm text-amber-700">{joinedDate}</div>
-              </motion.div>
 
-              {/* Cột 3: Thành tích */}
-              <motion.div
-                whileHover={{ scale: 1.05, translateY: -5 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Award className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-amber-900">
-                  {user.achievements.length}
-                </div>
-                <div className="text-sm text-amber-700">Thành tích</div>
-              </motion.div>
-            </motion.div>
+                {/* Stats */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-3 gap-4 mb-6"
+                >
+                  {/* Cột 1: Thành tích */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, translateY: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <Mail className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                    <div className="text-lg font-bold text-amber-900 mb-1">
+                      Email
+                    </div>
+                    <div className="text-sm text-amber-700">{user.email}</div>
+                  </motion.div>
 
-            {/* Achievements */}
-            <div className="mb-6">
+                  {/* Cột 2: Tham gia */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, translateY: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <Calendar className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                    <div className="text-lg font-semibold text-amber-900 mb-1">
+                      Tham gia
+                    </div>
+                    <div className="text-sm text-amber-700">{joinedDate}</div>
+                  </motion.div>
+
+                  {/* Cột 3: Bài viết */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, translateY: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <FileText className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-amber-900">
+                      {totalPosts}
+                    </div>
+                    <div className="text-sm text-amber-700">Bài viết</div>
+                  </motion.div>
+                </motion.div>
+
+                {/* Achievements */}
+                {/* <div className="mb-6">
               <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
                 <Award className="w-5 h-5 text-orange-600" />
                 Thành tích
@@ -139,39 +174,39 @@ export default function UserProfileModal({
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </div> */}
 
-            {/* Recent Posts */}
-            <div className="mb-6">
-              <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-orange-600" />
-                Bài viết gần đây
-              </h3>
-              <div className="space-y-3">
-                {posts.slice(0, 3).map((post) => (
-                  <div
-                    key={post.post_id}
-                    className="p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer"
-                    onClick={() => onPostClick(post.post_id)}
-                  >
-                    <h4 className="font-semibold text-amber-900 mb-1">
-                      {post.title}
-                    </h4>
-                    <p className="text-sm text-amber-700 line-clamp-2">
-                      {post.content}
-                    </p>
+                {/* Recent Posts */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-orange-600" />
+                    Bài viết gần đây
+                  </h3>
+                  <div className="space-y-3">
+                    {posts.map((post) => (
+                      <div
+                        key={post.id || post.post_id}
+                        className="p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer"
+                        onClick={() => onPostClick(post.id || post.post_id)}
+                      >
+                        <h4 className="font-semibold text-amber-900 mb-1">
+                          {post.title}
+                        </h4>
+                        <p className="text-sm text-amber-700 line-clamp-2">
+                          {post.content}
+                        </p>
+                      </div>
+                    ))}
+                    {posts.length === 0 && (
+                      <p className="text-center text-amber-600 py-4">
+                        Chưa có bài viết nào
+                      </p>
+                    )}
                   </div>
-                ))}
-                {posts.length === 0 && (
-                  <p className="text-center text-amber-600 py-4">
-                    Chưa có bài viết nào
-                  </p>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* Action Button */}
-            <div className="flex justify-center pb-4">
+                {/* Action Button */}
+                {/* <div className="flex justify-center pb-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -181,8 +216,10 @@ export default function UserProfileModal({
                 <MessageCircle className="w-5 h-5" />
                 Gửi tin nhắn
               </motion.button>
-            </div>
-          </div>
+            </div> */}
+              </div>
+            </>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>
