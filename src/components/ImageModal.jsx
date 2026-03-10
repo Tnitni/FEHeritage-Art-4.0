@@ -196,7 +196,7 @@ const ImageModal = ({
     e.stopPropagation();
     setIsTransitioning(true);
     setTimeout(() => {
-      onNext();
+      onNext?.()
       setIsTransitioning(false);
     }, 200);
   };
@@ -205,7 +205,7 @@ const ImageModal = ({
     e.stopPropagation();
     setIsTransitioning(true);
     setTimeout(() => {
-      onPrev();
+      onPrev?.()
       setIsTransitioning(false);
     }, 200);
   };

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import ExperienceGallery from "./ExperienceGallery";
-import ImageModal from "../../components/ImageModal";
 import {
   getPosts,
   getCommentsByPost,
@@ -10,12 +9,12 @@ import {
   deleteComment,
 } from "../../services/api";
 
-const DEFAULT_PERIODS = ["Lý", "Trần", "Lê", "Nguyễn", "Hiện đại"];
 const REGIONS = ["Bắc", "Trung", "Nam"];
+const DEFAULT_PERIODS = ["Lý", "Trần", "Lê", "Nguyễn", "Hiện đại"];
 
-const TrienLam = () => {
+const ExperiencePage = () => {
   const [galleryItems, setGalleryItems] = useState([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [activeTab, setActiveTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [periods, setPeriods] = useState(DEFAULT_PERIODS);
 
@@ -27,13 +26,14 @@ const TrienLam = () => {
 
   // ─── Fetch posts ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const loadGalleryData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await getPosts();
+        const resPosts = await getPosts();
 
-        if (res?.success && Array.isArray(res.data)) {
-          const formatted = res.data.map((post) => ({
+        if (resPosts?.success && Array.isArray(resPosts.data)) {
+         
+          const formatted = resPosts.data.map((post) => ({
             id: post.id,
             src: post.cloudinary_url || "https://via.placeholder.com/400",
             alt: post.caption || "Bài viết",
@@ -50,7 +50,7 @@ const TrienLam = () => {
 
           setGalleryItems(formatted);
 
-          // Merge periods từ server vào danh sách mặc định
+          // Cập nhật danh sách periods từ dữ liệu thực
           const serverPeriods = [...new Set(formatted.map((i) => i.period))];
           const mergedPeriods = [
             ...new Set([...DEFAULT_PERIODS, ...serverPeriods]),
@@ -62,24 +62,26 @@ const TrienLam = () => {
           }));
         }
       } catch (err) {
-        console.error("Lỗi tải triển lãm:", err);
+        console.error("Lỗi lấy dữ liệu bài viết:", err);
       } finally {
         setLoading(false);
         AOS.init({ duration: 800, once: true });
       }
     };
 
-    loadGalleryData();
+    fetchData();
   }, []);
 
-  // ─── Load comments cho một post (lazy) ─────────────────────────────────────
+  // Load comments cho một post 
   const handleLoadComments = async (postId) => {
     try {
       const res = await getCommentsByPost(postId);
       if (res?.success) {
         setGalleryItems((prev) =>
           prev.map((item) =>
-            item.id === postId ? { ...item, comments: res.data } : item
+            item.id === postId
+              ? { ...item, comments: res.data }
+              : item
           )
         );
       }
@@ -88,7 +90,8 @@ const TrienLam = () => {
     }
   };
 
-  // ─── Thêm comment ──────────────────────────────────────────────────────────
+  //  Thêm comment 
+ 
   const handleCommentSubmit = async (postId, data) => {
     try {
       const res = await createPostComment(postId, data);
@@ -108,7 +111,7 @@ const TrienLam = () => {
     return false;
   };
 
-  // ─── Xóa comment ───────────────────────────────────────────────────────────
+  //Xóa comment 
   const handleCommentDelete = async (commentId, postId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
@@ -148,70 +151,41 @@ const TrienLam = () => {
   };
 
   // ─── Filtered items ─────────────────────────────────────────────────────────
-  const filteredItems = galleryItems.filter(
-    (item) =>
-      galleryFilters.periods.has(item.period) &&
-      galleryFilters.regions.has(item.region) &&
-      item.year <= galleryFilters.year
-  );
+  const filteredGalleryItems = galleryItems.filter((item) => {
+    const matchesTab = activeTab === "all" || item.type === activeTab;
+    const matchesPeriod = galleryFilters.periods.has(item.period);
+    const matchesRegion = galleryFilters.regions.has(item.region);
+    const matchesYear = item.year <= galleryFilters.year;
+    return matchesTab && matchesPeriod && matchesRegion && matchesYear;
+  });
 
   // ─── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#fdfaf3]">
+      <div className="flex items-center justify-center min-h-screen">
         <p className="text-lg font-serif text-amber-800 animate-pulse">
-          Đang tải triển lãm...
+          Đang tải di sản văn hóa...
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#fdfaf3] min-h-screen p-8">
-      <ExperienceGallery
-        periods={periods}
-        regions={REGIONS}
-        galleryFilters={galleryFilters}
-        setGalleryFilters={setGalleryFilters}
-        filteredGalleryItems={filteredItems}
-        openModal={(index) => setSelectedImageIndex(index)}
-        handleLoadComments={handleLoadComments}
-        handleCommentSubmit={handleCommentSubmit}
-        handleCommentDelete={handleCommentDelete}
-        handleFilterChange={handleFilterChange}
-        handleYearChange={handleYearChange}
-      />
-
-      {selectedImageIndex !== null && filteredItems[selectedImageIndex] && (
-        <ImageModal
-          imageData={filteredItems[selectedImageIndex]}
-          onClose={() => setSelectedImageIndex(null)}
-          onPrev={() =>
-            setSelectedImageIndex((prev) =>
-              prev === 0 ? filteredItems.length - 1 : prev - 1
-            )
-          }
-          onNext={() =>
-            setSelectedImageIndex((prev) =>
-              prev === filteredItems.length - 1 ? 0 : prev + 1
-            )
-          }
-          onCommentSubmit={(data) =>
-            handleCommentSubmit(filteredItems[selectedImageIndex].id, data)
-          }
-          onCommentDelete={(commentId) =>
-            handleCommentDelete(
-              commentId,
-              filteredItems[selectedImageIndex].id
-            )
-          }
-          onLoadComments={() =>
-            handleLoadComments(filteredItems[selectedImageIndex].id)
-          }
-        />
-      )}
-    </div>
+    <ExperienceGallery
+      periods={periods}
+      regions={REGIONS}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      galleryFilters={galleryFilters}
+      setGalleryFilters={setGalleryFilters}
+      filteredGalleryItems={filteredGalleryItems}
+      handleLoadComments={handleLoadComments}
+      handleCommentSubmit={handleCommentSubmit}
+      handleCommentDelete={handleCommentDelete}
+      handleFilterChange={handleFilterChange}
+      handleYearChange={handleYearChange}
+    />
   );
 };
 
-export default TrienLam;
+export default ExperiencePage;
