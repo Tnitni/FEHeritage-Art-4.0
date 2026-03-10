@@ -15,28 +15,48 @@ api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     const originalRequest = error.config;
+
+    // Chỉ xử lý retry nếu lỗi là 401 và CHƯA từng retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
       try {
+        // Gọi refresh token
         await axios.post(
           `${API_CONFIG.BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
+        // Nếu thành công, thực hiện lại request gốc
         return api(originalRequest);
       } catch (refreshError) {
-        const path = window.location.pathname;
-        const skipRedirect = path.startsWith("/admin") || path === "/login" || path === "/register";
-        if (!skipRedirect) {
-          window.location.href = "/login";
+        // NẾU REFRESH THẤT BẠI (Dù lỗi 404 hay bất cứ gì)
+        console.error('Không thể làm mới token, yêu cầu đăng nhập lại');
+        
+        // Quan trọng: Xóa trạng thái đăng nhập để tránh các component khác gọi lại API
+        // Ví dụ: localStorage.removeItem('user'); 
+
+        if (!['/login', '/register'].includes(window.location.pathname)) {
+          window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       }
     }
-    return Promise.reject(error.response?.data || error);
+
+    // Xử lý các lỗi khác (ngoài 401 hoặc đã retry rồi vẫn lỗi)
+    if (error.response) {
+      const { status, data } = error.response;
+      switch (status) {
+        case 403: console.error('Forbidden'); break;
+        case 404: console.error('Not Found'); break;
+        case 500: console.error('Server Error'); break;
+      }
+      return Promise.reject(data || error);
+    }
+
+    return Promise.reject(error);
   }
 );
-
 // ==================== AUTH ====================
 export const register = (data) => api.post("/auth/register", data);
 export const login = (data) => api.post("/auth/login", data);
@@ -54,11 +74,10 @@ export const createPost = (formData) =>
   api.post("/experience-posts", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-
-export const updatePost = (postId, formData) =>
-  api.put(`/experience-posts/${postId}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  export const updatePost = (postId, formData) =>
+    api.put(`/experience-posts/${postId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }, 
+    });
 
 export const deletePost = (postId) => api.delete(`/experience-posts/${postId}`);
 
@@ -69,8 +88,7 @@ export const getCommentsByPost = (postId) =>
 export const getCommentById = (commentId) =>
   api.get(`/experience-comments/${commentId}`);
 
-export const getCommentReplies = (commentId) =>
-  api.get(`/experience-comments/${commentId}/replies`);
+
 
 export const createPostComment = (postId, data) => {
   const payload = typeof data === "string" ? { content: data } : data;
@@ -83,8 +101,14 @@ export const updateComment = (commentId, content) =>
 export const deleteComment = (commentId) =>
   api.delete(`/experience-comments/${commentId}`);
 
-export const likeComment = (commentId, action = "like") =>
-  api.post(`/experience-comments/${commentId}/like`, { action });
+// ==================== LIKES ====================
+
+
+export const likeComment = (commentId) => 
+  api.post(`/experience-comments/${commentId}/like`, { action: "like" });
+
+export const unlikeComment = (commentId) => 
+  api.post(`/experience-comments/${commentId}/like`, { action: "unlike" });
 
 // ==================== HISTORICAL PERIODS ====================
 export const getPeriods = () => api.get("/periods");

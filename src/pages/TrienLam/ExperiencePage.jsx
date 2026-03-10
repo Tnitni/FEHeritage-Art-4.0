@@ -7,6 +7,8 @@ import {
   getCommentsByPost,
   createPostComment,
   deleteComment,
+  toggleLikePost,
+  toggleLikeComment,
 } from "../../services/api";
 
 const REGIONS = ["Bắc", "Trung", "Nam"];
@@ -24,7 +26,6 @@ const ExperiencePage = () => {
     year: 2026,
   });
 
-  // ─── Fetch posts ────────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -32,13 +33,12 @@ const ExperiencePage = () => {
         const resPosts = await getPosts();
 
         if (resPosts?.success && Array.isArray(resPosts.data)) {
-         
           const formatted = resPosts.data.map((post) => ({
             id: post.id,
             src: post.cloudinary_url || "https://via.placeholder.com/400",
             alt: post.caption || "Bài viết",
             caption: post.caption || "",
-            type: post.type || "image",                        // "image" | "video"
+            type: post.type || "image",
             year: post.year || new Date(post.created_at).getFullYear(),
             period: post.historical_period?.name || "Hiện đại",
             region: post.region || "Bắc",
@@ -46,11 +46,11 @@ const ExperiencePage = () => {
             authorAvatar: post.author?.avatar_url || null,
             comments: post.comments || [],
             likeCount: post.like_count || 0,
+            isLiked: post.is_liked || false,
           }));
 
           setGalleryItems(formatted);
 
-          // Cập nhật danh sách periods từ dữ liệu thực
           const serverPeriods = [...new Set(formatted.map((i) => i.period))];
           const mergedPeriods = [
             ...new Set([...DEFAULT_PERIODS, ...serverPeriods]),
@@ -72,15 +72,21 @@ const ExperiencePage = () => {
     fetchData();
   }, []);
 
-  // Load comments cho một post 
   const handleLoadComments = async (postId) => {
     try {
       const res = await getCommentsByPost(postId);
+  
       if (res?.success) {
+        const formattedComments = res.data.map((comment) => ({
+          ...comment,
+          likeCount: comment.like_count || 0, // convert đúng field
+          isLiked: false, // vì backend không trả
+        }));
+  
         setGalleryItems((prev) =>
           prev.map((item) =>
             item.id === postId
-              ? { ...item, comments: res.data }
+              ? { ...item, comments: formattedComments }
               : item
           )
         );
@@ -90,8 +96,6 @@ const ExperiencePage = () => {
     }
   };
 
-  //  Thêm comment 
- 
   const handleCommentSubmit = async (postId, data) => {
     try {
       const res = await createPostComment(postId, data);
@@ -111,7 +115,6 @@ const ExperiencePage = () => {
     return false;
   };
 
-  //Xóa comment 
   const handleCommentDelete = async (commentId, postId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
@@ -133,7 +136,42 @@ const ExperiencePage = () => {
     }
   };
 
-  // ─── Toggle filter (period / region) ───────────────────────────────────────
+  // Toggle like for Post
+  const handleToggleLikePost = async (postId) => {
+    try {
+      await toggleLikePost(postId);
+
+      setGalleryItems((prev) =>
+        prev.map((item) =>
+          item.id === postId
+            ? {
+                ...item,
+                isLiked: !item.isLiked,
+                likeCount: item.isLiked
+                  ? Math.max(0, (item.likeCount || 0) - 1)
+                  : (item.likeCount || 0) + 1,
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("Lỗi toggle like post:", err);
+    }
+  };
+
+  // Toggle like for Comment
+  const handleToggleLikeComment = async (commentId, postId) => {
+    try {
+      await toggleLikeComment(commentId);
+  
+      // Sau khi toggle xong → reload lại từ server
+      await handleLoadComments(postId);
+  
+    } catch (err) {
+      console.error("Lỗi toggle like comment:", err);
+    }
+  };
+
   const handleFilterChange = (setter, type, value) => {
     setter((prev) => {
       const next = new Set(prev[type]);
@@ -142,7 +180,6 @@ const ExperiencePage = () => {
     });
   };
 
-  // ─── Đổi năm filter ────────────────────────────────────────────────────────
   const handleYearChange = (setter, e) => {
     setter((prev) => ({
       ...prev,
@@ -150,7 +187,6 @@ const ExperiencePage = () => {
     }));
   };
 
-  // ─── Filtered items ─────────────────────────────────────────────────────────
   const filteredGalleryItems = galleryItems.filter((item) => {
     const matchesTab = activeTab === "all" || item.type === activeTab;
     const matchesPeriod = galleryFilters.periods.has(item.period);
@@ -159,7 +195,6 @@ const ExperiencePage = () => {
     return matchesTab && matchesPeriod && matchesRegion && matchesYear;
   });
 
-  // ─── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -182,6 +217,8 @@ const ExperiencePage = () => {
       handleLoadComments={handleLoadComments}
       handleCommentSubmit={handleCommentSubmit}
       handleCommentDelete={handleCommentDelete}
+      handleToggleLikePost={handleToggleLikePost}
+      handleToggleLikeComment={handleToggleLikeComment}
       handleFilterChange={handleFilterChange}
       handleYearChange={handleYearChange}
     />

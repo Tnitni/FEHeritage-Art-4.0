@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import ExperienceGallery from "./ExperienceGallery";
@@ -8,6 +8,9 @@ import {
   getCommentsByPost,
   createPostComment,
   deleteComment,
+  likeComment,
+  unlikeComment,
+  
 } from "../../services/api";
 
 const DEFAULT_PERIODS = ["Lý", "Trần", "Lê", "Nguyễn", "Hiện đại"];
@@ -18,27 +21,31 @@ const TrienLam = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [periods, setPeriods] = useState(DEFAULT_PERIODS);
-
+  const [activeTab, setActiveTab] = useState("all");
   const [galleryFilters, setGalleryFilters] = useState({
     periods: new Set(DEFAULT_PERIODS),
     regions: new Set(REGIONS),
     year: 2026,
   });
 
-  // ─── Fetch posts ────────────────────────────────────────────────────────────
+  // 1. Chỉ khởi tạo AOS một lần duy nhất
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+  }, []);
+
+  // 2. Fetch data bài viết
   useEffect(() => {
     const loadGalleryData = async () => {
       try {
         setLoading(true);
         const res = await getPosts();
-
         if (res?.success && Array.isArray(res.data)) {
           const formatted = res.data.map((post) => ({
             id: post.id,
-            src: post.cloudinary_url || "https://via.placeholder.com/400",
+            src: post.cloudinary_url || "/assets/fallback-image.jpg",
             alt: post.caption || "Bài viết",
             caption: post.caption || "",
-            type: post.type || "image",                        // "image" | "video"
+            type: post.type || "image",
             year: post.year || new Date(post.created_at).getFullYear(),
             period: post.historical_period?.name || "Hiện đại",
             region: post.region || "Bắc",
@@ -46,168 +53,220 @@ const TrienLam = () => {
             authorAvatar: post.author?.avatar_url || null,
             comments: post.comments || [],
             likeCount: post.like_count || 0,
+            isLiked: post.is_liked || false,
           }));
 
           setGalleryItems(formatted);
-
-          // Merge periods từ server vào danh sách mặc định
           const serverPeriods = [...new Set(formatted.map((i) => i.period))];
-          const mergedPeriods = [
-            ...new Set([...DEFAULT_PERIODS, ...serverPeriods]),
-          ];
+          const mergedPeriods = [...new Set([...DEFAULT_PERIODS, ...serverPeriods])];
           setPeriods(mergedPeriods);
-          setGalleryFilters((prev) => ({
-            ...prev,
-            periods: new Set(mergedPeriods),
-          }));
+          setGalleryFilters(prev => ({ ...prev, periods: new Set(mergedPeriods) }));
         }
       } catch (err) {
         console.error("Lỗi tải triển lãm:", err);
       } finally {
         setLoading(false);
-        AOS.init({ duration: 800, once: true });
       }
     };
-
     loadGalleryData();
   }, []);
 
-  // ─── Load comments cho một post (lazy) ─────────────────────────────────────
-  const handleLoadComments = async (postId) => {
+  // 3. Sử dụng useCallback cho các hàm truyền xuống Modal để tránh vòng lặp request
+  const handleLoadComments = useCallback(async (postId) => {
+    if (!postId) return;
+  
     try {
       const res = await getCommentsByPost(postId);
+  
       if (res?.success) {
+        const formattedComments = res.data.map((comment) => ({
+          ...comment,
+          likeCount: comment.like_count || 0, // convert đúng field
+          isLiked: false, // backend không trả
+        }));
+  
         setGalleryItems((prev) =>
           prev.map((item) =>
-            item.id === postId ? { ...item, comments: res.data } : item
+            item.id === postId
+              ? { ...item, comments: formattedComments }
+              : item
           )
         );
       }
     } catch (err) {
       console.error("Lỗi tải comments:", err);
     }
-  };
-
-  // ─── Thêm comment ──────────────────────────────────────────────────────────
-  const handleCommentSubmit = async (postId, data) => {
+  }, []);
+  const handleCommentSubmit = useCallback(async (postId, data) => {
     try {
       const res = await createPostComment(postId, data);
       if (res?.success) {
         setGalleryItems((prev) =>
           prev.map((item) =>
-            item.id === postId
-              ? { ...item, comments: [res.data, ...item.comments] }
-              : item
+            item.id === postId ? { ...item, comments: [res.data, ...item.comments] } : item
           )
         );
         return true;
       }
     } catch (err) {
-      console.error("Lỗi gửi comment:", err);
+      console.error(err);
     }
     return false;
-  };
+  }, []);
 
-  // ─── Xóa comment ───────────────────────────────────────────────────────────
-  const handleCommentDelete = async (commentId, postId) => {
+  const handleCommentDelete = useCallback(async (commentId, postId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
     try {
       const res = await deleteComment(commentId);
       if (res?.success) {
         setGalleryItems((prev) =>
           prev.map((item) =>
-            item.id === postId
-              ? {
-                  ...item,
-                  comments: item.comments.filter((c) => c.id !== commentId),
-                }
+            item.id === postId 
+              ? { ...item, comments: item.comments.filter((c) => c.id !== commentId) }
               : item
           )
         );
       }
     } catch (err) {
-      console.error("Lỗi xóa comment:", err);
+      console.error(err);
+    }
+  }, []);
+
+  // Thêm handleReplyComment
+  const handleReplyComment = async (postId, parentCommentId, content) => {
+    try {
+      const res = await createPostComment(postId, {
+        content,
+        parent_comment_id: parentCommentId,
+      });
+  
+      const newReply = res.data;
+  
+      setGalleryItems((prev) =>
+        prev.map((item) =>
+          item.id === postId
+            ? {
+                ...item,
+                comments: item.comments.map((comment) =>
+                  comment.id === parentCommentId
+                    ? {
+                        ...comment,
+                        replies: [...(comment.replies || []), newReply],
+                      }
+                    : comment
+                ),
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("Lỗi reply:", err);
     }
   };
-
-  // ─── Toggle filter (period / region) ───────────────────────────────────────
-  const handleFilterChange = (setter, type, value) => {
-    setter((prev) => {
-      const next = new Set(prev[type]);
-      next.has(value) ? next.delete(value) : next.add(value);
-      return { ...prev, [type]: next };
-    });
+  // ─── Like/Unlike Comment ───────────────────────────────────────────────────
+  const handleLikeComment = async (commentId, postId) => {
+    try {
+      await likeComment(commentId);
+  
+      setGalleryItems((prev) =>
+        prev.map((item) =>
+          item.id === postId
+            ? {
+                ...item,
+                comments: item.comments.map((comment) =>
+                  comment.id === commentId
+                    ? {
+                        ...comment,
+                        isLiked: true,
+                        likeCount: (comment.likeCount || 0) + 1,
+                      }
+                    : comment
+                ),
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  // ─── Đổi năm filter ────────────────────────────────────────────────────────
-  const handleYearChange = (setter, e) => {
-    setter((prev) => ({
-      ...prev,
-      year: parseInt(e.target.value) || 2026,
-    }));
+  const handleUnlikeComment = async (commentId, postId) => {
+    try {
+      await unlikeComment(commentId);
+  
+      setGalleryItems((prev) =>
+        prev.map((item) =>
+          item.id === postId
+            ? {
+                ...item,
+                comments: item.comments.map((comment) =>
+                  comment.id === commentId
+                    ? {
+                        ...comment,
+                        isLiked: false,
+                        likeCount: Math.max((comment.likeCount || 1) - 1, 0),
+                      }
+                    : comment
+                ),
+              }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
+  
+  // 4. Logic lọc Gallery
+  const filteredGalleryItems = galleryItems.filter((item) => {
+    const matchesTab = activeTab === "all" || item.type === activeTab;
+    const matchesPeriod = galleryFilters.periods.has(item.period);
+    const matchesRegion = galleryFilters.regions.has(item.region);
+    return matchesTab && matchesPeriod && matchesRegion && (item.year <= galleryFilters.year);
+  });
 
-  // ─── Filtered items ─────────────────────────────────────────────────────────
-  const filteredItems = galleryItems.filter(
-    (item) =>
-      galleryFilters.periods.has(item.period) &&
-      galleryFilters.regions.has(item.region) &&
-      item.year <= galleryFilters.year
-  );
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Đang tải...</div>;
 
-  // ─── Loading ────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#fdfaf3]">
-        <p className="text-lg font-serif text-amber-800 animate-pulse">
-          Đang tải triển lãm...
-        </p>
-      </div>
-    );
-  }
+  // For clarity with variable name, use filteredItems as in your sample
+  const filteredItems = filteredGalleryItems;
 
   return (
-    <div className="bg-[#fdfaf3] min-h-screen p-8">
+    <div className="bg-[#fdfaf3] min-h-screen">
       <ExperienceGallery
         periods={periods}
         regions={REGIONS}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         galleryFilters={galleryFilters}
         setGalleryFilters={setGalleryFilters}
         filteredGalleryItems={filteredItems}
-        openModal={(index) => setSelectedImageIndex(index)}
-        handleLoadComments={handleLoadComments}
-        handleCommentSubmit={handleCommentSubmit}
-        handleCommentDelete={handleCommentDelete}
-        handleFilterChange={handleFilterChange}
-        handleYearChange={handleYearChange}
+        openModal={setSelectedImageIndex}
       />
 
       {selectedImageIndex !== null && filteredItems[selectedImageIndex] && (
         <ImageModal
           imageData={filteredItems[selectedImageIndex]}
+          currentIndex={selectedImageIndex}
+          totalImages={filteredItems.length}
           onClose={() => setSelectedImageIndex(null)}
-          onPrev={() =>
-            setSelectedImageIndex((prev) =>
-              prev === 0 ? filteredItems.length - 1 : prev - 1
-            )
-          }
           onNext={() =>
-            setSelectedImageIndex((prev) =>
-              prev === filteredItems.length - 1 ? 0 : prev + 1
+            setSelectedImageIndex(i =>
+              i === filteredItems.length - 1 ? 0 : i + 1
             )
           }
-          onCommentSubmit={(data) =>
-            handleCommentSubmit(filteredItems[selectedImageIndex].id, data)
-          }
-          onCommentDelete={(commentId) =>
-            handleCommentDelete(
-              commentId,
-              filteredItems[selectedImageIndex].id
+          onPrev={() =>
+            setSelectedImageIndex(i =>
+              i === 0 ? filteredItems.length - 1 : i - 1
             )
           }
-          onLoadComments={() =>
-            handleLoadComments(filteredItems[selectedImageIndex].id)
-          }
+          onLoadComments={() => handleLoadComments(filteredItems[selectedImageIndex].id)}
+          onCommentSubmit={(data) => handleCommentSubmit(filteredItems[selectedImageIndex].id, data)}
+          onCommentDelete={(cId) => handleCommentDelete(cId, filteredItems[selectedImageIndex].id)}
+          onLikeComment={handleLikeComment}
+          onUnlikeComment={handleUnlikeComment}
+          onImageSelect={setSelectedImageIndex}
+          relatedImages={filteredItems}
+          onReplyComment={handleReplyComment}
         />
       )}
     </div>

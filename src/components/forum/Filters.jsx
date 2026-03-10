@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Filter, TrendingUp, Clock } from "lucide-react";
+import { Filter, TrendingUp, Clock, BookText } from "lucide-react";
 
 const categories = [
   { value: "all", label: "Tất cả" },
@@ -11,10 +11,12 @@ const categories = [
 ];
 
 export default function Filters({
+  isLoading,
   selectedCategory,
   onCategoryChange,
   sortBy,
   onSortChange,
+  categories,
 }) {
   return (
     <motion.div
@@ -32,21 +34,46 @@ export default function Filters({
         {/* Category Filter */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-amber-800">Danh mục</label>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+          {isLoading ? (
+            <div className="flex flex-wrap gap-2 pb-2">
+              {[...Array(10)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-10 w-[calc(20%-8px)] min-w-[80px] bg-amber-100 animate-pulse rounded-lg"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {/* Nút Tất cả mặc định */}
               <button
-                key={category.value}
-                onClick={() => onCategoryChange(category.value)}
+                onClick={() => onCategoryChange("all")}
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  selectedCategory === category.value
+                  selectedCategory === "all"
                     ? "bg-amber-500 text-zinc-50 shadow-md"
                     : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"
                 }`}
               >
-                {category.label}
+                Tất cả
               </button>
-            ))}
-          </div>
+              {/* Danh sách categories từ API */}
+              {categories.map((category) => (
+                <button
+                  key={category.id || category.category_id}
+                  onClick={() =>
+                    onCategoryChange(category.id || category.category_id)
+                  }
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    selectedCategory === (category.id || category.category_id)
+                      ? "bg-amber-500 text-zinc-50 shadow-md"
+                      : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Sort Filter */}
@@ -54,7 +81,7 @@ export default function Filters({
           <label className="text-sm font-medium text-amber-800">
             Sắp xếp theo
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => onSortChange("newest")}
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -75,7 +102,18 @@ export default function Filters({
               }`}
             >
               <TrendingUp className="w-4 h-4" />
-              Phổ biến
+              Nổi bật
+            </button>
+            <button
+              onClick={() => onSortChange("myself")}
+              className={`w-8/12 mx-auto px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+                sortBy === "myself"
+                  ? "bg-amber-500 text-zinc-50 shadow-md"
+                  : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"
+              }`}
+            >
+              <BookText className="w-4 h-4" />
+              Bài viết của tôi
             </button>
           </div>
         </div>

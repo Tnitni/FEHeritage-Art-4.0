@@ -33,14 +33,17 @@ export function UserProvider({ children }) {
         try {
           setLoading(true);
           const response = await authService.getProfile();
-          console.log('📥 [UserContext] Profile loaded:', response.data?.user);
-          
+          console.log("📥 [UserContext] Profile loaded:", response.data?.user);
+
           if (response.success && response.data.user) {
             setUser(response.data.user);
             setIsLoggedIn(true);
 
             // Connect socket with user ID
-            console.log('🔌 [UserContext] Connecting socket for user:', response.data.user.id);
+            console.log(
+              "🔌 [UserContext] Connecting socket for user:",
+              response.data.user.id,
+            );
             socketService.connect(response.data.user.id);
           }
         } catch (error) {
@@ -58,7 +61,10 @@ export function UserProvider({ children }) {
     if (authService.isAuthenticated()) {
       // Nếu đã có user trong localStorage (reload page), connect socket ngay
       if (user) {
-        console.log('🔌 [UserContext] User exists from localStorage, connecting socket:', user.id);
+        console.log(
+          "🔌 [UserContext] User exists from localStorage, connecting socket:",
+          user.id,
+        );
         socketService.connect(user.id);
       } else {
         // Nếu chưa có user, load profile từ server
@@ -212,11 +218,7 @@ export function UserProvider({ children }) {
     refreshProfile,
   };
 
-  return (
-    <UserContext.Provider value={value}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export const useUser = () => useContext(UserContext);
