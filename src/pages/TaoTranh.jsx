@@ -1,5 +1,6 @@
 import AOS from "aos";
 import "aos/dist/aos.css";
+import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -21,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useUser } from "../context/UserContext";
 
 // --- IMPORT ẢNH NỀN ---
 import bgVietnam from "../../src/assets/visual-ai-vietnam.png";
@@ -29,92 +31,152 @@ import bgVietnam from "../../src/assets/visual-ai-vietnam.png";
 
 const VIETNAM_STYLES = [
   {
-    id: "son-dau",
+    id: "son_dau",
     name: "Sơn Dầu",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694658/sondau_h20ugz.jpg",
   },
   {
-    id: "son-mai",
+    id: "son_mai",
     name: "Sơn Mài",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694659/sonmai_pzmnhi.jpg",
   },
   {
-    id: "dong-ho",
+    id: "dong_ho",
     name: "Đông Hồ",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694658/dongho_mshg5f.jpg",
   },
   {
-    id: "hang-trong",
+    id: "hang_trong",
     name: "Hàng Trống",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694657/hangtrong_bjbs7h.jpg",
   },
   {
-    id: "khac-go",
+    id: "khac_go",
     name: "Khắc Gỗ",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694659/khacgo_e1ls7k.jpg",
   },
   {
-    id: "lang-sinh",
+    id: "lang_sinh_hue",
     name: "Làng Sình",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694657/langsinh_devj72.jpg",
   },
   {
-    id: "tranh-lua",
+    id: "lua",
     name: "Tranh Lụa",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694660/tranhlua_elnhph.jpg",
   },
   {
-    id: "dan-toc-thieu-so",
+    id: "dan_toc_thieu_so",
     name: "Dân tộc thiểu số",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770694657/dantocthieuso_xvhclt.jpg",
+  },
+  {
+    id: "gao",
+    name: "Tranh Gạo",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772504836/tranh-gao_exf8il.jpg",
   },
 ];
 
 const OTHER_STYLES = [
   {
-    id: "neon",
+    id: "neon_cyberpunk",
     name: "Neon Cyberpunk",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695158/cyberpunk_rjdxte.webp",
   },
   {
-    id: "colorful",
+    id: "vibrant_color_pop",
     name: "Màu Sắc Rực Rỡ",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695158/M%C3%A0u_S%E1%BA%AFc_R%E1%BB%B1c_R%E1%BB%A1_pziyee.jpg",
   },
   {
-    id: "meme",
+    id: "social_meme",
     name: "Meme MXH",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695159/Meme_MXH_bzh1qt.png",
   },
   {
-    id: "ads",
+    id: "glossy_commercial",
     name: "Quảng Cáo Thương Mại",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695158/Qu%E1%BA%A3ng_C%C3%A1o_Th%C6%B0%C6%A1ng_M%E1%BA%A1i_bx9msj.jpg",
   },
   {
-    id: "isometric",
+    id: "product_isometric",
     name: "Isometric Sản Phẩm",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695157/Isometric_S%E1%BA%A3n_Ph%E1%BA%A9m_nbhagp.jpg",
   },
   {
-    id: "tach-nen",
+    id: "bg_removed_shadow",
     name: "Tách nền + Đổ bóng",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695159/T%C3%A1ch_n%E1%BB%81n_%C4%90%E1%BB%95_b%C3%B3ng_o2casp.png",
   },
   {
-    id: "thiet-ke-phang",
+    id: "minimalist_flat",
     name: "Thiết kế phẳng tối giản",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695163/Thi%E1%BA%BFt_k%E1%BA%BF_ph%E1%BA%B3ng_t%E1%BB%91i_gi%E1%BA%A3n_jtswud.jpg",
   },
   {
-    id: "chan-dung-dien-anh",
+    id: "cinematic_portrait",
     name: "Chân dung điện ảnh",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695157/Ch%C3%A2n_dung_%C4%91i%E1%BB%87n_%E1%BA%A3nh_d5qi9y.jpg",
   },
   {
-    id: "den-trang",
+    id: "black_white_classic",
     name: "Đen trắng cổ điển",
     img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1770695157/%C4%90en_tr%E1%BA%AFng_c%E1%BB%95_%C4%91i%E1%BB%83n_cdkqw4.webp",
+  },
+  {
+    id: "mau_nuoc",
+    name: "Màu Nước",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505789/tranh-mau-nuoc_jajkbg.webp",
+  },
+  {
+    id: "anime",
+    name: "Anime",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505784/anime_neateh.jpg",
+  },
+  {
+    id: "3d_pixar",
+    name: "3D Pixar",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505783/3D_Pixar_uyxkar.jpg",
+  },
+  {
+    id: "retro_pop_art",
+    name: "Retro Pop-Art",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505784/Retro_Pop-Art_fjdmdo.webp",
+  },
+  {
+    id: "soft_pastel",
+    name: "Màu Phấn (Pastel)",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505784/M%C3%A0u_Ph%E1%BA%A5n_Pastel_xbjw1q.webp",
+  },
+  {
+    id: "luxury_editorial",
+    name: "Tạp Chí Cao Cấp",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505787/T%E1%BA%A1p_Ch%C3%AD_Cao_C%E1%BA%A5p_nzbge9.jpg",
+  },
+  {
+    id: "double_exposure",
+    name: "Phơi Sáng Kép",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505784/Ph%C6%A1i_S%C3%A1ng_K%C3%A9p_i8z5xw.jpg",
+  },
+  {
+    id: "ai_painted",
+    name: "Tranh Vẽ AI",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505789/Tranh_V%E1%BA%BD_AI_pyqegt.png",
+  },
+  {
+    id: "high_contrast_editorial",
+    name: "Chân Dung Tương Phản",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505784/Ch%C3%A2n_Dung_T%C6%B0%C6%A1ng_Ph%E1%BA%A3n_u1bqlq.webp",
+  },
+  {
+    id: "flat_lay",
+    name: "Sắp Đặt Flat-lay",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505787/S%E1%BA%AFp_%C4%90%E1%BA%B7t_Flat-lay_cqn9zr.jpg",
+  },
+  {
+    id: "3d_render_realistic",
+    name: "3D Chân Thực",
+    img: "https://res.cloudinary.com/dypm5avrx/image/upload/v1772505783/3D_Ch%C3%A2n_Th%E1%BB%B1c_jqs0qw.webp",
   },
 ];
 
@@ -239,7 +301,7 @@ const LoginPopup = ({ onClose }) => {
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
-    navigate("/dangnhap");
+    navigate("/login");
     onClose();
   };
 
@@ -297,7 +359,7 @@ const LoginPopup = ({ onClose }) => {
 // --- 5. COMPONENT IMAGECREATOR ---
 const ImageCreator = () => {
   // 1. GLOBAL STATE
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn } = useUser();
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resultUrl, setResultUrl] = useState(null);
@@ -413,19 +475,120 @@ const ImageCreator = () => {
     setTemplatePreviewUrl(null);
   };
 
+  // === HÀM CHUYỂN IMAGE URL THÀNH FILE (Để gửi đi) ===
+  const createFileFromUrl = async (url, filename) => {
+    const response = await fetch(url);
+    const data = await response.blob();
+    const metadata = { type: "image/png" };
+    return new File([data], filename, metadata);
+  };
+
+  // === HÀM GỌT ẢNH THÀNH HÌNH VUÔNG 1:1 BẰNG CANVAS ===
+  // === HÀM GỌT ẢNH THEO TỶ LỆ CHỌN TRÊN GIAO DIỆN ===
+  const cropImageByRatio = (imageUrl, ratioString) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = imageUrl;
+      img.onload = () => {
+        // 1. Tách tỷ lệ từ chuỗi (VD: "4/3" -> w=4, h=3)
+        const [ratioW, ratioH] = ratioString.split("/").map(Number);
+        const targetRatio = ratioW / ratioH;
+        const imageRatio = img.width / img.height;
+
+        let cropWidth = img.width;
+        let cropHeight = img.height;
+
+        // 2. Tính toán kích thước cắt sao cho khung hình không bị méo
+        if (imageRatio > targetRatio) {
+          // Ảnh gốc quá rộng -> Giữ nguyên chiều cao, xén bớt 2 bên chiều rộng
+          cropHeight = img.height;
+          cropWidth = cropHeight * targetRatio;
+        } else {
+          // Ảnh gốc quá cao -> Giữ nguyên chiều rộng, xén bớt trên dưới
+          cropWidth = img.width;
+          cropHeight = cropWidth / targetRatio;
+        }
+
+        // 3. Tính tọa độ để luôn cắt ở chính giữa trung tâm bức ảnh
+        const startX = (img.width - cropWidth) / 2;
+        const startY = (img.height - cropHeight) / 2;
+
+        // 4. Mở khung Canvas và tiến hành cắt
+        const canvas = document.createElement("canvas");
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+        const ctx = canvas.getContext("2d");
+
+        ctx.drawImage(
+          img,
+          startX,
+          startY,
+          cropWidth,
+          cropHeight, // Lấy phần lõi của ảnh gốc
+          0,
+          0,
+          cropWidth,
+          cropHeight, // Dán vừa khít vào Canvas
+        );
+
+        resolve(canvas.toDataURL("image/png"));
+      };
+    });
+  };
+
   //Hàm tạo ảnh
   const generateImage = async () => {
+    // 1. Kiểm tra đăng nhập và ảnh đầu vào
     if (!isLoggedIn) {
       setShowLoginPopup(true);
       return;
     }
-    if (!imageFile) return;
+    if (!imageFile) {
+      toast.warning("Vui lòng tải lên hoặc chụp một bức ảnh đầu vào!", {
+        position: "top-right",
+      });
+      return;
+    }
+
     setLoading(true);
     setResultUrl(null);
-    setTimeout(() => {
-      setResultUrl(previewUrl);
-      setLoading(false);
-    }, 3000);
+
+    try {
+      // Cắt ảnh thành đúng tỷ lệ bằng Canvas
+      const croppedImageUrl = await cropImageByRatio(previewUrl, aspectRatio);
+      const croppedImageFile = await createFileFromUrl(
+        croppedImageUrl,
+        "cropped-image.png",
+      );
+      // 2. Tạo gói dữ liệu (FormData) để gửi File và Style
+      const formData = new FormData();
+      formData.append("image", croppedImageFile);
+      formData.append("style", selectedStyle);
+
+      // 3. Gửi hỏa tốc lên con AI
+      const response = await axios.post(
+        "https://nova-ai-3-n1yj.onrender.com/style_transfer/style-transfer",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          responseType: "blob", // Cực kỳ quan trọng: Báo cho Axios biết Server sẽ trả về File ảnh
+        },
+      );
+
+      // 4. Nhận kết quả file ảnh, biến thành URL và hiển thị
+      const imageUrl = URL.createObjectURL(response.data);
+      setResultUrl(imageUrl);
+      toast.success("Tạo ảnh thành công!", { position: "top-right" });
+    } catch (error) {
+      console.error("Lỗi tạo ảnh AI:", error);
+      toast.error("Có lỗi xảy ra từ máy chủ AI. Vui lòng thử lại!", {
+        position: "top-right",
+      });
+    } finally {
+      setLoading(false); // Tắt hiệu ứng quay vòng
+    }
   };
 
   // Hàm khởi động Camera
@@ -689,9 +852,8 @@ const ImageCreator = () => {
                               : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                           }`}
                         >
-                          {/* KHUNG CHỨA CHỮ REVIEW (Chiếm phần lớn không gian) */}
+                          {/* KHUNG CHỨA CHỮ REVIEW */}
                           <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
-                            {/* Dùng break-words để tự xuống dòng, leading-tight để dòng sít nhau */}
                             <span
                               className={`text-[16px] text-[#B91C1C] ${font.className} leading-tight break-words w-full text-center`}
                             >
@@ -834,7 +996,7 @@ const ImageCreator = () => {
 
                   <div className="border-2 border-dashed border-gray-300 rounded-xl bg-white min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden">
                     {!templatePreviewUrl ? (
-                      // TRẠNG THÁI CHƯA UPLOAD (Giống image_112e47.png)
+                      // TRẠNG THÁI CHƯA UPLOAD
                       <label className="w-full h-32 flex flex-col items-center justify-center cursor-pointer">
                         <FolderOpen
                           size={40}
@@ -854,7 +1016,7 @@ const ImageCreator = () => {
                         />
                       </label>
                     ) : (
-                      // TRẠNG THÁI ĐÃ UPLOAD (Giống image_1132c3.png)
+                      // TRẠNG THÁI ĐÃ UPLOAD
                       <div className="relative w-full p-2 animate-in fade-in duration-500">
                         <div className="relative rounded-lg overflow-hidden shadow-md">
                           <img
@@ -917,12 +1079,16 @@ const ImageCreator = () => {
             </h3>
             <img
               src={resultUrl}
-              className="max-h-[60vh] rounded-xl shadow-2xl mb-6 object-contain"
+              className="max-h-[60vh] w-auto object-contain rounded-xl shadow-2xl mb-6"
               alt="Result"
             />
             <div className="flex gap-4">
               <button
-                onClick={() => setResultUrl(null)}
+                onClick={() => {
+                  setResultUrl(null);
+                  setImageFile(null);
+                  setPreviewUrl(null);
+                }}
                 className="px-6 py-2 bg-gray-100 rounded-full font-medium hover:bg-gray-200"
               >
                 Làm lại
@@ -948,7 +1114,7 @@ const ImageCreator = () => {
   );
 };
 
-// --- 6. COMPONENT TAOTRANH (MAIN PAGE VỚI FIXED BACKGROUND) ---
+// --- 6. COMPONENT TAOTRANH ---
 const TaoTranh = () => {
   useEffect(() => {
     AOS.init({ duration: 1000, once: true });
