@@ -25,7 +25,7 @@
     "@ckeditor/ckeditor5-list": "^47.4.0",
     "@ckeditor/ckeditor5-media-embed": "^47.4.0",
     "@ckeditor/ckeditor5-paragraph": "^47.4.0",
-    "@ckeditor/ckeditor5-react": "^11.0.1",
+    "@ckeditor/ckeditor5-react": "^8.0.0",
     "@ckeditor/ckeditor5-source-editing": "^47.4.0",
     "@ckeditor/ckeditor5-special-characters": "^47.4.0",
     "@ckeditor/ckeditor5-table": "^47.4.0",

@@ -414,76 +414,9 @@ const ExperienceGallery = ({
             <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 p-4 flex flex-col justify-between">
               <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/60 to-transparent pointer-events-none"></div>
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+              {/* Đã xóa Edit/Yêu thích/Dislike */}
               <div className="relative z-10 flex justify-between items-start">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="flex items-center gap-2 rounded-lg bg-black/50 px-4 py-2 text-white text-sm font-semibold transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                  title="Chỉnh sửa ảnh"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 003-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Edit
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                    title="Thêm vào yêu thích"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                    title="Dislike"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.682 17.682a4.5 4.5 0 01-6.364 0L12 16.364l-1.318 1.318a4.5 4.5 0 01-6.364-6.364l7.682-7.682 7.682 7.682a4.5 4.5 0 010 6.364z"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                {/* empty - remove Edit/Yêu thích/Dislike */}
               </div>
               <div className="relative z-10 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-white text-sm font-semibold">
