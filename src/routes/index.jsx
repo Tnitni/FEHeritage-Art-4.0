@@ -30,6 +30,7 @@ import {
   LoginPage,
   RegisterPage,
 } from "../pages";
+import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
 import AppLayout from "../components/layouts/AppLayout.jsx";
 import MainLayout from "../components/layouts/MainLayout.jsx";
 import Cart from "../components/Cart.jsx";
@@ -298,7 +299,11 @@ const router = createBrowserRouter([
       // Admin Routes
       {
         path: "admin",
-        element: <AdminLayout />,
+        element: (
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
         children: [
           {
             index: true, // Trang mặc định khi vào /admin
@@ -327,12 +332,16 @@ const router = createBrowserRouter([
           {
             path: 'analysis',
             element: <AdminPhanTich />,
-            
+
           },
-          { path: 'TraiNghiem', 
-            element: <AdminTraiNghiem /> },
-          { path: 'viewpoint',
-             element: <AdminGocNhin /> },
+          {
+            path: 'TraiNghiem',
+            element: <AdminTraiNghiem />
+          },
+          {
+            path: 'viewpoint',
+            element: <AdminGocNhin />
+          },
           {
             path: "forum",
             element: <AdminForum />,

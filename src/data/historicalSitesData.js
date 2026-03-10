@@ -52,7 +52,6 @@ import langongthuytuong from "../assets/Lăng Ông Thủy Tướng.png";
 import mieucayqueo from "../assets/Miếu Cây Quéo.png";
 import mieunhiphu from "../assets/Miếu Nhị Phủ (Chùa Ông Bổn).png";
 
-
 import moongphamvanchi from "../assets/Mộ và đền thờ ông Phạm Văn Chí.png";
 
 import ngabagiong from "../assets/Ngã Ba Giồng.png";
@@ -2670,7 +2669,13 @@ export const mapDataRaw = [
     lng: "106.8350235718222",
     description:
       'Chùa Bửu Long thường được người dân gọi là "Chùa Thái Lan" do lối kiến trúc đặc trưng mang đậm sắc thái các ngôi chùa ở xứ sở Chùa Vàng, kết hợp hài hòa với văn hóa thời Nguyễn. Điểm nhấn nổi bật nhất của chùa là bảo tháp Gotama Cetiya màu trắng với chóp vàng rực rỡ, được mệnh danh là bảo tháp lớn nhất Việt Nam. Khuôn viên chùa rộng 11ha, nằm trên một ngọn đồi rợp bóng cây xanh nhìn ra sông Đồng Nai, mang lại không gian thanh tịnh và mát mẻ. Đây là điểm đến tâm linh nổi tiếng, từng được tạp chí National Geographic (Mỹ) bình chọn là một trong 10 công trình Phật giáo có thiết kế đẹp nhất thế giới.',
-    images: [],
+    images: [
+      "https://res.cloudinary.com/dypm5avrx/image/upload/v1771920173/chua-buu-long-o-dau-1170x781_yljfx1.jpg",
+      "https://res.cloudinary.com/dypm5avrx/image/upload/v1771920169/chua-buu-long-1-1699418900_vib0ap.jpg",
+      "https://res.cloudinary.com/dypm5avrx/image/upload/v1771920166/chua-buu-long-1-1699418900_1_mv3ibb.jpg",
+      "https://res.cloudinary.com/dypm5avrx/image/upload/v1771920162/chuabuulong_qsexvw.jpg",
+      "https://res.cloudinary.com/dypm5avrx/image/upload/v1771920160/26eb4713-chua-buu-long-2_yk5g4f.jpg",
+    ],
     period: "Pháp thuộc",
     region: "Nam",
     province: "TP. Hồ Chí Minh",
@@ -3331,14 +3336,17 @@ export const mapDataRaw = [
     description: "Lưu giữ sắc phong cổ và các đồ tế tự bằng đồng quý giá.",
     detail:
       "Đình An Hội (Gò Vấp, TPHCM) là di tích kiến trúc nghệ thuật cấp Thành phố, nổi bật với giá trị văn hóa và lịch sử lâu đời. Đình thờ Thành hoàng làng, là nơi sinh hoạt tâm linh và cộng đồng quan trọng. Cùng với Miếu Sa Tân, Đình An Hội góp phần bảo tồn văn hóa truyền thống tại khu vực.",
-    images: ["https://res.cloudinary.com/dcizhss2x/image/upload/v1772021168/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_pjwhrh.jpg",
+    images: [
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021168/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_pjwhrh.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021165/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_4_fxvamb.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021167/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_9_f2lhmy.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_3_pnie8e.jpg","https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_5_empfdz.jpg",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_3_pnie8e.jpg",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_5_empfdz.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021165/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_2_qoazfd.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_8_ewgujb.jpg","https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_ojcixf.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_a097i4.jpg","https://res.cloudinary.com/dcizhss2x/image/upload/v1772021164/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_jyqcqr.jpg"
-
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_8_ewgujb.jpg",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_ojcixf.jpg",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021166/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_a097i4.jpg",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021164/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_jyqcqr.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3364,7 +3372,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021623/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_xrrxlf.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021623/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_fp00fv.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021623/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_rhzv6q.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021623/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_rhzv6q.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021623/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_rhzv6q.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3388,7 +3396,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021769/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_5_ydxaf1.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021770/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_wzuuuy.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021770/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_gqfi9b.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021771/B%E1%BA%A3n_sao_c%E1%BB%A7a_unnamed_h5bhg0.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021771/B%E1%BA%A3n_sao_c%E1%BB%A7a_unnamed_h5bhg0.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3410,7 +3418,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021904/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_4_jwmtmy.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021906/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_t0leoe.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021906/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_t0leoe.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021908/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_k7hhhn.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772021908/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_k7hhhn.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3437,7 +3445,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022051/B%E1%BA%A3n_sao_c%E1%BB%A7a_sddefault_z6iucj.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022052/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_zqsp1i.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022053/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_2_xktzwo.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022054/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_zwezsn.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022054/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_zwezsn.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3463,7 +3471,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022269/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_sjnlly.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022270/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_2_rajyly.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022271/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_3_e13tzi.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022273/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_uv6zvb.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022273/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_uv6zvb.jpg",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3501,7 +3509,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022438/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_5_bp0vcz.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022440/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_yywozd.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022441/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_kw6mlf.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022442/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_dc2hvc.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022442/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_dc2hvc.jpg",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3526,7 +3534,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022602/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_7_si5gqm.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022605/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_8_tccurv.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022607/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_9_zjgtac.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022610/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_f8ddlh.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022610/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_f8ddlh.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3552,7 +3560,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022727/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_4_jhbtbg.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022729/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_5_wyxt5s.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022731/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_6_p4mamr.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022741/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_dywtbs.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022741/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_dywtbs.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3569,7 +3577,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022853/B%E1%BA%A3n_sao_c%E1%BB%A7a_images_1_f4kl7l.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022855/B%E1%BA%A3n_sao_c%E1%BB%A7a_images_y3eihv.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022857/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_rjenxf.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022858/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_xec5vy.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022858/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_xec5vy.jpg",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3588,7 +3596,7 @@ export const mapDataRaw = [
     images: [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022929/B%E1%BA%A3n_sao_c%E1%BB%A7a_images_q0s0ar.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022930/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_1_w0uvgo.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022932/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_nypqfs.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772022932/B%E1%BA%A3n_sao_c%E1%BB%A7a_t%E1%BA%A3i_xu%E1%BB%91ng_nypqfs.jpg",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3613,7 +3621,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023044/Tu%E1%BB%95i_tr%E1%BA%BB_X%C3%A3_B%C3%ACnh_Kh%C3%A1nh_-_TPHCM-7_weodns.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023047/Tu%E1%BB%95i_tr%E1%BA%BB_X%C3%A3_B%C3%ACnh_Kh%C3%A1nh_-_TPHCM-6_q4k4ur.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023050/Tu%E1%BB%95i_tr%E1%BA%BB_X%C3%A3_B%C3%ACnh_Kh%C3%A1nh_-_TPHCM-5_hyqywm.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023055/Tu%E1%BB%95i_tr%E1%BA%BB_X%C3%A3_B%C3%ACnh_Kh%C3%A1nh_-_TPHCM-4_afnzlc.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023055/Tu%E1%BB%95i_tr%E1%BA%BB_X%C3%A3_B%C3%ACnh_Kh%C3%A1nh_-_TPHCM-4_afnzlc.png",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3639,7 +3647,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023209/Google_Maps-2_ntpbss.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023204/H%C3%A0_Nguy%E1%BB%85n-vietnamnet_hibzds.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023207/Google_Maps-3_xtsyjz.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023211/Google_Maps_yb2ba6.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023211/Google_Maps_yb2ba6.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3660,7 +3668,9 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023322/Google_Maps-9_xhslps.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023335/Google_Maps-2_aapugx.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023333/Google_Maps-7_rdpded.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023346/Google_Maps_nqytq7.webp","https://res.cloudinary.com/dcizhss2x/image/upload/v1772023344/Google_Maps-3_p8jp6l.webp","https://res.cloudinary.com/dcizhss2x/image/upload/v1772023342/Google_Maps-4_sj07jp.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023346/Google_Maps_nqytq7.webp",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023344/Google_Maps-3_p8jp6l.webp",
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023342/Google_Maps-4_sj07jp.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -3686,7 +3696,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023546/Th%C3%ADch_%C4%90i_Ch%C3%B9a_-H%E1%BB%93ng_Nguy%E1%BB%85n-4_jtiewr.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023550/Th%C3%ADch_%C4%90i_Ch%C3%B9a_-H%E1%BB%93ng_Nguy%E1%BB%85n-3_uutc2s.jpg",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023556/Th%C3%ADch_%C4%90i_Ch%C3%B9a_-H%E1%BB%93ng_Nguy%E1%BB%85n_gslffd.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023554/Th%C3%ADch_%C4%90i_Ch%C3%B9a_-H%E1%BB%93ng_Nguy%E1%BB%85n-2_kmbvno.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023554/Th%C3%ADch_%C4%90i_Ch%C3%B9a_-H%E1%BB%93ng_Nguy%E1%BB%85n-2_kmbvno.jpg",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3707,7 +3717,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023680/YTUP-TV886-7_tyll3x.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023682/YTUP-TV886-6_mhlsl3.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023684/YTUP-TV886-5_ivlww2.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023687/YTUP-TV886-4_ejkke1.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023687/YTUP-TV886-4_ejkke1.png",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3732,7 +3742,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023748/Google_Maps-4_y7qxwa.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023755/Google_Maps-3_sbezwd.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023758/Google_Maps-2_mfrctt.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023762/Google_Maps_fgwmhs.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023762/Google_Maps_fgwmhs.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3755,7 +3765,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023940/Google_Maps-8_rk2b1n.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023943/Google_Maps-7_dp67tc.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023956/Google_Maps-6_p7hioh.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023962/Google_Maps-5_c2sfli.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772023962/Google_Maps-5_c2sfli.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3780,7 +3790,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024103/Google_Maps-4_fnzoav.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024103/Google_Maps-4_fnzoav.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024108/Google_Maps-2_xt4wh1.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024111/Google_Maps_keiknz.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024111/Google_Maps_keiknz.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3803,7 +3813,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024263/Google_Maps-4_iqaqeu.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024267/Google_Maps-3_c1uyxt.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024271/Google_Maps-2_hpdfpo.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024275/Google_Maps_qwfbnl.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024275/Google_Maps_qwfbnl.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3829,7 +3839,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024389/Google_Maps-4_jjc3ov.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024393/Google_Maps-3_ewjwsp.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024400/Google_Maps-2_od5irn.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024405/Google_Maps_oaglhc.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024405/Google_Maps_oaglhc.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3855,7 +3865,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024530/Google_Maps-4_ieihj2.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024534/Google_Maps-3_lgja8b.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024537/Google_Maps-2_q5juhn.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024544/Google_Maps_pjwkhc.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024544/Google_Maps_pjwkhc.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -3882,7 +3892,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024653/Google_Maps-4_pqwlnv.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024656/Google_Maps-3_xuymaf.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024661/Google_Maps-2_jefkr2.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024666/Google_Maps_bbcruq.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024666/Google_Maps_bbcruq.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3908,7 +3918,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024830/Google_Maps-4_gartf5.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024836/Google_Maps-3_tg4oaw.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024842/Google_Maps-2_ly3zlk.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024847/Google_Maps_vv1dca.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024847/Google_Maps_vv1dca.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3934,7 +3944,6 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024980/Google_Maps-2_umuxcr.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024973/Google_Maps-3_sllbi9.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772024985/Google_Maps_vtdury.webp",
-      
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3960,7 +3969,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025210/Google_Maps-4_jponb1.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025216/Google_Maps-3_wg4ogc.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025221/Google_Maps-2_ug9ypp.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025227/Google_Maps_iang0b.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025227/Google_Maps_iang0b.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -3986,7 +3995,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025381/Google_Maps-4_hilmpe.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025387/Google_Maps-3_zdndwn.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025392/Google_Maps-2_lgl7zx.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025397/Google_Maps_xlampd.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025397/Google_Maps_xlampd.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4006,7 +4015,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025495/Google_Maps-4_ss2pbn.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025501/Google_Maps-3_eb4v9u.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025505/Google_Maps-2_cjtd9c.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025514/Google_Maps_kqj3v1.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025514/Google_Maps_kqj3v1.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4032,7 +4041,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025787/Google_Maps-4_qvowlx.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025794/Google_Maps-3_jdiapb.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025800/Google_Maps-2_ozdstk.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025805/Google_Maps_fpuruc.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025805/Google_Maps_fpuruc.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4055,7 +4064,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025650/Google_Maps-4_qq0bnf.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025656/Google_Maps-3_pph04k.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025656/Google_Maps-3_pph04k.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025668/Google_Maps_eoh70y.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025668/Google_Maps_eoh70y.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4080,7 +4089,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025900/Google_Maps-4_yhrj8i.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025907/Google_Maps-3_n67ebb.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025913/Google_Maps-2_n6ndzx.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025919/Google_Maps_fgkxzc.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772025919/Google_Maps_fgkxzc.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4102,7 +4111,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026038/Chi%E1%BA%BFn_d%E1%BB%8Bch_t%C3%ACnh_nguy%E1%BB%87n_m%C3%B9a_h%C3%A8_xanh_l%E1%BA%A7n_th%E1%BB%A9_XXII_n%C4%83m_2024_Tr%C6%B0%E1%BB%9Dng_%C4%90H_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt-5_kg3bpv.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026041/Chi%E1%BA%BFn_d%E1%BB%8Bch_t%C3%ACnh_nguy%E1%BB%87n_m%C3%B9a_h%C3%A8_xanh_l%E1%BA%A7n_th%E1%BB%A9_XXII_n%C4%83m_2024_Tr%C6%B0%E1%BB%9Dng_%C4%90H_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt-4_h99m8c.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026049/Chi%E1%BA%BFn_d%E1%BB%8Bch_t%C3%ACnh_nguy%E1%BB%87n_m%C3%B9a_h%C3%A8_xanh_l%E1%BA%A7n_th%E1%BB%A9_XXII_n%C4%83m_2024_Tr%C6%B0%E1%BB%9Dng_%C4%90H_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt-3_xxw3vl.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026054/Chi%E1%BA%BFn_d%E1%BB%8Bch_t%C3%ACnh_nguy%E1%BB%87n_m%C3%B9a_h%C3%A8_xanh_l%E1%BA%A7n_th%E1%BB%A9_XXII_n%C4%83m_2024_Tr%C6%B0%E1%BB%9Dng_%C4%90H_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt-2_rwvxfk.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026054/Chi%E1%BA%BFn_d%E1%BB%8Bch_t%C3%ACnh_nguy%E1%BB%87n_m%C3%B9a_h%C3%A8_xanh_l%E1%BA%A7n_th%E1%BB%A9_XXII_n%C4%83m_2024_Tr%C6%B0%E1%BB%9Dng_%C4%90H_Kinh_T%E1%BA%BF_-_Lu%E1%BA%ADt-2_rwvxfk.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4127,7 +4136,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026159/Google_Maps-5_zq3tjd.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026166/Google_Maps-4_qwldla.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026172/Google_Maps-2_qbjeoc.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026178/Google_Maps_ydtc55.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026178/Google_Maps_ydtc55.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4153,7 +4162,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026273/Google_Maps-4_b9qg4f.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026279/Google_Maps-3_effxup.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026285/Google_Maps-2_dutbx8.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026291/Google_Maps_x6x8rn.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026291/Google_Maps_x6x8rn.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4179,7 +4188,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026382/Google_Maps-5_vv0wrx.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026388/Google_Maps-4_hgtyak.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026394/Google_Maps-3_awcc7o.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026401/Google_Maps-2_w7qmql.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026401/Google_Maps-2_w7qmql.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4204,7 +4213,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026492/Google_Maps-5_tiagve.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026498/Google_Maps-4_nwykrx.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026505/Google_Maps-3_cosh4j.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026510/Google_Maps-2_vjuuzk.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026510/Google_Maps-2_vjuuzk.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4228,7 +4237,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026611/Google_Maps-4_osfadg.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026617/Google_Maps-3_uryala.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026623/Google_Maps-2_s9soe2.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026631/Google_Maps_vtgejn.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026631/Google_Maps_vtgejn.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4251,7 +4260,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026712/Google_Maps-2_ree4zv.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026718/Google_Maps_e7nhjj.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026725/xanhsm-2_i4vckh.jpg",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026732/xanhsm_wgdonc.jpg"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026732/xanhsm_wgdonc.jpg",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4276,7 +4285,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026825/Google_Maps-5_oalrxt.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026830/Google_Maps-4_lkrhxn.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026841/Google_Maps-3_swjdwh.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026849/Google_Maps-2_ypyfbd.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772026849/Google_Maps-2_ypyfbd.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4329,7 +4338,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027093/Google_Maps-4_d60wkk.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027093/Google_Maps-4_d60wkk.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027108/Google_Maps-3_g03dcl.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027117/Google_Maps-2_sli9gy.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027117/Google_Maps-2_sli9gy.webp",
     ],
     period: "Hiện đại",
     region: "Nam",
@@ -4355,7 +4364,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027233/UBND_Ph%C6%B0%E1%BB%9Dng_26_Qu%E1%BA%ADn_B%C3%ACnh_Th%E1%BA%A1nh-2_w5rdmz.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027241/UBND_Ph%C6%B0%E1%BB%9Dng_26_Qu%E1%BA%ADn_B%C3%ACnh_Th%E1%BA%A1nh_mjryqj.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027249/Google_Maps-3_vmr00q.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027256/Google_Maps-2_icbuc3.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027256/Google_Maps-2_icbuc3.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4382,7 +4391,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027393/Google_Maps-4_pbbwzy.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027400/Google_Maps-3_vljxiw.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027407/Google_Maps-2_tclwjh.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027414/Google_Maps_rsvvai.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027414/Google_Maps_rsvvai.webp",
     ],
     period: "Hậu Lê",
     region: "Nam",
@@ -4406,7 +4415,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027549/Youtube-Master_V-5_vi9wci.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027558/Youtube-Master_V-4_a4hrfu.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027564/Youtube-Master_V-3_kfuitc.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027564/Youtube-Master_V-3_kfuitc.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027564/Youtube-Master_V-3_kfuitc.png",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4433,7 +4442,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027724/Youtube-Thanh_Nguy%E1%BB%85n-10_okpsz2.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027725/Youtube-Thanh_Nguy%E1%BB%85n-3_wlxsre.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027726/Youtube-Thanh_Nguy%E1%BB%85n-5_dttkia.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027725/Youtube-Thanh_Nguy%E1%BB%85n-2_v09rjn.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027725/Youtube-Thanh_Nguy%E1%BB%85n-2_v09rjn.png",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4458,7 +4467,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027811/Google_Maps-4_nfw2rc.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027811/Google_Maps-3_wm6izo.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027810/Google_Maps-6_d816p5.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027811/Google_Maps-5_bbi42p.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027811/Google_Maps-5_bbi42p.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4481,7 +4490,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027907/Google_Maps-4_wad3yd.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027908/Google_Maps-2_b8n5jf.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027911/Google_Maps_zkdbem.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027907/Google_Maps-3_n9xdfd.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027907/Google_Maps-3_n9xdfd.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4505,7 +4514,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027990/Google_Maps-7_rxr93r.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027992/Google_Maps-6_k3otbb.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772027992/Google_Maps-3_vsdeze.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028000/Google_Maps_ozn8mm.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028000/Google_Maps_ozn8mm.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4530,7 +4539,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028104/L%C3%AA_Nh%C3%A2n_Media-3_femg9b.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028106/L%C3%AA_Nh%C3%A2n_Media_jgtcaz.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028105/Hu%E1%BA%A5n_Phan_V%C4%83n_nmcrx1.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028103/Hu%E1%BA%A5n_Phan_V%C4%83n-2_owc0b2.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028103/Hu%E1%BA%A5n_Phan_V%C4%83n-2_owc0b2.png",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4553,7 +4562,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028192/B%C3%A1o_ph%C3%A1p_lu%E1%BA%ADt_Th%C3%A0nh_Ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh-6_hje3fa.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028207/B%C3%A1o_ph%C3%A1p_lu%E1%BA%ADt_Th%C3%A0nh_Ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh_mpbvfg.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028207/B%C3%A1o_ph%C3%A1p_lu%E1%BA%ADt_Th%C3%A0nh_Ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh-5_fyc4tf.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028206/B%C3%A1o_ph%C3%A1p_lu%E1%BA%ADt_Th%C3%A0nh_Ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh-2_znthtk.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028206/B%C3%A1o_ph%C3%A1p_lu%E1%BA%ADt_Th%C3%A0nh_Ph%E1%BB%91_H%E1%BB%93_Ch%C3%AD_Minh-2_znthtk.webp",
     ],
     period: "Pháp thuộc",
     region: "Nam",
@@ -4601,7 +4610,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028337/Google_Maps-4_zatwos.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028336/Google_Maps-5_jwxfpb.webp",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028344/Google_Maps_sqcwwc.webp",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028339/Google_Maps-2_gmgmmg.webp"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028339/Google_Maps-2_gmgmmg.webp",
     ],
     period: "Nguyễn",
     region: "Nam",
@@ -4650,7 +4659,7 @@ export const mapDataRaw = [
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028546/Youtube_-_V%C5%A9_Nh%C6%B7-4_ctfitz.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028549/Youtube_-_V%C5%A9_Nh%C6%B7-2_af03vi.png",
       "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028551/Youtube_-_V%C5%A9_Nh%C6%B7_hmwv02.png",
-      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028547/Youtube_-_V%C5%A9_Nh%C6%B7-3_tuqwxp.png"
+      "https://res.cloudinary.com/dcizhss2x/image/upload/v1772028547/Youtube_-_V%C5%A9_Nh%C6%B7-3_tuqwxp.png",
     ],
     period: "Nguyễn",
     region: "Nam",
