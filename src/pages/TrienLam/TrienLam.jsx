@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import ExperienceGallery from "./ExperienceGallery";
+import { useEffect, useState } from "react";
 import ImageModal from "../../components/ImageModal";
 import {
-  getPosts,
-  getCommentsByPost,
   createPostComment,
   deleteComment,
+  getCommentsByPost,
+  getPosts,
 } from "../../services/api";
+import ExperienceGallery from "./ExperienceGallery";
 
 const DEFAULT_PERIODS = ["Lý", "Trần", "Lê", "Nguyễn", "Hiện đại"];
 const REGIONS = ["Bắc", "Trung", "Nam"];
@@ -18,6 +18,7 @@ const TrienLam = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   const [periods, setPeriods] = useState(DEFAULT_PERIODS);
+  const [isFilterPanelVisible, setFilterPanelVisible] = useState(false);
 
   const [galleryFilters, setGalleryFilters] = useState({
     periods: new Set(DEFAULT_PERIODS),
@@ -38,7 +39,7 @@ const TrienLam = () => {
             src: post.cloudinary_url || "https://via.placeholder.com/400",
             alt: post.caption || "Bài viết",
             caption: post.caption || "",
-            type: post.type || "image",                        // "image" | "video"
+            type: post.type || "image", // "image" | "video"
             year: post.year || new Date(post.created_at).getFullYear(),
             period: post.historical_period?.name || "Hiện đại",
             region: post.region || "Bắc",
@@ -79,8 +80,8 @@ const TrienLam = () => {
       if (res?.success) {
         setGalleryItems((prev) =>
           prev.map((item) =>
-            item.id === postId ? { ...item, comments: res.data } : item
-          )
+            item.id === postId ? { ...item, comments: res.data } : item,
+          ),
         );
       }
     } catch (err) {
@@ -97,8 +98,8 @@ const TrienLam = () => {
           prev.map((item) =>
             item.id === postId
               ? { ...item, comments: [res.data, ...item.comments] }
-              : item
-          )
+              : item,
+          ),
         );
         return true;
       }
@@ -121,8 +122,8 @@ const TrienLam = () => {
                   ...item,
                   comments: item.comments.filter((c) => c.id !== commentId),
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err) {
@@ -152,7 +153,7 @@ const TrienLam = () => {
     (item) =>
       galleryFilters.periods.has(item.period) &&
       galleryFilters.regions.has(item.region) &&
-      item.year <= galleryFilters.year
+      item.year <= galleryFilters.year,
   );
 
   // ─── Loading ────────────────────────────────────────────────────────────────
@@ -180,6 +181,8 @@ const TrienLam = () => {
         handleCommentDelete={handleCommentDelete}
         handleFilterChange={handleFilterChange}
         handleYearChange={handleYearChange}
+        isFilterPanelVisible={isFilterPanelVisible}
+        setFilterPanelVisible={setFilterPanelVisible}
       />
 
       {selectedImageIndex !== null && filteredItems[selectedImageIndex] && (
@@ -188,22 +191,19 @@ const TrienLam = () => {
           onClose={() => setSelectedImageIndex(null)}
           onPrev={() =>
             setSelectedImageIndex((prev) =>
-              prev === 0 ? filteredItems.length - 1 : prev - 1
+              prev === 0 ? filteredItems.length - 1 : prev - 1,
             )
           }
           onNext={() =>
             setSelectedImageIndex((prev) =>
-              prev === filteredItems.length - 1 ? 0 : prev + 1
+              prev === filteredItems.length - 1 ? 0 : prev + 1,
             )
           }
           onCommentSubmit={(data) =>
             handleCommentSubmit(filteredItems[selectedImageIndex].id, data)
           }
           onCommentDelete={(commentId) =>
-            handleCommentDelete(
-              commentId,
-              filteredItems[selectedImageIndex].id
-            )
+            handleCommentDelete(commentId, filteredItems[selectedImageIndex].id)
           }
           onLoadComments={() =>
             handleLoadComments(filteredItems[selectedImageIndex].id)

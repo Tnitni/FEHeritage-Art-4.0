@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef, useState } from "react";
 import filterIcon from "../../assets/filter.png";
 
 const CustomCheckbox = ({ label, value, checked, onChange }) => (
@@ -48,6 +48,7 @@ const ExperienceGallery = ({
   openModal,
 }) => {
   const filterPanelRef = useRef(null);
+  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
 
   const resetFilters = () => {
     setGalleryFilters({
@@ -264,11 +265,14 @@ const ExperienceGallery = ({
               scrollbarColor: "#dc8154 #f5f5f4",
             }}
           >
+            {/* THỜI KỲ LỊCH SỬ */}
             <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-3 md:gap-5">
+              {/* 1. Label (Bên trái) */}
               <div className="flex items-center justify-between w-full md:w-auto">
                 <strong className="text-base md:text-lg font-bold text-[#2e1e10]">
                   Thời kỳ:
                 </strong>
+                {/* Đếm số lượng trên mobile */}
                 <div className="flex items-center gap-2 md:hidden">
                   <span className="text-[11px] text-stone-500">
                     Đã chọn {activePeriodsCount}
@@ -276,21 +280,103 @@ const ExperienceGallery = ({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 md:gap-4 overflow-x-auto pb-1 md:pb-0 flex-1">
-                {periods.map((period) => (
-                  <CustomCheckbox
-                    key={period}
-                    label={period}
-                    value={period}
-                    checked={galleryFilters.periods.has(period)}
-                    onChange={() =>
-                      handleFilterChange(setGalleryFilters, "periods", period)
+              {/* 2. Nút Dropdown (Nằm giữa, độ rộng vừa phải w-56) */}
+              <div className="flex-1 relative z-[60]">
+                <div className="relative inline-block w-full md:w-56">
+                  {/* Nút bấm hiển thị Dropdown */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsPeriodDropdownOpen(!isPeriodDropdownOpen)
                     }
-                  />
-                ))}
+                    className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-white px-4 py-2 text-sm font-medium text-[#2e1e10] shadow-sm hover:bg-amber-50 focus:outline-none"
+                  >
+                    <span className="truncate">
+                      {activePeriodsCount === 0
+                        ? "Chọn thời kỳ..."
+                        : activePeriodsCount === periods.length
+                          ? "Tất cả thời kỳ"
+                          : `Đã chọn (${activePeriodsCount})`}
+                    </span>
+                    <svg
+                      className={`ml-2 h-4 w-4 transition-transform duration-200 ${isPeriodDropdownOpen ? "rotate-180 text-amber-500" : "text-gray-400"}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Bảng Dropdown xổ xuống */}
+                  {isPeriodDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsPeriodDropdownOpen(false)}
+                      ></div>
+                      <div className="absolute left-0 mt-1 w-full md:w-64 z-50 rounded-xl border border-amber-100 bg-white p-2 shadow-xl animate-fadein-fast max-h-60 overflow-y-auto">
+                        {periods.map((period) => {
+                          const isActive = galleryFilters.periods.has(period);
+                          return (
+                            <label
+                              key={period}
+                              className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-amber-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  className="peer sr-only"
+                                  checked={isActive}
+                                  onChange={() =>
+                                    handleFilterChange(
+                                      setGalleryFilters,
+                                      "periods",
+                                      period,
+                                    )
+                                  }
+                                />
+                                <div
+                                  className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${isActive ? "border-[#dc8154] bg-[#dc8154]" : "border-gray-300"}`}
+                                >
+                                  {isActive && (
+                                    <svg
+                                      className="h-3 w-3 text-white"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth="3"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span
+                                  className={`text-sm font-medium ${isActive ? "text-[#2e1e10]" : "text-gray-600"}`}
+                                >
+                                  {period}
+                                </span>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] md:text-xs text-stone-500">
+              {/* 3. Cụm nút chức năng (Bên phải - Phục hồi lại như cũ) */}
+              <div className="flex items-center gap-2 text-[11px] md:text-xs text-stone-500 mt-2 md:mt-0">
                 <button
                   type="button"
                   onClick={() => handleSelectAll("periods")}
@@ -310,6 +396,9 @@ const ExperienceGallery = ({
                 </span>
               </div>
             </div>
+
+            {/* Đường gạch ngang phân cách mobile */}
+            <div className="h-px w-full bg-amber-100 md:hidden" />
 
             <div className="h-px w-full bg-amber-100 md:hidden" />
 

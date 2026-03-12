@@ -483,14 +483,13 @@ const ImageCreator = () => {
     return new File([data], filename, metadata);
   };
 
-  // === HÀM GỌT ẢNH THÀNH HÌNH VUÔNG 1:1 BẰNG CANVAS ===
   // === HÀM GỌT ẢNH THEO TỶ LỆ CHỌN TRÊN GIAO DIỆN ===
   const cropImageByRatio = (imageUrl, ratioString) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = imageUrl;
       img.onload = () => {
-        // 1. Tách tỷ lệ từ chuỗi (VD: "4/3" -> w=4, h=3)
+        // 1. Tách tỷ lệ từ chuỗi
         const [ratioW, ratioH] = ratioString.split("/").map(Number);
         const targetRatio = ratioW / ratioH;
         const imageRatio = img.width / img.height;
@@ -528,7 +527,7 @@ const ImageCreator = () => {
           0,
           0,
           cropWidth,
-          cropHeight, // Dán vừa khít vào Canvas
+          cropHeight,
         );
 
         resolve(canvas.toDataURL("image/png"));
@@ -573,7 +572,7 @@ const ImageCreator = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          responseType: "blob", // Cực kỳ quan trọng: Báo cho Axios biết Server sẽ trả về File ảnh
+          responseType: "blob",
         },
       );
 
@@ -656,10 +655,7 @@ const ImageCreator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* === CỘT TRÁI: UPLOAD & CAMERA === */}
         <div className="flex flex-col gap-4 w-full">
-          {/* 1. KHUNG ẢNH BIẾN HÌNH (MAGIC BOX)
-              - Thay aspect-square bằng style={{ aspectRatio }}
-              - Thêm transition-all duration-500 để hiệu ứng mượt mà
-          */}
+          {/* 1. Khung ảnh */}
           <div
             className="relative w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center group hover:bg-slate-100 transition-all duration-500 ease-in-out cursor-pointer overflow-hidden shadow-inner"
             style={{ aspectRatio: aspectRatio }}
@@ -704,8 +700,6 @@ const ImageCreator = () => {
               </label>
             ) : (
               <div className="relative w-full h-full">
-                {/* Ảnh preview: object-cover để tràn khung, object-contain để hiện full ảnh.
-                    Dựa theo yêu cầu "tràn hình vuông", dùng object-cover sẽ đẹp hơn khi đổi tỷ lệ */}
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -769,26 +763,7 @@ const ImageCreator = () => {
 
         {/* === CỘT PHẢI: BẢNG ĐIỀU KHIỂN === */}
         <div className="flex flex-col gap-6">
-          {/* 1. Ô Nhập Prompt */}
-          <div className="p-4 bg-[#F8F9FA] border border-[#E9ECEF] rounded-2xl flex flex-col gap-2">
-            <label className="text-slate-700 font-bold text-base">
-              Nhập nội dung (Content)
-            </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => {
-                if (e.target.value.length <= 500) setPrompt(e.target.value);
-              }}
-              className="w-full h-32 p-4 bg-white border border-slate-300 rounded-xl resize-none text-gray-700 text-sm placeholder:text-gray-400 shadow-sm transition-all focus:outline-none focus:ring-0"
-              placeholder="Ví dụ: Một cô gái trẻ đang ngồi trên ghế đá trong vườn hoa..."
-            ></textarea>
-            <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-              <span>Mô tả chi tiết để có kết quả tốt hơn</span>
-              <span>{prompt.length}/500</span>
-            </div>
-          </div>
-
-          {/* 2. Phần Tùy Chỉnh */}
+          {/* 1. Phần Tùy Chỉnh */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 px-1">
               <Settings className="w-5 h-5 text-gray-400 animate-spin-slow" />
@@ -1055,7 +1030,7 @@ const ImageCreator = () => {
               )}
             </div>
           </div>
-          {/* 3. Button Tạo ảnh */}
+          {/* 2. Button Tạo ảnh */}
           <button
             onClick={generateImage}
             disabled={loading}
