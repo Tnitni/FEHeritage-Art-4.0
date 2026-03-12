@@ -69,7 +69,10 @@ export const changePassword = (data) => api.put("/auth/change-password", data);
 export const getPosts = () => api.get("/experience-posts");
 export const getPostById = (postId) => api.get(`/experience-posts/${postId}`);
 export const getPostsByUser = (userId) => api.get(`/experience-posts/user/${userId}`);
-
+export const createReply = (commentId, data) => {
+  const payload = typeof data === "string" ? { content: data } : data;
+  return api.post(`/experience-comments/${commentId}/replies`, payload);
+};
 export const createPost = (formData) =>
   api.post("/experience-posts", formData, {
     headers: { "Content-Type": "multipart/form-data" },

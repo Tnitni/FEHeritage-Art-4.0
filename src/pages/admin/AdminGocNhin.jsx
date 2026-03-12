@@ -7,7 +7,9 @@ import {
   updatePost,
 } from "../../services/api";
 
-// Dữ liệu mẫu góc nhìn (local fallback, hiếm khi dùng)
+/**
+ * Danh sách mẫu bài viết Góc Nhìn, dùng làm dữ liệu fallback khi load API thất bại.
+ */
 const initialGocNhinPosts = [
   {
     id: "G-001",
@@ -29,56 +31,62 @@ const initialGocNhinPosts = [
 
 const ITEMS_PER_PAGE = 5;
 
-// Hàm cập nhật bài viết sử dụng FormData và gọi updatePost từ services/api.js
+/**
+ * Cập nhật bài viết Góc Nhìn.
+ * Sử dụng FormData để hỗ trợ upload file và gửi lên API Laravel (giao thức _method spoofing).
+ * @param {string} id - ID bài viết cần cập nhật
+ * @param {Object} form - Dữ liệu bài viết (form state)
+ * @returns {Promise<boolean>} - Kết quả thành công/thất bại
+ */
 const handleUpdate = async (id, form) => {
   try {
     const formData = new FormData();
 
     formData.append("title", form.title);
-    formData.append("caption",  form.title);
+    formData.append("caption", form.title);
     formData.append("summary", form.summary);
     formData.append("content", form.content);
- 
 
-    // Quan trọng: Spoofing method cho Laravel/Backend nhận diện PUT qua POST
+    // Dùng _method để backend Laravel nhận diện PUT qua POST (nếu RESTful không chấp nhận upload image qua PUT)
     formData.append("_method", "PUT");
 
     if (form.thumbnail instanceof File) {
-      formData.append("image", form.thumbnail);
+      formData.append("image", form.thumbnail); // Trường hợp upload ảnh mới
     } else if (typeof form.thumbnail === "string" && form.thumbnail) {
-      // Nếu không đổi ảnh, gửi URL hiện tại để Backend không báo thiếu image
+      // Nếu không đổi ảnh, gửi lại URL cũ để backend không báo thiếu ảnh
       formData.append("image_url", form.thumbnail); 
     }
 
     const response = await updatePost(id, formData);
-    
-    // DEBUG: Khang nhìn vào console xem Object này có 'id' không
     console.log("DỮ LIỆU SERVER TRẢ VỀ:", response);
 
-    // SỬA ĐIỀU KIỆN: Chỉ cần có response và có id là coi như thành công
-    // (Vì interceptor của bạn đã trả về response.data rồi)
-
+    // Kiểm tra thành công dựa trên trường 'success'
     return response?.success === true;
-    
   } catch (error) {
-    console.error("Lỗi cập nhật chi tiết:", error.response?.data || error.message);
+    console.error("Lỗi cập nhật chi tiết:", error?.response?.data || error?.message);
     return false;
   }
 };
-// Hàm tạo mới bài viết - sử dụng FormData và gọi API từ services/api.js
+
+/**
+ * Tạo mới bài viết Góc Nhìn.
+ * Kiểm tra validate và sử dụng FormData để upload ảnh.
+ * @param {Event} e - Sự kiện submit form
+ * @param {Object} form - Dữ liệu bài viết
+ * @param {Function} resetForm - Hàm reset form sau khi thành công
+ * @param {Function} loadData - Hàm reload danh sách bài viết
+ */
 const handlePost = async (e, form, resetForm, loadData) => {
   e.preventDefault();
 
-  // 1. Validation 
+  // Kiểm tra đầu vào bắt buộc
   if (!form.title.trim() || !form.content.trim() || !form.thumbnail) {
     alert("Vui lòng nhập tiêu đề, nội dung và chọn ảnh đại diện!");
     return;
   }
 
-  // KHỞI TẠO TRƯỚC KHI SỬ DỤNG (Dòng này phải nằm trên các dòng append/log)
   const formData = new FormData(); 
 
-  // 2. Append dữ liệu
   formData.append("title", form.title);
   formData.append("caption", form.title);
   formData.append("summary", form.summary);
@@ -86,15 +94,16 @@ const handlePost = async (e, form, resetForm, loadData) => {
   formData.append("type", "gocnhin");
 
   if (form.thumbnail instanceof File) {
-    formData.append("image", form.thumbnail); // <--- Thử đổi tên ở đây
+    formData.append("image", form.thumbnail);
   }
+
+  // Debug nội dung formData
   console.log("--- DEBUG PAYLOAD ---");
-for (var pair of formData.entries()) {
-    console.log(pair[0] + ': ' + pair[1]); 
-}
+  for (var pair of formData.entries()) {
+    console.log(pair[0] + ": " + pair[1]);
+  }
   try {
     const response = await createPost(formData);
-    // Log để xem server trả về gì thành công
     console.log("Server Response:", response);
     
     if (response.status === 200 || response.status === 201 || response.success) { 
@@ -103,27 +112,27 @@ for (var pair of formData.entries()) {
       resetForm();
     }
   } catch (error) {
-    // ĐÂY LÀ PHẦN QUAN TRỌNG NHẤT
+    // Xử lý lỗi trả về từ server hoặc mạng
     console.error("LỖI PHÁT SINH TỪ SERVER:");
     if (error.response) {
-      // Server đã nhận request nhưng trả về lỗi (4xx, 5xx)
+      // Lỗi API trả về
       console.log("Data lỗi:", error.response.data); 
       console.log("Status code:", error.response.status);
       alert(`Server báo lỗi (${error.response.status}): ${JSON.stringify(error.response.data)}`);
     } else {
-      // Lỗi mạng hoặc lỗi không phản hồi
+      // Lỗi mạng hoặc không có response
       console.log("Message:", error.message);
     }
   }
-}
+};
 
 const AdminGocnhin = () => {
+  // State quản lý danh sách bài viết, trạng thái form, modal, tìm kiếm, phân trang,...
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true); // loading state
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     id: "",
-    title:"",
-    
+    title: "",
     summary: "",
     content: "",
     caption: "",
@@ -137,18 +146,21 @@ const AdminGocnhin = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Sử dụng useCallback để loadData có thể tái sử dụng
+  /**
+   * Fetch danh sách bài viết Góc Nhìn từ API, fallback sang initial data nếu lỗi.
+   * Áp dụng useCallback để hạn chế re-create function khi dependencies không đổi.
+   */
   const loadData = useCallback(async () => {
     setLoading(true);
 
     try {
+      // API lấy danh sách bài viết loại "gocnhin"
       const res = await getPosts({ type: "gocnhin" });
       if (res?.success && Array.isArray(res.data)) {
         const normalized = res.data.map((post) => ({
           id: post.id,
-          
           title: post.caption || post.title || "Không có tiêu đề", 
-        caption: post.caption || post.title || "",
+          caption: post.caption || post.title || "",
           summary: post.summary || post.caption || "",              
           content: post.content || "",
           thumbnail: post.cloudinary_url || "",
@@ -156,6 +168,7 @@ const AdminGocnhin = () => {
         setItems(normalized);
       }
     } catch (err) {
+      // Nếu fetch lỗi, dùng dữ liệu mẫu cho trải nghiệm offline
       console.error("Failed to fetch:", err);
       setItems(initialGocNhinPosts);
     } finally {
@@ -167,24 +180,32 @@ const AdminGocnhin = () => {
     loadData();
   }, [loadData]);
 
-  // Reset form
+  /**
+   * Đặt lại dữ liệu form và các trạng thái liên quan về mặc định (đóng modal,...)
+   */
   const resetForm = () => {
-    setForm({ id: "", title: "", summary: "", content: "", thumbnail: "" , caption: "",});
+    setForm({ id: "", title: "", summary: "", content: "", thumbnail: "", caption: "" });
     setThumbnailPreview("");
     setEditingIndex(null);
     setEditingId(null);
     setIsAdding(false);
+    // Clear input file nếu có
     const input = document.getElementById("gocnhin-image-upload");
     if (input) input.value = "";
   };
 
-  // Thêm mới
+  /**
+   * Bắt đầu quá trình thêm mới một bài viết.
+   */
   const startAdd = () => {
     resetForm();
     setIsAdding(true);
   };
 
-  // Sửa
+  /**
+   * Vào chế độ chỉnh sửa một bài viết.
+   * @param {number} index - Index trong mảng items
+   */
   const startEdit = (index) => {
     const item = items[index];
     setEditingIndex(index);
@@ -192,18 +213,20 @@ const AdminGocnhin = () => {
 
     setForm({
       id: item.id,
-      title: item.title,      // Đã được map từ caption ở loadData
-      summary: item.summary,  // Đã được map từ caption ở loadData
+      title: item.title,      // Đồng bộ với caption từ normalize
+      summary: item.summary,  
       content: item.content,
-      caption: item.title,    // Đảm bảo caption đồng bộ với title
-      thumbnail: item.thumbnail // Giữ URL ảnh hiện tại
+      caption: item.title,    // Caption = title cho thống nhất
+      thumbnail: item.thumbnail 
     });
 
     setThumbnailPreview(item.thumbnail || "");
     setIsAdding(true);
   };
 
-  // SVG Icon
+  /**
+   * SVG Icon dấu X, dùng cho nút đóng/hủy/loại bỏ.
+   */
   const X = (props) => (
     <svg
       viewBox="0 0 24 24"
@@ -222,21 +245,24 @@ const AdminGocnhin = () => {
     </svg>
   );
 
-  // Thêm/Sửa Góc Nhìn
+  /**
+   * Xử lý submit tạo mới hoặc cập nhật bài viết Góc Nhìn.
+   * Nếu có editingId sẽ update, ngược lại sẽ tạo mới.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!form.title || !form.content || !form.thumbnail) {
       alert("Vui lòng điền đầy đủ tiêu đề, nội dung và ảnh!");
       return;
     }
-  
+
     if (editingId) {
       const success = await handleUpdate(editingId, form);
       if (success) {
         alert("Cập nhật thành công!");
-        await loadData(); // <-- Hàm này sẽ fetch lại danh sách mới từ Server
-        resetForm();     // <-- Hàm này sẽ đóng Modal và xóa dữ liệu form
+        await loadData(); // Reload danh sách bài viết sau khi update
+        resetForm();     // Đóng modal, làm sạch dữ liệu form
       } else {
         alert("Cập nhật thất bại. Vui lòng kiểm tra lại dữ liệu hoặc Console.");
       }
@@ -245,15 +271,20 @@ const AdminGocnhin = () => {
     }
   };
 
-  // Xóa
+  /**
+   * Xóa một bài viết Góc Nhìn, có xác nhận người dùng trước khi thực hiện.
+   * @param {number} index - Index mục cần xóa trong mảng items
+   */
   const handleDelete = async (index) => {
     if (!window.confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
     const id = items[index]?.id;
     try {
       if (id) await deletePost(id);
+      // Cập nhật lại danh sách đã xóa
       const filtered = items.filter((_, i) => i !== index);
       setItems(filtered);
-      // Điều chỉnh trang nếu cần sau khi xóa
+
+      // Điều chỉnh trang hiện tại nếu có thay đổi về số lượng trang
       const filteredTotalPages =
         Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
       if (filtered.length && currentPage > filteredTotalPages) {
@@ -267,7 +298,9 @@ const AdminGocnhin = () => {
     }
   };
 
-  // Xóa ảnh
+  /**
+   * Xóa/hủy ảnh đại diện khỏi form.
+   */
   const removeThumbnail = () => {
     setForm((prev) => ({ ...prev, thumbnail: "" }));
     setThumbnailPreview("");
@@ -275,25 +308,31 @@ const AdminGocnhin = () => {
     if (input) input.value = "";
   };
 
+  /**
+   * Xử lý upload ảnh thumbnail cho bài viết Góc Nhìn.
+   * @param {Event} e - Sự kiện thay đổi input file
+   */
   const handleThumbnailUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
-    // Giải phóng URL preview cũ để tránh rò rỉ bộ nhớ
+
+    // Giải phóng URL cũ nếu có để tránh memory leak
     if (thumbnailPreview) {
       URL.revokeObjectURL(thumbnailPreview);
     }
-  
+
     setForm((prev) => ({
       ...prev,
-      thumbnail: file // Lưu trực tiếp File object
+      thumbnail: file, // Lưu file, sẽ gửi qua API khi submit
     }));
-  
+
     const previewUrl = URL.createObjectURL(file);
     setThumbnailPreview(previewUrl);
   };
 
-  // Filter data
+  /**
+   * Lọc danh sách bài viết dựa trên tiêu đề hoặc mô tả ngắn theo từ khóa tìm kiếm.
+   */
   const getFilteredData = () => {
     return items.filter(
       (item) =>
@@ -313,7 +352,9 @@ const AdminGocnhin = () => {
     startIndex + ITEMS_PER_PAGE
   );
 
-  // Phân trang
+  /**
+   * Sinh ra mảng số trang phục vụ hiển thị phân trang, tối ưu tránh quá nhiều nút nếu danh sách dài.
+   */
   const getPageNumbers = () => {
     if (totalPages <= 8)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -332,6 +373,7 @@ const AdminGocnhin = () => {
     return pages;
   };
 
+  // JSX phần giao diện chính
   return (
     <div>
       <div className="max-w-7xl mx-auto">
@@ -340,7 +382,7 @@ const AdminGocnhin = () => {
             Góc Nhìn
           </span>
         </div>
-        {/* Header, toolbar filter, thêm mới */}
+        {/* Toolbar: Filter + Tìm kiếm + Thông tin tổng + Nút Thêm mới */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-7 rounded-t-2xl border-b border-emerald-100 shadow">
           {/* Ô tìm kiếm */}
           <div className="flex items-center w-full md:max-w-md relative">
@@ -370,7 +412,7 @@ const AdminGocnhin = () => {
               className="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-blue-50 transition"
             />
           </div>
-          {/* Thông tin số lượng + nút thêm mới */}
+          {/* Số lượng bài viết và nút Thêm mới */}
           <div className="flex flex-row gap-3 items-center mt-2 md:mt-0">
             <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-extrabold px-4 py-1 rounded-full">
               {filteredData.length} bài viết
@@ -385,14 +427,15 @@ const AdminGocnhin = () => {
             </button>
           </div>
         </div>
-        {/* Danh sách bài viết (table) */}
+        {/* Danh sách bài viết dạng table responsive */}
         {loading ? (
+          // Skeleton loading UI
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden w-full overflow-x-auto pt-1 pb-4">
-            {/* Header bảng */}
+            {/* Header các cột thông tin */}
             <div className="min-w-[800px] grid grid-cols-12 items-center bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200 px-6 py-4 text-xs font-bold text-blue-600 tracking-wider uppercase">
               <div className="col-span-1 text-center">STT</div>
               <div className="col-span-2 text-center">Ảnh</div>
@@ -400,7 +443,7 @@ const AdminGocnhin = () => {
               <div className="col-span-3 text-center">Mô tả ngắn</div>
               <div className="col-span-2 flex justify-end">Hành động</div>
             </div>
-            {/* Dòng dữ liệu */}
+            {/* Dữ liệu từng dòng */}
             {currentData.length > 0 ? (
               currentData.map((item, idx) => {
                 const globalIndex = items.findIndex((i) => i.id === item.id);
@@ -409,13 +452,13 @@ const AdminGocnhin = () => {
                     key={item.id}
                     className="group min-w-[800px] grid grid-cols-12 items-center border-b last:border-0 border-emerald-50 px-6 py-3 text-base transition hover:bg-emerald-50"
                   >
-                    {/* STT */}
+                    {/* Số thứ tự (STT) */}
                     <div className="col-span-1 text-center">
                       <span className="inline-block px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-700 rounded-md tracking-wide">
                         {startIndex + idx + 1}
                       </span>
                     </div>
-                    {/* Ảnh đại diện hoặc placeholder */}
+                    {/* Ảnh đại diện hoặc placeholder nếu chưa có ảnh */}
                     <div className="col-span-2 flex items-center justify-center">
                       <div className="h-12 w-20 flex items-center justify-center rounded-xl overflow-hidden bg-white border border-emerald-100">
                         {item.thumbnail ? (
@@ -431,18 +474,19 @@ const AdminGocnhin = () => {
                         )}
                       </div>
                     </div>
-                    {/* Tiêu đề */}
+                    {/* Tiêu đề bài viết */}
                     <div className="col-span-4 flex flex-col gap-1 min-w-0">
                       <span className="text-emerald-900 font-bold truncate">
                         {item.title}
                       </span>
                     </div>
-                    {/* Mô tả ngắn */}
+                    {/* Mô tả ngắn, giới hạn dòng */}
                     <div className="col-span-3">
                       <div className="text-gray-700 text-sm line-clamp-2">{item.summary}</div>
                     </div>
-                    {/* Các nút hành động */}
+                    {/* Nhóm nút hành động thao tác */}
                     <div className="col-span-2 flex flex-row gap-2 justify-end items-center pr-2">
+                      {/* Nút xem chi tiết */}
                       <button
                         className="w-9 h-9 flex items-center justify-center bg-emerald-50 border border-emerald-200 rounded-full shadow-md hover:bg-emerald-100 group/action transition"
                         onClick={() => setViewItem(item)}
@@ -454,6 +498,7 @@ const AdminGocnhin = () => {
                           <path d="M2 12C4 7.5 8.5 5 12 5s8 2.5 10 7c-2 4.5-6.5 7-10 7s-8-2.5-10-7z" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
+                      {/* Nút chỉnh sửa bài viết */}
                       <button
                         className="w-9 h-9 flex items-center justify-center bg-yellow-50 border border-yellow-200 rounded-full shadow-md hover:bg-yellow-100 group/action transition"
                         onClick={() => startEdit(globalIndex)}
@@ -464,6 +509,7 @@ const AdminGocnhin = () => {
                           <path d="M15.232 5.232l3.536 3.536M9 13l6.207-6.207c.39-.39 1.024-.39 1.414 0l2.586 2.586c.39.39.39 1.024 0 1.414L13 17H9v-4z" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
+                      {/* Nút xóa bài viết */}
                       <button
                         className="w-9 h-9 flex items-center justify-center bg-red-50 border border-red-200 rounded-full shadow-md hover:bg-red-100 group/action transition"
                         onClick={() => handleDelete(globalIndex)}
@@ -485,7 +531,7 @@ const AdminGocnhin = () => {
                 Chưa có bài viết
               </div>
             )}
-            {/* Phân trang nếu > 1 trang */}
+            {/* Hiện thanh phân trang nếu dữ liệu có nhiều trang */}
             {totalPages > 1 && (
               <div className="flex flex-col md:flex-row items-center justify-between px-4 py-5 bg-gradient-to-r from-emerald-50 to-sky-50 border-t border-emerald-100 mt-2 rounded-b-2xl">
                 <div className="text-sm text-gray-700 mb-3 md:mb-0 font-semibold">
@@ -508,6 +554,7 @@ const AdminGocnhin = () => {
                   </span>{" "}
                   bài viết
                 </div>
+                {/* Các nút số trang */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -549,7 +596,7 @@ const AdminGocnhin = () => {
             )}
           </div>
         )}
-        {/* Modal thêm/sửa bài viết */}
+        {/* Modal: Thêm/Sửa bài viết */}
         {isAdding && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-[1.5px] transition animate-fadein-fast">
             <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[96vh] overflow-y-auto border border-emerald-200">
@@ -568,9 +615,9 @@ const AdminGocnhin = () => {
                   <X className="w-7 h-7" />
                 </button>
               </div>
-              {/* Body modal */}
+              {/* Body modal: Form nhập liệu */}
               <form className="p-6 space-y-6" onSubmit={handleSubmit}>
-                {/* Tiêu đề */}
+                {/* Tiêu đề bài viết */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Tiêu đề <span className="text-red-500">*</span>
@@ -584,7 +631,7 @@ const AdminGocnhin = () => {
                     autoFocus
                   />
                 </div>
-                {/* Mô tả ngắn */}
+                {/* Tóm tắt/Mô tả ngắn bài viết */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Mô tả ngắn <span className="text-red-500">*</span>
@@ -597,7 +644,7 @@ const AdminGocnhin = () => {
                     placeholder="Tóm tắt nội dung"
                   />
                 </div>
-                {/* Nội dung bài viết góc nhìn */}
+                {/* Nội dung đầy đủ của bài viết (CKEditor) */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Nội dung bài viết <span className="text-red-500">*</span>
@@ -608,7 +655,7 @@ const AdminGocnhin = () => {
                     placeholder="Nhập nội dung góc nhìn..."
                   />
                 </div>
-                {/* Ảnh đại diện upload/đổi/xóa */}
+                {/* Trường upload và hiển thị ảnh đại diện */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Ảnh đại diện <span className="text-red-500">*</span>
@@ -650,11 +697,11 @@ const AdminGocnhin = () => {
                   </div>
                   {form.thumbnail && (
                     <div className="relative w-fit mt-3 mx-auto">
-                       <img
-    src={thumbnailPreview || form.thumbnail}
-    alt="preview"
-    className="max-w-xs max-h-44 object-contain rounded-xl border border-emerald-100 shadow-lg bg-white"
-  />
+                      <img
+                        src={thumbnailPreview || form.thumbnail}
+                        alt="preview"
+                        className="max-w-xs max-h-44 object-contain rounded-xl border border-emerald-100 shadow-lg bg-white"
+                      />
                       <button
                         type="button"
                         className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full p-2 shadow transition"
@@ -687,11 +734,11 @@ const AdminGocnhin = () => {
           </div>
         )}
       </div>
-      {/* Modal xem chi tiết */}
+      {/* Modal xem chi tiết bài viết */}
       {viewItem && (
         <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center min-h-screen overflow-y-auto animate-fadein-fast p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl p-0 relative border border-emerald-200 flex flex-col max-h-[96vh] overflow-y-auto">
-            {/* Header chi tiết */}
+            {/* Header modal chi tiết */}
             <div className="flex justify-between items-center px-8 pt-8 pb-4 border-b border-emerald-50 sticky top-0 bg-white z-10">
               <h3 className="text-xl font-extrabold text-emerald-700">
                 {viewItem.title}
@@ -704,7 +751,7 @@ const AdminGocnhin = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            {/* Nội dung chi tiết */}
+            {/* Nội dung chi tiết bài viết */}
             <div className="px-8 pb-8 pt-4 flex flex-col gap-3">
               {viewItem.thumbnail && (
                 <img
@@ -731,4 +778,3 @@ const AdminGocnhin = () => {
 };
 
 export default AdminGocnhin;
-

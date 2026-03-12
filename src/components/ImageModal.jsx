@@ -46,6 +46,10 @@ const ImageModal = ({
   const [expandedReplies, setExpandedReplies] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const totalCommentsCount = imageData.comments?.reduce(
+    (acc, curr) => acc + 1 + (curr.replies?.length || 0), 
+    0
+  ) || 0;
   // Hàm chèn tag tên người dùng vào replyText khi reply (theo yêu cầu prompt)
   const handleReplyClick = (commentId, userName) => {
     setReplyingTo(commentId);
@@ -104,12 +108,13 @@ const ImageModal = ({
       const updateLikeRecursively = (commentsList) => {
         return commentsList.map((comment) => {
           if (comment.id === commentId) {
+            const currentCount = comment.like_count ?? comment.likeCount ?? 0;
+            const newCount = isLiked ? Math.max(0, currentCount - 1) : currentCount + 1;
             return {
               ...comment,
               isLiked: !isLiked,
-              likeCount: isLiked
-                ? Math.max(0, (comment.likeCount || 1) - 1)
-                : (comment.likeCount || 0) + 1,
+              likeCount: newCount, // Cập nhật cả 2 để đồng bộ UI
+              like_count: newCount,
             };
           }
           if (comment.replies?.length) {
@@ -194,29 +199,25 @@ const ImageModal = ({
   }, [onNext, onPrev, onClose]);
 
   // Gửi phản hồi bình luận, reload lại comments từ backend
-  const handleReplySubmit = async (parentCommentId) => {
+  const handleReplySubmit = async (parentId) => {
     if (!replyText.trim() || isSubmitting) return;
-
-    const tempReplyText = replyText;
-    setReplyText("");
-    setReplyingTo(null);
+  
     try {
       setIsSubmitting(true);
-      await onReplyComment?.(imageData.id, parentCommentId, tempReplyText);
-      if (onLoadComments) {
-        setLoadingComments(true);
-        await onLoadComments(imageData.id);
-        setLoadingComments(false);
+      // Phải có await và nhận giá trị trả về
+      const res = await onReplyComment(imageData.id, parentId, replyText);
+  
+      // Kiểm tra nếu thực sự thành công mới xóa text
+      if (res) { 
+        setReplyText("");
+        setReplyingTo(null);
       }
     } catch (error) {
       console.error("Lỗi khi gửi phản hồi:", error);
-      setReplyText(tempReplyText);
-      setReplyingTo(parentCommentId);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   /**
    * Render các phản hồi (hỗ trợ lồng nhau)
    */
@@ -251,24 +252,16 @@ const ImageModal = ({
                       {formatCommentContent(reply.content)}
                     </p>
                   </div>
-                  {reply.likeCount > 0 && (
-                    <div className="absolute -right-2 bottom-0 flex items-center bg-white shadow-sm rounded-full px-1.5 py-0.5 border border-gray-100">
-                      <span className="flex items-center">
-                        <svg
-                          width="15"
-                          height="15"
-                          viewBox="0 0 24 24"
-                          fill={reply.isLiked ? "#2563eb" : "none"}
-                          stroke={reply.isLiked ? "#2563eb" : "#888"}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          style={{ marginBottom: '1.5px' }}
-                        >
-                          <path d="M7.5 21h6.75a2 2 0 0 0 1.97-2.424l-1.1-5.174A1 1 0 0 1 16.08 12c.635-1.215 1.02-2.663 1.02-4.198C17.1 5.184 15.65 3 14 3H7a2 2 0 0 0-2 2v13a3 3 0 0 0 3 3z" />
-                          <path d="M3 21V7a4 4 0 0 1 4-4h7c2.21 0 4 2.015 4 4.802 0 1.533-.384 2.982-1.019 4.197a1 1 0 0 1 .428 1.404l-1.101 5.175A2 2 0 0 1 14.25 21H7.5" />
+                  {(reply.like_count > 0 || reply.likeCount > 0) && (
+               
+                    <div className="absolute right-0 -bottom-3 flex items-center gap-1 bg-white shadow-md rounded-full px-1.5 py-0.5 border border-gray-100 z-10 scale-95" style={{ transform: 'translateX(30%)' }}>
+                      <div className="bg-blue-500 rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="white">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
-                        <span className="text-[10px] font-bold ml-1 text-gray-600">{reply.likeCount}</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-gray-700 leading-none">
+                        {reply.like_count ?? reply.likeCount}
                       </span>
                     </div>
                   )}
@@ -278,20 +271,7 @@ const ImageModal = ({
                     onClick={() => handleLikeComment(reply.id, reply.isLiked)}
                     className={"flex items-center gap-1 " + (reply.isLiked ? "text-blue-600" : "hover:underline")}
                   >
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill={reply.isLiked ? "#2563eb" : "none"}
-                      stroke={reply.isLiked ? "#2563eb" : "#888"}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ marginBottom: '1.5px' }}
-                    >
-                      <path d="M7.5 21h6.75a2 2 0 0 0 1.97-2.424l-1.1-5.174A1 1 0 0 1 16.08 12c.635-1.215 1.02-2.663 1.02-4.198C17.1 5.184 15.65 3 14 3H7a2 2 0 0 0-2 2v13a3 3 0 0 0 3 3z" />
-                      <path d="M3 21V7a4 4 0 0 1 4-4h7c2.21 0 4 2.015 4 4.802 0 1.533-.384 2.982-1.019 4.197a1 1 0 0 1 .428 1.404l-1.101 5.175A2 2 0 0 1 14.25 21H7.5" />
-                    </svg>
+                   
                     Thích
                   </button>
                   <button
@@ -322,12 +302,12 @@ const ImageModal = ({
                         onKeyDown={e => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            handleReplySubmit(reply.id);
+                            handleReplySubmit(parentId);
                           }
                         }}
                       />
                       <button
-                        onClick={() => handleReplySubmit(reply.id)}
+                        onClick={() => handleReplySubmit(parentId)}
                         disabled={!replyText.trim() || isSubmitting}
                         className="ml-1 p-1.5 bg-amber-500 text-white rounded-full hover:bg-amber-600 disabled:bg-gray-200 disabled:text-gray-400 transition-colors shrink-0 flex items-center justify-center"
                         tabIndex={-1}
@@ -444,7 +424,7 @@ const ImageModal = ({
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </span>
-                  Bình luận ({comments.length})
+                  Bình luận ({totalCommentsCount})
                 </h3>
               </div>
 
@@ -477,7 +457,7 @@ const ImageModal = ({
                               </p>
                             </div>
                             {/* Hiển thị số lượt thích */}
-                            {comment.likeCount > 0 && (
+                            {(comment.like_count > 0 || comment.likeCount > 0) && (
                               <div className="flex justify-end w-full -mt-2.5 pr-1">
                                 <div className="flex items-center gap-1 bg-white shadow-sm rounded-full px-1.5 py-0.5 border border-gray-100 z-10">
                                   <div className="bg-blue-500 rounded-full p-0.5 flex items-center justify-center">
@@ -486,7 +466,7 @@ const ImageModal = ({
                                     </svg>
                                   </div>
                                   <span className="text-[11px] font-bold text-gray-600 leading-none">
-                                    {comment.likeCount}
+                                  {comment.like_count ?? comment.likeCount}
                                   </span>
                                 </div>
                               </div>
