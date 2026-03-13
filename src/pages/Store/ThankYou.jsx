@@ -479,7 +479,7 @@ export default function ThankYou() {
           transition={{ delay: 0.5, duration: 0.5 }}
         >
           <Link
-            to="/mua-tranh-in"
+            to="/do-luu-niem"
             className="px-8 py-3 bg-white text-orange-600 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all border-2 border-orange-200 text-center"
           >
             Tiếp tục mua sắm

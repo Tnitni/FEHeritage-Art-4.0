@@ -78,7 +78,7 @@ const NavBar = () => {
       {
         label: "Cửa hàng",
         submenu: [
-          { label: "Đồ lưu niệm", link: "/mua-tranh-in" },
+          { label: "Đồ lưu niệm", link: "/do-luu-niem" },
           { label: "Donate / Ủng hộ", link: "/donat-ung-ho" },
           { label: "Thành viên VIP", link: "/thanh-vien-vip" },
         ],
@@ -558,7 +558,7 @@ const NavBar = () => {
 
               {/* Cart Button: chỉ hiển thị khi ở trang Cửa hàng */}
               {typeof window !== "undefined" &&
-                /^\/((mua-tranh-in)|(donat-ung-ho)|(thanh-vien-vip)|(cart)|(checkout)|(chi-tiet))/.test(
+                /^\/((do-luu-niem)|(donat-ung-ho)|(thanh-vien-vip)|(cart)|(checkout)|(chi-tiet))/.test(
                   window.location.pathname,
                 ) && (
                   <li className="ml-3 pl-3 border-l border-[#5a3822]/50">

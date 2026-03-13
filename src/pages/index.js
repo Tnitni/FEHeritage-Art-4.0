@@ -32,7 +32,7 @@ export { default as LoginPage } from "./auth/LoginPage";
 export { default as RegisterPage } from "./auth/RegisterPage";
 
 // Store Pages
-export { default as MuaTranhIn } from "./Store/MuaTranhIn";
+export { default as DoLuuNiem } from "./Store/DoLuuNiem";
 export { default as DonatUngHo } from "./Store/DonatUngHo";
 export { default as ThanhVienVIP } from "./Store/ThanhVienVIP";
 export { default as Checkout } from "./Store/Checkout";
