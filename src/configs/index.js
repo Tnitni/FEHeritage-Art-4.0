@@ -9,10 +9,10 @@ export const API_ENDPOINTS = {
   // Auth
   AUTH: {
     BASE: "/auth",
-    REGISTER: "/api/auth/register",
-    LOGIN: "/api/auth/login",
-    LOGOUT: "/api/auth/logout",
-    PROFILE: "/api/auth/profile",
+    REGISTER: "auth/register",
+    LOGIN: "auth/login",
+    LOGOUT: "auth/logout",
+    PROFILE: "auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
   },
   // Users
