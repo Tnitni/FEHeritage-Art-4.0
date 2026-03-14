@@ -32,7 +32,7 @@ export default function Cart() {
         >
           <div className="flex items-center justify-between mb-4">
             <button
-              onClick={() => navigate('/mua-tranh-in')}
+              onClick={() => navigate('/do-luu-niem')}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-orange-600 font-semibold hover:bg-orange-50 transition shadow-sm border border-orange-200"
             >
               <span className="text-xl">←</span> Tiếp tục mua sắm
@@ -73,7 +73,7 @@ export default function Cart() {
             <h2 className="text-2xl font-bold text-gray-800 mb-3">Giỏ hàng trống</h2>
             <p className="mb-6 text-gray-600 text-lg">Hãy khám phá bộ sưu tập tranh tuyệt đẹp của chúng tôi!</p>
             <Link
-              to="/mua-tranh-in"
+              to="/do-luu-niem"
               className="inline-block rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 font-semibold text-white shadow-lg hover:from-orange-600 hover:to-amber-600 transition-all transform hover:scale-105"
             >
               Khám phá ngay →

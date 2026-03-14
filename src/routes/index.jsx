@@ -35,7 +35,7 @@ import AppLayout from "../components/layouts/AppLayout.jsx";
 import MainLayout from "../components/layouts/MainLayout.jsx";
 import Cart from "../components/Cart.jsx";
 import Checkout from "../pages/Store/Checkout.jsx";
-import MuaTranhIn from "../pages/Store/MuaTranhIn.jsx";
+import DoLuuNiem from "../pages/Store/DoLuuNiem.jsx";
 import ChiTietTranh from "../pages/Store/ChiTietTranh.jsx";
 import DonatUngHo from "../pages/Store/DonatUngHo.jsx";
 import ThanhVienVIP from "../pages/Store/ThanhVienVIP.jsx";
@@ -233,8 +233,8 @@ const router = createBrowserRouter([
           },
           // Store Routes
           {
-            path: "mua-tranh-in",
-            element: <MuaTranhIn />,
+            path: "do-luu-niem",
+            element: <DoLuuNiem />,
           },
           {
             path: "chi-tiet/:id",
