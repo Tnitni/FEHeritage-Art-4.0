@@ -60,6 +60,7 @@ const forumService = {
     tag,
     popular,
     myself,
+    search,
   }) => {
     try {
       const response = await api.get(API_ENDPOINTS.FORUM.GET, {
@@ -71,6 +72,7 @@ const forumService = {
           tag: tag || undefined,
           popular: popular || undefined,
           myself: myself || undefined,
+          search: search || undefined,
         },
       });
       return response;
@@ -104,6 +106,16 @@ const forumService = {
   deletePost: async (postId) => {
     try {
       const response = await api.delete(API_ENDPOINTS.FORUM.DELETE(postId));
+      return response;
+    } catch (error) {
+      console.error("Delete post error:", error);
+      throw error.response?.data || error;
+    }
+  },
+
+  activePost: async (postId) => {
+    try {
+      const response = await api.put(API_ENDPOINTS.FORUM.ACTIVE(postId));
       return response;
     } catch (error) {
       console.error("Delete post error:", error);
@@ -191,6 +203,24 @@ const forumService = {
       return response;
     } catch (error) {
       console.error("Fetch my posts error:", error);
+      throw error;
+    }
+  },
+
+  getAllPostsForAdmin: async ({ page, limit, search, status, category_id }) => {
+    try {
+      const response = await api.get(API_ENDPOINTS.FORUM.GETFORADMIN, {
+        params: {
+          page,
+          limit,
+          search: search || undefined,
+          status: status || undefined,
+          category_id: category_id || undefined,
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("Fetch admin posts error:", error);
       throw error;
     }
   },

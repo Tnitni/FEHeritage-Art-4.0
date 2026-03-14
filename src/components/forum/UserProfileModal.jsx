@@ -75,6 +75,7 @@ export default function UserProfileModal({
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 p-2 bg-white/40 hover:bg-white/30 rounded-full transition-colors text-white"
+                  title="Đóng"
                 >
                   <X className="w-6 h-6" />
                 </button>

@@ -23,6 +23,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
+  Search,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -537,6 +539,8 @@ export default function Forum() {
   const [hasFetchedTotalTags, setHasFetchedTotalTags] = useState(false);
   const [allPostsForTags, setAllPostsForTags] = useState([]);
   const [isFiltersLoading, setIsFiltersLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [tempSearch, setTempSearch] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -574,6 +578,7 @@ export default function Forum() {
           tag: selectedTag,
           popular: isPopular,
           myself: isMine,
+          search: searchTerm,
         }),
         forumService.getCategories(),
       ]);
@@ -616,7 +621,7 @@ export default function Forum() {
 
   useEffect(() => {
     loadInitialData();
-  }, [currentPage, selectedCategory, sortBy, selectedTag]);
+  }, [currentPage, selectedCategory, sortBy, selectedTag, searchTerm]);
 
   useEffect(() => {
     if (prevPageRef.current !== currentPage) {
@@ -719,51 +724,57 @@ export default function Forum() {
       const response = await forumService.createPost(fullData);
 
       if (response.success) {
-        const newPostFromApi = response.data;
+        // const newPostFromApi = response.data;
 
-        // Chuẩn hóa dữ liệu bài viết mới đồng bộ với cấu trúc list hiện tại
-        const formattedNewPost = {
-          ...newPostFromApi,
+        // // Chuẩn hóa dữ liệu bài viết mới đồng bộ với cấu trúc list hiện tại
+        // const formattedNewPost = {
+        //   ...newPostFromApi,
 
-          post_id: newPostFromApi.id || newPostFromApi.post_id,
+        //   post_id: newPostFromApi.id || newPostFromApi.post_id,
 
-          tags: newPostFromApi.tags
-            ? newPostFromApi.tags.map((t) =>
-                typeof t === "string" ? t : t.name,
-              )
-            : [],
+        //   tags: newPostFromApi.tags
+        //     ? newPostFromApi.tags.map((t) =>
+        //         typeof t === "string" ? t : t.name,
+        //       )
+        //     : [],
 
-          likes: newPostFromApi.likes || 0,
-          commentsCount: 0,
-          views: 0,
+        //   likes: newPostFromApi.likes || 0,
+        //   commentsCount: 0,
+        //   views: 0,
 
-          // Chuẩn hóa media URL
-          displayImages: (newPostFromApi.images || []).map(
-            (img) => img.image_url || img,
-          ),
-          displayVideos: (newPostFromApi.videos || []).map(
-            (vid) => vid.video_url || vid,
-          ),
+        //   // Chuẩn hóa media URL
+        //   displayImages: (newPostFromApi.images || []).map(
+        //     (img) => img.image_url || img,
+        //   ),
+        //   displayVideos: (newPostFromApi.videos || []).map(
+        //     (vid) => vid.video_url || vid,
+        //   ),
 
-          // Thông tin author và category
-          author: newPostFromApi.author,
-          post_category: newPostFromApi.post_category,
-          category: newPostFromApi.post_category?.name,
-        };
+        //   // Thông tin author và category
+        //   author: newPostFromApi.author,
+        //   post_category: newPostFromApi.post_category,
+        //   category: newPostFromApi.post_category?.name,
+        // };
 
-        // ✅ Cập nhật state thêm bài mới vào đầu mảng posts
-        setPosts((prevPosts) => [formattedNewPost, ...prevPosts]);
+        // // ✅ Cập nhật state thêm bài mới vào đầu mảng posts
+        // setPosts((prevPosts) => [formattedNewPost, ...prevPosts]);
+
         // setAllPostsForTags((prevAll) => {
         //   const updatedAll = [formattedNewPost, ...prevAll];
         //   setAllFeaturedTags(calculateTop8Tags(updatedAll));
         //   return updatedAll;
         // });
-        setPagination((prev) => ({
-          ...prev,
-          total: (prev.total || 0) + 1,
-        }));
+        // setPagination((prev) => ({
+        //   ...prev,
+        //   total: (prev.total || 0) + 1,
+        // }));
         setHasFetchedTotalTags(false);
-        toast.success("Đăng bài viết mới thành công!");
+        toast.success(
+          "Tạo bài viết mới thành công! Bài viết đang chờ xét duyệt",
+          {
+            duration: 5000,
+          },
+        );
         setIsCreateModalOpen(false);
       }
     } catch (error) {
@@ -851,29 +862,18 @@ export default function Forum() {
   //   );
   // };
 
-  const filteredAndSortedPosts = posts
-    .filter((post) => {
-      if (selectedCategory !== "all" && post.category_id !== selectedCategory)
-        return false;
+  const filteredAndSortedPosts = posts.filter((post) => {
+    if (selectedCategory !== "all" && post.category_id !== selectedCategory)
+      return false;
 
-      if (selectedTag) {
-        const hasTag = post.tags?.some((t) =>
-          typeof t === "string" ? t === selectedTag : t.name === selectedTag,
-        );
-        if (!hasTag) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "newest") {
-        return (
-          new Date(b.created_date).getTime() -
-          new Date(a.created_date).getTime()
-        );
-      } else {
-        return b.likes - a.likes;
-      }
-    });
+    if (selectedTag) {
+      const hasTag = post.tags?.some((t) =>
+        typeof t === "string" ? t === selectedTag : t.name === selectedTag,
+      );
+      if (!hasTag) return false;
+    }
+    return true;
+  });
 
   const allTags = posts.flatMap((post) => post.tags || []);
   const tagCounts = allTags.reduce((acc, tag) => {
@@ -1490,6 +1490,72 @@ export default function Forum() {
               transition={{ duration: 3, repeat: Infinity }}
             />
           </motion.button>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto w-full mb-8"
+        >
+          <div className="relative group">
+            {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+            </div> */}
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tiêu đề, nội dung bài viết..."
+              value={tempSearch}
+              onChange={(e) => setTempSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isLoading) {
+                  setSearchTerm(tempSearch);
+                  setCurrentPage(1);
+                }
+              }}
+              className={`block w-full pl-5 pr-24 py-3.5 border-2 border-zinc-100 rounded-2xl bg-white shadow-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-gray-700 font-medium ${
+                isLoading ? "opacity-70" : "opacity-100"
+              }`}
+              disabled={isLoading}
+            />
+            <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+              {tempSearch && !isLoading && (
+                <button
+                  onClick={() => {
+                    setTempSearch("");
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="p-2 text-gray-400 hover:text-red-500 transition-colors mr-1"
+                >
+                  <X size={20} />
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (!isLoading) {
+                    setSearchTerm(tempSearch);
+                    setCurrentPage(1);
+                  }
+                }}
+                disabled={isLoading}
+                className={`${
+                  isLoading
+                    ? "bg-orange-400"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-md shadow-orange-200 min-w-[44px] flex items-center justify-center`}
+              >
+                {isLoading ? (
+                  <Loader2
+                    size={20}
+                    strokeWidth={2.5}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Search size={20} strokeWidth={2.5} />
+                )}
+              </button>
+            </div>
+          </div>
         </motion.div>
         <Filters
           isLoading={isFiltersLoading}

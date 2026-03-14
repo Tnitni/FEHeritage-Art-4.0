@@ -201,6 +201,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/40 rounded-full transition-colors"
+                title="Đóng"
               >
                 <X className="w-6 h-6" />
               </button>

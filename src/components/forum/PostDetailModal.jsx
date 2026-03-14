@@ -231,7 +231,7 @@ export default function PostDetailModal({
                           whileTap={{ scale: 0.9 }}
                           onClick={onEdit}
                           className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                          title="Chỉnh sửa"
+                          title="Chỉnh sửa bài viết"
                         >
                           <Edit className="w-5 h-5" />
                         </motion.button>
@@ -240,7 +240,7 @@ export default function PostDetailModal({
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setShowDeleteConfirm(true)}
                           className="p-2 hover:bg-red-500/20 rounded-full transition-colors"
-                          title="Xóa"
+                          title="Xóa bài viết"
                         >
                           <Trash2 className="w-5 h-5" />
                         </motion.button>
@@ -249,6 +249,7 @@ export default function PostDetailModal({
                     <button
                       onClick={onClose}
                       className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                      title="Đóng bài viết"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -612,7 +613,7 @@ export default function PostDetailModal({
             {/* Hiển thị nội dung (Ảnh hoặc Video) */}
             <div
               className="relative w-full h-full flex items-center justify-center"
-              onClick={() => setSelectedImageIndex(null)}
+              // onClick={() => setSelectedImageIndex(null)}
             >
               <div
                 onClick={(e) => e.stopPropagation()}
@@ -641,7 +642,7 @@ export default function PostDetailModal({
             </div>
 
             {/* Chỉ số */}
-            <div className="absolute bottom-9 text-white/80 font-medium bg-black/40 px-4 py-1 rounded-full">
+            <div className="absolute bottom-4 text-white/80 font-medium bg-black/40 px-4 py-1 rounded-full">
               {selectedImageIndex + 1} / {allMedia.length}
             </div>
           </motion.div>
