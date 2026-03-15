@@ -1,11 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getEventById } from '../../data/mockData'
+import { getEventById as fetchEventById, registerEvent } from '../../services/api'
+import { mapEventFromApi } from '../../utils/eventsNewsMappers'
 
 const EventRegistration = () => {
-const { eventId } = useParams()
-const navigate = useNavigate()
-const event = getEventById(eventId)
+  const { eventId } = useParams()
+  const navigate = useNavigate()
+  const [event, setEvent] = useState(null)
+  const [loadingEvent, setLoadingEvent] = useState(true)
+  const [eventError, setEventError] = useState(null)
+
+  useEffect(() => {
+    if (!eventId) return
+    let cancelled = false
+    fetchEventById(eventId)
+      .then((res) => {
+        if (cancelled) return
+        const raw = res?.data ?? res
+        setEvent(raw ? mapEventFromApi(raw) : null)
+      })
+      .catch((e) => {
+        if (!cancelled) setEventError(e?.message || 'Tải sự kiện thất bại')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEvent(false)
+      })
+    return () => { cancelled = true }
+  }, [eventId])
 
 const [formData, setFormData] = useState({
 fullName: '',
@@ -82,40 +103,59 @@ setErrors(newErrors)
 return Object.keys(newErrors).length === 0
 }
 
-const handleSubmit = async (event) => {
-event.preventDefault()
-if (!validateForm()) return
+const handleSubmit = async (ev) => {
+  ev.preventDefault()
+  if (!validateForm()) return
 
-setIsSubmitting(true)
-await new Promise((resolve) => setTimeout(resolve, 2000))
+  setIsSubmitting(true)
+  setErrors({})
+  try {
+    const formDataToSend = new FormData()
+    formDataToSend.append('fullName', formData.fullName)
+    formDataToSend.append('email', formData.email)
+    formDataToSend.append('workTitle', formData.workTitle)
+    formDataToSend.append('workCategory', formData.workCategory)
+    formDataToSend.append('description', formData.description)
+    if (formData.file) formDataToSend.append('image', formData.file)
 
-console.log('Registration data:', { eventId, ...formData })
-setIsSubmitting(false)
-setSubmitSuccess(true)
-
-setTimeout(() => {
-    navigate(`/events/${eventId}`)
-}, 3000)
+    await registerEvent(eventId, formDataToSend)
+    setSubmitSuccess(true)
+    setTimeout(() => navigate(`/events/${eventId}`), 3000)
+  } catch (err) {
+    const msg = err?.message || err?.errors?.[0]?.message || 'Đăng ký thất bại. Vui lòng thử lại.'
+    setErrors((prev) => ({ ...prev, submit: msg }))
+  } finally {
+    setIsSubmitting(false)
+  }
 }
 
-if (!event) {
-return (
-    <div className="mx-auto max-w-6xl space-y-12 px-4 py-12 md:px-6">
-    <div className="rounded-[40px] bg-[#f6eadf] p-10 text-center shadow-[0_32px_60px_rgba(83,48,33,0.12)] sm:p-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.35em] text-brand-brown-400">Lỗi 404</p>
-        <h1 className="mt-4 text-3xl font-serif font-semibold text-brand-brown-900 sm:text-4xl">
-        Không tìm thấy sự kiện
-        </h1>
-        <Link
-        to="/events"
-        className="mt-8 inline-block rounded-full bg-gradient-to-br from-[#3b2412] to-[#2e1e10] px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(83,48,33,0.3)] transition hover:scale-105"
-        >
-        Trở về danh sách sự kiện
-        </Link>
-    </div>
-    </div>
-)
-}
+  if (loadingEvent) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center">
+        <div className="text-gray-600 font-medium">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (eventError || !event) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-12 px-4 py-12 md:px-6">
+        <div className="rounded-[40px] bg-[#f6eadf] p-10 text-center shadow-[0_32px_60px_rgba(83,48,33,0.12)] sm:p-12">
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-brand-brown-400">Lỗi 404</p>
+          <h1 className="mt-4 text-3xl font-serif font-semibold text-brand-brown-900 sm:text-4xl">
+            Không tìm thấy sự kiện
+          </h1>
+          <p className="mt-2 text-sm text-brand-brown-600">{eventError}</p>
+          <Link
+            to="/events"
+            className="mt-8 inline-block rounded-full bg-gradient-to-br from-[#3b2412] to-[#2e1e10] px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(83,48,33,0.3)] transition hover:scale-105"
+          >
+            Trở về danh sách sự kiện
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
 if (submitSuccess) {
 return (
@@ -142,8 +182,8 @@ return (
 <div className="min-h-screen bg-gradient-to-b from-[#fef8f3] to-[#f6eadf]">
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-6">
     {/* Hero Banner Section */}
-    <div className="relative mb-8 h-[500px] overflow-hidden rounded-[32px] shadow-[0_20px_50px_rgba(59,36,18,0.08)]">
-        <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover" />
+    <div className="relative mb-8 h-[500px] overflow-hidden rounded-[32px] shadow-[0_20px_50px_rgba(59,36,18,0.08)] bg-gray-200">
+        <img src={event.imageUrl || event.thumbnail_url || 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1200&h=600&fit=crop'} alt={event.title} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
         
         {/* Content */}
@@ -163,6 +203,11 @@ return (
     {/* Main form column */}
     <div className="overflow-hidden rounded-[32px] bg-white shadow-[0_20px_50px_rgba(59,36,18,0.08)]">
     <form onSubmit={handleSubmit} className="p-8 sm:p-12">
+        {errors.submit && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+            {errors.submit}
+          </div>
+        )}
         <div className="mb-8 rounded-2xl border-l-4 border-amber-500 bg-amber-50/50 p-5">
         <p className="text-sm leading-relaxed text-brand-brown-900">
             💡 <strong>Hướng dẫn:</strong> Điền đầy đủ thông tin bên dưới và tải lên tác phẩm của bạn. 

@@ -1,40 +1,76 @@
 import { Link, useParams } from 'react-router-dom'
-import { useState } from 'react'
-import { getEventById, events } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { getEventById as fetchEventById, getEvents } from '../../services/api'
+import { mapEventFromApi } from '../../utils/eventsNewsMappers'
 
 const EventDetail = () => {
   const { eventId } = useParams()
-  const event = getEventById(eventId)
+  const [event, setEvent] = useState(null)
+  const [otherEvents, setOtherEvents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [openFaqIndex, setOpenFaqIndex] = useState(null)
 
-  // Get other events (exclude current event)
-  const otherEvents = events.filter(e => e.id !== eventId).slice(0, 3)
+  useEffect(() => {
+    if (!eventId) return
+    let cancelled = false
+    Promise.all([
+      fetchEventById(eventId),
+      getEvents(),
+    ])
+      .then(([detailRes, listRes]) => {
+        if (cancelled) return
+        const raw = detailRes?.data ?? detailRes
+        setEvent(raw ? mapEventFromApi(raw) : null)
+        const list = Array.isArray(listRes?.data) ? listRes.data : []
+        const others = list
+          .map(mapEventFromApi)
+          .filter((e) => e && e.id !== eventId)
+          .slice(0, 3)
+        setOtherEvents(others)
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e?.message || 'Tải sự kiện thất bại')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [eventId])
 
   const toggleFaq = (index) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index)
   }
 
-if (!event) {
-return (
-    <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center p-4">
-    <div className="max-w-md text-center bg-white rounded-2xl shadow-lg p-8">
-        <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Lỗi 404</p>
-        <h1 className="mt-4 text-3xl font-bold text-gray-900">
-        Không tìm thấy sự kiện
-        </h1>
-        <p className="mt-4 text-gray-600">
-        Sự kiện bạn tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.
-        </p>
-        <Link
-        to="/events"
-        className="mt-8 inline-block rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-blue-700"
-        >
-        Trở về danh sách sự kiện
-        </Link>
-    </div>
-    </div>
-)
-}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center">
+        <div className="text-gray-600 font-medium">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center p-4">
+        <div className="max-w-md text-center bg-white rounded-2xl shadow-lg p-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-gray-500">Lỗi 404</p>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900">
+            Không tìm thấy sự kiện
+          </h1>
+          <p className="mt-4 text-gray-600">
+            {error || 'Sự kiện bạn tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.'}
+          </p>
+          <Link
+            to="/events"
+            className="mt-8 inline-block rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-blue-700"
+          >
+            Trở về danh sách sự kiện
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
 return (
 <div className="min-h-screen bg-[#f6eadf]">
@@ -57,10 +93,10 @@ return (
         <div className="lg:col-span-2">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header Image */}
-        {event.imageUrl && (
+        {(event.imageUrl || event.thumbnail_url) && (
         <div className="relative h-64 sm:h-80 overflow-hidden">
             <img 
-            src={event.imageUrl} 
+            src={event.imageUrl || event.thumbnail_url} 
             alt={event.title} 
             className="w-full h-full object-cover"
             />
@@ -284,7 +320,7 @@ return (
         <div className="pt-8 border-t-2 border-gray-200">
             <div className="flex flex-col sm:flex-row gap-4">
             <Link
-                to={`/register/${event.id}`}
+                to={`/events/${event.id}/register`}
                 className="flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl text-base font-bold text-white transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

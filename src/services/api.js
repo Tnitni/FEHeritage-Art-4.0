@@ -137,10 +137,17 @@ export const uploadNewsMedia = (id, formData) =>
   });
 
 // ==================== EVENTS (Sự kiện) ====================
-export const getEvents = (params) => api.get("/events/", { params });
+export const getEvents = (params) => api.get("/events", { params });
 export const getEventById = (id) => api.get(`/events/${id}`);
-export const createEvent = (data) => api.post("/events/", data);
+export const createEvent = (data) => api.post("/events", data);
 export const updateEvent = (id, data) => api.put(`/events/${id}`, data);
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
+/** Đăng ký tham gia sự kiện (user). body: FormData (image file) hoặc JSON tùy backend */
+export const registerEvent = (eventId, data) =>
+  data instanceof FormData
+    ? api.post(`/events/${eventId}/register`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    : api.post(`/events/${eventId}/register`, data);
 
 export default api;

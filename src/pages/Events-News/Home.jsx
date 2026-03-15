@@ -1,26 +1,60 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { events, news, speakers } from '../../data/mockData'
+import { speakers } from '../../data/mockData'
+import { getEvents, getNews } from '../../services/api'
+import { mapEventFromApi, mapNewsFromApi } from '../../utils/eventsNewsMappers'
 
 const Home = () => {
-  const allContent = useMemo(() => {
-    const newsWithType = news.map(item => ({ ...item, type: 'news' }))
-    const eventsWithType = events.map(item => ({ ...item, type: 'event' }))
-    return [...newsWithType, ...eventsWithType].sort((a, b) => {
-      // Sort by date or id (newest first)
-      return b.id.localeCompare(a.id)
-    })
+  const [eventsList, setEventsList] = useState([])
+  const [newsList, setNewsList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const [eventsRes, newsRes] = await Promise.all([
+          getEvents().catch((e) => ({ success: false, data: [] })),
+          getNews({ limit: 20 }).catch((e) => ({ success: false, data: [] })),
+        ])
+        if (cancelled) return
+        const eventsData = Array.isArray(eventsRes?.data) ? eventsRes.data : []
+        const newsData = Array.isArray(newsRes?.data) ? newsRes.data : []
+        setEventsList(eventsData.map(mapEventFromApi).filter(Boolean))
+        setNewsList(newsData.map(mapNewsFromApi).filter(Boolean))
+      } catch (e) {
+        if (!cancelled) setError(e?.message || 'Tải dữ liệu thất bại')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
-  
-  const sidebarNews = useMemo(() => allContent.slice(1, 6), [allContent])
+
+  const allContent = useMemo(() => {
+    const newsWithType = newsList.map(item => ({ ...item, type: 'news' }))
+    const eventsWithType = eventsList.map(item => ({ ...item, type: 'event' }))
+    return [...newsWithType, ...eventsWithType].sort((a, b) => {
+      const dateA = a.created_date || a.start_date || a.date || a.id
+      const dateB = b.created_date || b.start_date || b.date || b.id
+      return String(dateB).localeCompare(String(dateA))
+    })
+  }, [eventsList, newsList])
+
+  const sidebarNews = useMemo(() => allContent.slice(0, 5), [allContent])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [hoveredArticle, setHoveredArticle] = useState(null)
   const [isPaused, setIsPaused] = useState(false)
-  
-  const defaultFeatured = sidebarNews[currentIndex]
+
+  const defaultFeatured = sidebarNews[currentIndex] || sidebarNews[0]
   const featuredArticle = hoveredArticle || defaultFeatured
-  const otherNews = useMemo(() => news.slice(6, 9), [])
-  const upcomingEvents = useMemo(() => events.slice(0, 3), [])
+  const otherNews = useMemo(() => newsList.slice(0, 3), [newsList])
+  const hasContent = allContent.length > 0
+  const upcomingEvents = useMemo(() => eventsList.slice(0, 3), [eventsList])
   const featuredSpeakers = useMemo(() => speakers.slice(0, 4), [])
 
   // Auto-rotate through sidebar items
@@ -33,6 +67,31 @@ const Home = () => {
 
     return () => clearInterval(interval)
   }, [isPaused, hoveredArticle, sidebarNews.length])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center">
+        <div className="text-gray-600 font-medium">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-2">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#f6eadf]">
@@ -63,9 +122,9 @@ const Home = () => {
                       setIsPaused(false)
                     }}
                   >
-                    <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden">
+                    <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
                       <img
-                        src={article.imageUrl}
+                        src={article.imageUrl || 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=200&h=200&fit=crop'}
                         alt={article.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
@@ -97,42 +156,39 @@ const Home = () => {
           {/* Main Featured Article */}
           <main className="lg:col-span-9">
             <article className="overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 h-full">
-              <div className="relative aspect-[16/7] overflow-hidden">
+              <div className="relative aspect-[16/7] overflow-hidden bg-gray-200">
                 <img
-                  src={featuredArticle.imageUrl}
-                  alt={featuredArticle.title}
+                  src={featuredArticle?.imageUrl || 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1200&h=600&fit=crop'}
+                  alt={featuredArticle?.title}
                   className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute bottom-4 left-4">
-                  <span className={`inline-block rounded-full px-4 py-1.5 text-xs font-bold shadow-lg ${
-                    featuredArticle.type === 'event' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-blue-600 text-white'
-                  }`}>
-                    {featuredArticle.type === 'event' ? 'Sự kiện' : 'Tin tức'}
+                  <span className="inline-block rounded-full px-4 py-1.5 text-xs font-bold shadow-lg bg-blue-600 text-white">
+                    {featuredArticle?.type === 'event' ? 'Sự kiện' : 'Tin tức'}
                   </span>
                 </div>
               </div>
               <div className="p-6">
                 <h1 className="mb-2 text-2xl font-bold text-gray-900 transition-all duration-300 leading-tight line-clamp-2 hover:text-blue-600">
-                  {featuredArticle.title}
+                  {featuredArticle?.title ?? 'Tin tức & Sự kiện'}
                 </h1>
                 <p className="mb-4 text-sm text-gray-600 leading-relaxed transition-all duration-300 line-clamp-2">
-                  {featuredArticle.description}
+                  {featuredArticle?.description ?? ''}
                 </p>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>{featuredArticle.date}</span>
+                    <span>{featuredArticle?.date ?? ''}</span>
                     <span>•</span>
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    <span>{featuredArticle.author || featuredArticle.location || 'Chính thức'}</span>
+                    <span>{featuredArticle?.author || featuredArticle?.location || 'Chính thức'}</span>
                   </div>
+                  {featuredArticle && (
                   <Link
                     to={`/${featuredArticle.type === 'event' ? 'events' : 'news'}/${featuredArticle.id}`}
                     className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-blue-700 hover:shadow-lg hover:scale-105"
@@ -142,6 +198,7 @@ const Home = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                   </Link>
+                  )}
                 </div>
               </div>
             </article>

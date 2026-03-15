@@ -1,20 +1,61 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { news } from '../../data/mockData'
+import { getNews } from '../../services/api'
+import { mapNewsFromApi } from '../../utils/eventsNewsMappers'
 
 const News = () => {
   const [query, setQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [newsList, setNewsList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getNews({ limit: 50 })
+      .then((res) => {
+        if (cancelled) return
+        const data = Array.isArray(res?.data) ? res.data : []
+        setNewsList(data.map(mapNewsFromApi).filter(Boolean))
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e?.message || 'Tải danh sách tin tức thất bại')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const filteredNews = useMemo(() => {
-    if (!query.trim()) return news
-
+    if (!query.trim()) return newsList
     const lowercaseQuery = query.toLowerCase()
-    return news.filter((article) => {
-      const fields = [article.title, article.description, article.content, article.category, article.author]
-      return fields.some((field) => field?.toLowerCase().includes(lowercaseQuery))
+    return newsList.filter((article) => {
+      const fields = [article.title, article.description, article.content, article.category, article.tag]
+      return fields.some((field) => String(field || '').toLowerCase().includes(lowercaseQuery))
     })
-  }, [query])
+  }, [query, newsList])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center">
+        <div className="text-gray-600 font-medium">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-2">{error}</p>
+          <button type="button" onClick={() => window.location.reload()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            Thử lại
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#f6eadf]">
@@ -96,9 +137,9 @@ const News = () => {
                     to={`/news/${article.id}`}
                     className="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
                   >
-                    <div className="relative aspect-video overflow-hidden">
+                    <div className="relative aspect-video overflow-hidden bg-gray-200">
                       <img
-                        src={article.imageUrl}
+                        src={article.imageUrl || 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=450&fit=crop'}
                         alt={article.title}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                       />

@@ -1,34 +1,71 @@
 import { Link, useParams } from 'react-router-dom'
-import { getNewsById, news } from '../../data/mockData'
+import { useState, useEffect } from 'react'
+import { getNewsById as fetchNewsById, getNews } from '../../services/api'
+import { mapNewsFromApi } from '../../utils/eventsNewsMappers'
 
 const NewsDetail = () => {
-const { newsId } = useParams()
-const article = getNewsById(newsId)
+  const { newsId } = useParams()
+  const [article, setArticle] = useState(null)
+  const [otherNews, setOtherNews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-// Get other news (exclude current article)
-const otherNews = news.filter(n => n.id !== newsId).slice(0, 3)
+  useEffect(() => {
+    if (!newsId) return
+    let cancelled = false
+    Promise.all([
+      fetchNewsById(newsId),
+      getNews({ limit: 20 }),
+    ])
+      .then(([detailRes, listRes]) => {
+        if (cancelled) return
+        const raw = detailRes?.data ?? detailRes
+        setArticle(raw ? mapNewsFromApi(raw) : null)
+        const list = Array.isArray(listRes?.data) ? listRes.data : []
+        const others = list
+          .map(mapNewsFromApi)
+          .filter((n) => n && n.id !== newsId)
+          .slice(0, 3)
+        setOtherNews(others)
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e?.message || 'Tải tin tức thất bại')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [newsId])
 
-if (!article) {
-return (
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f6eadf] flex items-center justify-center">
+        <div className="text-gray-600 font-medium">Đang tải...</div>
+      </div>
+    )
+  }
+
+  if (error || !article) {
+    return (
     <div className="mx-auto max-w-6xl space-y-12 px-4 py-12 md:px-6">
-    <div className="rounded-[40px] bg-[#f6eadf] p-10 text-center shadow-[0_32px_60px_rgba(83,48,33,0.12)] sm:p-12">
+      <div className="rounded-[40px] bg-[#f6eadf] p-10 text-center shadow-[0_32px_60px_rgba(83,48,33,0.12)] sm:p-12">
         <p className="text-sm font-semibold uppercase tracking-[0.35em] text-brand-brown-400">Lỗi 404</p>
         <h1 className="mt-4 text-3xl font-serif font-semibold text-brand-brown-900 sm:text-4xl">
-        Không tìm thấy bài viết
+          Không tìm thấy bài viết
         </h1>
         <p className="mt-4 text-sm text-brand-brown-600 sm:text-base">
-        Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.
+          {error || 'Bài viết bạn tìm kiếm không tồn tại hoặc đã bị xóa khỏi hệ thống.'}
         </p>
         <Link
-        to="/news"
-        className="mt-8 inline-block rounded-full bg-gradient-to-br from-[#3b2412] to-[#2e1e10] px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(83,48,33,0.3)] transition hover:scale-105 hover:shadow-[0_18px_40px_rgba(83,48,33,0.4)]"
+          to="/news"
+          className="mt-8 inline-block rounded-full bg-gradient-to-br from-[#3b2412] to-[#2e1e10] px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(83,48,33,0.3)] transition hover:scale-105 hover:shadow-[0_18px_40px_rgba(83,48,33,0.4)]"
         >
-        Trở về tin tức
+          Trở về tin tức
         </Link>
+      </div>
     </div>
-    </div>
-)
-}
+    )
+  }
 
 return (
 <div className="min-h-screen bg-[#f6eadf]">
