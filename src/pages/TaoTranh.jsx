@@ -765,26 +765,7 @@ const ImageCreator = () => {
 
         {/* === CỘT PHẢI: BẢNG ĐIỀU KHIỂN === */}
         <div className="flex flex-col gap-6">
-          {/* 1. Ô Nhập Prompt */}
-          <div className="p-4 bg-[#F8F9FA] border border-[#E9ECEF] rounded-2xl flex flex-col gap-2">
-            <label className="text-slate-700 font-bold text-base">
-              Nhập nội dung (Content)
-            </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => {
-                if (e.target.value.length <= 500) setPrompt(e.target.value);
-              }}
-              className="w-full h-32 p-4 bg-white border border-slate-300 rounded-xl resize-none text-gray-700 text-sm placeholder:text-gray-400 shadow-sm transition-all focus:outline-none focus:ring-0"
-              placeholder="Ví dụ: Một cô gái trẻ đang ngồi trên ghế đá trong vườn hoa..."
-            ></textarea>
-            <div className="flex justify-between items-center text-xs text-gray-400 px-1">
-              <span>Mô tả chi tiết để có kết quả tốt hơn</span>
-              <span>{prompt.length}/500</span>
-            </div>
-          </div>
-
-          {/* 2. Phần Tùy Chỉnh */}
+          {/* 1. Phần Tùy Chỉnh */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 px-1">
               <Settings className="w-5 h-5 text-gray-400 animate-spin-slow" />
@@ -1077,7 +1058,7 @@ const ImageCreator = () => {
               )}
             </div>
           </div>
-          {/* 3. Button Tạo ảnh */}
+          {/* 2. Button Tạo ảnh */}
           <button
             onClick={generateImage}
             disabled={loading}
