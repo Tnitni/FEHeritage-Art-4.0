@@ -58,7 +58,7 @@ const Footer = () => {
               </span>
               <div className="contact-info">
                 <span>Email:</span>
-                <a href="mailto:contact@mt4.vn">contact@mt4.vn</a>
+                <a href="mailto:andey@novaha.vn">andey@novaha.vn</a>
               </div>
             </li>
 
@@ -91,7 +91,7 @@ const Footer = () => {
             <h4>Kết nối với chúng tôi</h4>
             <div className="footer-social-links">
               <a
-                href="mailto:contact@mt4.vn"
+                href="mailto:andey@novaha.vn"
                 className="social-link"
                 aria-label="Email"
                 title="Email"
@@ -190,7 +190,7 @@ const Footer = () => {
 
       <div className="footer-bottom">
         <p>
-          &copy; {new Date().getFullYear()} Công ty TNHH MT4. Bảo lưu mọi quyền.
+          &copy; {new Date().getFullYear()} Công ty TNHH Novaha. Bảo lưu mọi quyền.
         </p>
         <div className="footer-supplemental-links">
           <a href="#projects">Hợp tác</a>
