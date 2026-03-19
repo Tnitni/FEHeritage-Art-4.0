@@ -8,32 +8,32 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Forum
   FORUM: {
-    POST: "/api/forums/posts",
-    GETCAT: "/api/forum-category",
-    GET: "/api/forums/posts?status=Active",
-    GETFORADMIN: "/api/forums/posts",
-    GETBYID: (postId) => `/api/forums/posts/${postId}`,
-    UPDATEBYID: (postId) => `/api/forums/posts/${postId}`,
-    DELETE: (postId) => `/api/forums/posts/${postId}`,
-    ACTIVE: (postId) => `/api/forums/posts/status/${postId}`,
-    LIKE: (postId) => `/api/forums/reactions/${postId}`,
-    POSTCOMMENT: (postId) => `/api/forums/posts/${postId}/comments`,
-    DELETECOMMENT: (postId) => `/api/forums/comments/${postId}`,
-    GETUSERBYID: (userId) => `/api/users/${userId}`,
-    GETTAG: "/api/tag",
-    FILTERISMINE: (userId) => `/api/forums/user/${userId}`,
+    POST: "forums/posts",
+    GETCAT: "forum-category",
+    GET: "forums/posts?status=Active",
+    GETFORADMIN: "forums/posts",
+    GETBYID: (postId) => `forums/posts/${postId}`,
+    UPDATEBYID: (postId) => `forums/posts/${postId}`,
+    DELETE: (postId) => `forums/posts/${postId}`,
+    ACTIVE: (postId) => `forums/posts/status/${postId}`,
+    LIKE: (postId) => `forums/reactions/${postId}`,
+    POSTCOMMENT: (postId) => `forums/posts/${postId}/comments`,
+    DELETECOMMENT: (postId) => `forums/comments/${postId}`,
+    GETUSERBYID: (userId) => `users/${userId}`,
+    GETTAG: "tag",
+    FILTERISMINE: (userId) => `forums/user/${userId}`,
   },
   // Historical periods
   HISTORICAL_PERIODS: {
-    GETALL: "/api/periods",
-    GETBYID: (periodId) => `/api/periods/${periodId}`,
+    GETALL: "periods",
+    GETBYID: (periodId) => `periods/${periodId}`,
   },
   // Historical events
   HISTORICAL_EVENTS: {
-    GETALL: (periodId) => `/api/history-event/${periodId}`,
+    GETALL: (periodId) => `history-event/${periodId}`,
   },
   // Celebrities
   CELEBRITIES: {
-    GETALL: (periodId) => `/api/Celebrities/${periodId}`,
+    GETALL: (periodId) => `Celebrities/${periodId}`,
   },
 };
