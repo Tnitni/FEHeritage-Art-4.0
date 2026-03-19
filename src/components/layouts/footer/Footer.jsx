@@ -58,7 +58,7 @@ const Footer = () => {
               </span>
               <div className="contact-info">
                 <span>Email:</span>
-                <a href="mailto:andey@novaha.vn">andey@novaha.vn</a>
+                <a href="mailto:andrey@novaha.vn">andrey@novaha.vn</a>
               </div>
             </li>
 
@@ -91,7 +91,7 @@ const Footer = () => {
             <h4>Kết nối với chúng tôi</h4>
             <div className="footer-social-links">
               <a
-                href="mailto:andey@novaha.vn"
+                href="mailto:andrey@novaha.vn"
                 className="social-link"
                 aria-label="Email"
                 title="Email"
