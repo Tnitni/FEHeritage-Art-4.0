@@ -108,6 +108,7 @@ const AdminForum = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [displayPage, setDisplayPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -150,6 +151,7 @@ const AdminForum = () => {
         if (response.success) {
           setThreads(response.data);
           setPagination(response.pagination);
+          setDisplayPage(response.pagination.page);
         }
         if (!isSilent) toast.success("Đã cập nhật danh sách", { id: loadId });
       } catch (error) {
@@ -372,7 +374,7 @@ const AdminForum = () => {
           {/* Bảng danh sách bài viết */}
           <div className="w-full bg-white rounded-2xl shadow border border-blue-100 overflow-hidden">
             <div className="flex items-center gap-4 px-6 py-4 border-b border-blue-200 bg-gradient-to-tr from-blue-100 to-green-100 rounded-t-2xl">
-              <div className="relative">
+              <div className="relative flex-1 max-w-2xl">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none select-none text-lg">
                   <Search size={20} />
                 </span>
@@ -441,8 +443,10 @@ const AdminForum = () => {
               <table className="min-w-[650px] w-full divide-y divide-emerald-50 text-sm">
                 <thead>
                   <tr className="bg-emerald-50 text-emerald-800">
-                    <th className="py-2 px-3 font-bold text-center w-48">ID</th>
-                    <th className="py-2 px-3 font-bold text-center">Tiêu đề</th>
+                    <th className="py-2 px-3 font-bold text-center">STT</th>
+                    <th className="py-2 px-3 font-bold text-center w-44">
+                      Tiêu đề
+                    </th>
                     <th className="py-2 px-3 font-bold text-center">Tác giả</th>
                     <th className="py-4 px-4">Ngày giờ đăng</th>
                     <th className="py-2 px-3 font-bold text-center">
@@ -472,6 +476,8 @@ const AdminForum = () => {
                         item.status === "Deleted"
                           ? "opacity-60"
                           : "opacity-100";
+                      const displayIndex =
+                        (displayPage - 1) * pagination.limit + (index + 1);
                       return (
                         <tr
                           key={item.id}
@@ -485,7 +491,7 @@ const AdminForum = () => {
                             className={`py-2 px-3 text-center font-mono font-bold ${contentOpacity}`}
                           >
                             <span className="inline-block px-2 py-0.5 text-xs font-bold bg-teal-100 text-teal-700 rounded-md tracking-wide">
-                              {item.id}
+                              {displayIndex}
                             </span>
                           </td>
                           <td className={`py-2 px-3 ${contentOpacity}`}>

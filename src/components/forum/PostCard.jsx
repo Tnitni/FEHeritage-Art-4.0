@@ -296,6 +296,7 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
           <motion.div
             whileHover={{ scale: 1.1 }}
             className="flex items-center gap-2 text-green-600"
+            onClick={onPostClick}
           >
             <MessageSquare className="w-5 h-5" />
             <span className="font-bold">
