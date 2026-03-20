@@ -81,10 +81,10 @@ export default function Filters({
           <label className="text-sm font-medium text-amber-800">
             Sắp xếp theo
           </label>
-          <div className="flex gap-2 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <button
               onClick={() => onSortChange("newest")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 sortBy === "newest"
                   ? "bg-amber-500 text-zinc-50 shadow-md"
                   : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"
@@ -95,7 +95,7 @@ export default function Filters({
             </button>
             <button
               onClick={() => onSortChange("popular")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 sortBy === "popular"
                   ? "bg-amber-500 text-zinc-50 shadow-md"
                   : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"
@@ -106,7 +106,7 @@ export default function Filters({
             </button>
             <button
               onClick={() => onSortChange("myself")}
-              className={`w-8/12 mx-auto px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
+              className={`col-span-2 sm:flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                 sortBy === "myself"
                   ? "bg-amber-500 text-zinc-50 shadow-md"
                   : "bg-amber-100/60 text-amber-800 hover:bg-amber-200/50"

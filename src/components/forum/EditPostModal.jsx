@@ -200,17 +200,19 @@ export default function EditPostModal({ post, onClose, onSubmit }) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-6 text-white flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Chỉnh sửa bài viết</h2>
+          <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-4 sm:p-6 text-white flex justify-between items-center">
+            <h2 className="text-xl sm:text-2xl font-bold">
+              Chỉnh sửa bài viết
+            </h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-white/40 rounded-full transition-colors"
               title="Đóng"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
@@ -263,7 +265,8 @@ export default function EditPostModal({ post, onClose, onSubmit }) {
             {/* Ảnh */}
             <div>
               <label className="block text-sm font-medium text-amber-900 mb-2">
-                Hình ảnh (Tối đa 4 ảnh, mỗi hình ảnh tối đa 5 MB)
+                Hình ảnh (Tối đa 4 ảnh, mỗi hình ảnh tối đa 5 MB, để xóa nhấn
+                vào ảnh cần xóa)
               </label>
               <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer hover:bg-orange-50 transition-all group">
                 <Upload className="w-6 h-6 text-amber-600 group-hover:text-orange-600" />
@@ -303,7 +306,8 @@ export default function EditPostModal({ post, onClose, onSubmit }) {
             {/* Video */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-amber-900">
-                Video (Tối đa 4 video, mỗi video tối đa 50 MB)
+                Video (Tối đa 4 video, mỗi video tối đa 50 MB, để xóa nhấn vào
+                video cần xóa)
               </label>
               <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-blue-200 rounded-lg cursor-pointer hover:bg-blue-50 transition-all group">
                 <VideoIcon className="w-6 h-6 text-blue-600 group-hover:text-blue-700" />

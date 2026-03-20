@@ -1502,7 +1502,7 @@ export default function Forum() {
             </div> */}
             <input
               type="text"
-              placeholder="Tìm kiếm theo tiêu đề, nội dung bài viết..."
+              placeholder="Tìm kiếm theo tiêu đề, nội dung..."
               value={tempSearch}
               onChange={(e) => setTempSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -1511,12 +1511,12 @@ export default function Forum() {
                   setCurrentPage(1);
                 }
               }}
-              className={`block w-full pl-5 pr-24 py-3.5 border-2 border-zinc-100 rounded-2xl bg-white shadow-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-gray-700 font-medium ${
+              className={`block w-full pl-4 pr-20 sm:pr-24 py-3 border-2 border-zinc-100 rounded-2xl bg-white shadow-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-gray-700 font-medium ${
                 isLoading ? "opacity-70" : "opacity-100"
               }`}
               disabled={isLoading}
             />
-            <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+            <div className="absolute inset-y-0 right-2 sm:right-3 flex items-center gap-1">
               {tempSearch && !isLoading && (
                 <button
                   onClick={() => {
@@ -1524,7 +1524,7 @@ export default function Forum() {
                     setSearchTerm("");
                     setCurrentPage(1);
                   }}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors mr-1"
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors mr-1"
                 >
                   <X size={20} />
                 </button>
@@ -1542,16 +1542,16 @@ export default function Forum() {
                   isLoading
                     ? "bg-orange-400"
                     : "bg-orange-500 hover:bg-orange-600"
-                } text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-md shadow-orange-200 min-w-[44px] flex items-center justify-center`}
+                } text-white p-2 sm:p-2.5 rounded-xl transition-all active:scale-95 shadow-md shadow-orange-200 min-w-[44px] flex items-center justify-center`}
               >
                 {isLoading ? (
                   <Loader2
-                    size={20}
+                    size={18}
                     strokeWidth={2.5}
                     className="animate-spin"
                   />
                 ) : (
-                  <Search size={20} strokeWidth={2.5} />
+                  <Search size={18} strokeWidth={2.5} />
                 )}
               </button>
             </div>

@@ -167,7 +167,7 @@ export default function HeroesList() {
             <h2 className="text-2xl font-bold text-amber-900">
               {currentData.title}
             </h2>
-            <span className="text-sm text-gray-600 bg-amber-50 px-4 py-2 rounded-full border border-amber-200">
+            <span className="flex items-center justify-center text-center text-sm text-gray-600 bg-amber-50 px-4 py-2 rounded-full border border-amber-200">
               {currentData.heroes.length} danh nhân
             </span>
           </div>
@@ -255,7 +255,7 @@ export default function HeroesList() {
               </button>
 
               {/* Hero Image Section */}
-              <div className="relative h-[360px] rounded-t-2xl overflow-hidden">
+              <div className="relative h-[250px] sm:h-[300px] md:h-[400px] rounded-t-2xl overflow-hidden">
                 <img
                   src={heroDetailModal.img}
                   alt={heroDetailModal.name}
@@ -270,14 +270,14 @@ export default function HeroesList() {
                 {/* Content overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-4xl">⭐</span>
-                    <h2 className="text-4xl font-bold drop-shadow-lg">
+                    <span className="text-2xl md:text-4xl">⭐</span>
+                    <h2 className="text-2xl md:text-4xl font-bold drop-shadow-lg">
                       {heroDetailModal.name}
                     </h2>
                   </div>
-                  <div className="flex items-center gap-2 text-lg">
+                  <div className="flex items-center gap-2 text-sm md:text-lg">
                     <svg
-                      className="w-5 h-5"
+                      className="w-4 h-4 md:w-5 md:h-5"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -293,7 +293,7 @@ export default function HeroesList() {
               {/* Content Section */}
               <div className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-amber-900 mb-4 flex items-center gap-2">
+                  <h3 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 flex items-center gap-2">
                     <svg
                       className="w-6 h-6"
                       fill="currentColor"
@@ -307,7 +307,7 @@ export default function HeroesList() {
                     </svg>
                     Tiểu sử
                   </h3>
-                  <p className="text-gray-700 leading-relaxed text-base">
+                  <p className="text-gray-700 leading-relaxed text-sm md:text-base">
                     {heroDetailModal.bio}
                   </p>
                 </div>

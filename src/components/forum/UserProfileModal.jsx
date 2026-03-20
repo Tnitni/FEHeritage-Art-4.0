@@ -71,22 +71,22 @@ export default function UserProfileModal({
             <>
               {/* Header with Cover */}
               <div className="relative">
-                <div className="h-32 bg-gradient-to-r from-orange-300 via-amber-500 to-orange-400" />
+                <div className="h-24 sm:h-32 bg-gradient-to-r from-orange-300 via-amber-500 to-orange-400" />
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 bg-white/40 hover:bg-white/30 rounded-full transition-colors text-white"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 bg-white/40 hover:bg-white/30 rounded-full transition-colors text-white"
                   title="Đóng"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 h-6" />
                 </button>
 
                 {/* Avatar */}
-                <div className="absolute left-1/2 -translate-x-1/2 -bottom-16">
+                <div className="absolute left-1/2 -translate-x-1/2 -bottom-12 sm:-bottom-16">
                   <div className="relative">
                     <img
                       src={user.avatar}
                       alt={user.name}
-                      className="w-32 h-32 rounded-full object-cover ring-4 ring-white shadow-xl"
+                      className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-white shadow-xl"
                     />
                     <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-500/20 to-transparent" />
                   </div>
@@ -97,10 +97,12 @@ export default function UserProfileModal({
               <div className="pt-20 px-6 pb-6">
                 {/* User Info */}
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-amber-900 mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-amber-900 mb-2">
                     {user.name}
                   </h2>
-                  <p className="text-amber-700 max-w-md mx-auto">{user.bio}</p>
+                  <p className="text-sm sm:text-base text-amber-700 max-w-md mx-auto">
+                    {user.bio}
+                  </p>
                 </div>
 
                 {/* Stats */}
@@ -108,17 +110,17 @@ export default function UserProfileModal({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-3 gap-4 mb-6"
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6"
                 >
                   {/* Cột 1: Thành tích */}
                   <motion.div
                     whileHover={{ scale: 1.05, translateY: -5 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
+                    className="col-span-2 sm:col-span-1 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
                   >
                     <Mail className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                    <div className="text-lg font-bold text-amber-900 mb-1">
+                    <div className="text-base sm:text-lg font-bold text-amber-900 mb-1">
                       Email
                     </div>
                     <div className="text-sm text-amber-700">{user.email}</div>
@@ -132,7 +134,7 @@ export default function UserProfileModal({
                     className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
                   >
                     <Calendar className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                    <div className="text-lg font-semibold text-amber-900 mb-1">
+                    <div className="text-base sm:text-lg font-semibold text-amber-900 mb-1">
                       Tham gia
                     </div>
                     <div className="text-sm text-amber-700">{joinedDate}</div>
@@ -145,7 +147,7 @@ export default function UserProfileModal({
                     className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 text-center cursor-default shadow-sm hover:shadow-md transition-shadow"
                   >
                     <FileText className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-amber-900">
+                    <div className="text-lg sm:text-2xl font-bold text-amber-900">
                       {totalPosts}
                     </div>
                     <div className="text-sm text-amber-700">Bài viết</div>

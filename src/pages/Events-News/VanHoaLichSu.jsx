@@ -200,11 +200,11 @@ export default function VanHoaLichSu() {
         <div
           className={`overflow-hidden transition-all duration-500 ${isOpen ? "max-h-none opacity-100 mt-3" : "max-h-0 opacity-0"}`}
         >
-          <div className="ml-16 space-y-4">
+          <div className="ml-4 md:ml-16 space-y-6">
             {/* Heroes/Figures Section */}
             {dynasty.figures && dynasty.figures.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-3">
+              <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <svg
                       className="w-5 h-5 text-amber-700"
@@ -213,7 +213,7 @@ export default function VanHoaLichSu() {
                     >
                       <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
-                    <h4 className="text-sm font-bold text-amber-900">
+                    <h4 className="text-sm md:text-base font-bold text-amber-900">
                       Danh nhân tiêu biểu
                     </h4>
                     <button
@@ -223,7 +223,7 @@ export default function VanHoaLichSu() {
                           `/heroes?period=${encodeURIComponent(dynasty.title)}`,
                         );
                       }}
-                      className="ml-auto text-xs font-semibold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-full transition-all duration-300 flex items-center gap-1.5"
+                      className="text-xs font-semibold text-amber-700 hover:text-amber-900 bg-amber-100 px-3 py-1.5 rounded-full transition-all flex items-center gap-1"
                     >
                       <span>Xem thêm</span>
                       <svg
@@ -298,13 +298,13 @@ export default function VanHoaLichSu() {
                 </div>
 
                 {/* Cards Container - Conditional layout */}
-                <div className="relative">
+                <div className="relative group/container">
                   <div
                     ref={hasMultipleFigures ? scrollContainerRef : null}
                     onScroll={hasMultipleFigures ? handleScroll : undefined}
                     className={
                       hasMultipleFigures
-                        ? "flex gap-3 overflow-x-auto scroll-smooth hide-scrollbar pb-2"
+                        ? "flex gap-3 md:gap-4 overflow-x-auto scroll-smooth hide-scrollbar pb-2"
                         : "grid grid-cols-1 sm:grid-cols-2 gap-3"
                     }
                   >
@@ -319,11 +319,13 @@ export default function VanHoaLichSu() {
                           })
                         }
                         className={`group relative bg-gradient-to-br from-white to-amber-50/50 rounded-xl overflow-hidden border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg transition-all duration-300 ${
-                          hasMultipleFigures ? "flex-shrink-0 w-[300px]" : ""
+                          hasMultipleFigures
+                            ? "flex-shrink-0 w-[230px] md:w-[300px]"
+                            : ""
                         }`}
                       >
                         <div className="flex gap-3 p-3">
-                          <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-amber-300 shadow-md flex-shrink-0 bg-amber-100">
+                          <div className="relative w-17 h-17 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 border-amber-300 shadow-md flex-shrink-0 bg-amber-100">
                             <img
                               src={figure.img}
                               alt={figure.name}
@@ -340,7 +342,7 @@ export default function VanHoaLichSu() {
                               <span className="text-amber-600">⭐</span>
                               {figure.name}
                             </h5>
-                            <p className="text-xs text-gray-700 leading-relaxed line-clamp-3">
+                            <p className="text-[11px] md:text-xs text-gray-700 leading-relaxed line-clamp-3">
                               {figure.bio}
                             </p>
                           </div>
@@ -392,10 +394,10 @@ export default function VanHoaLichSu() {
                 >
                   <div className="absolute -left-[31px] top-5 w-3 h-3 bg-amber-400 rounded-full border-2 border-white"></div>
 
-                  <div className="font-medium text-amber-900 text-sm group-hover:text-amber-700">
+                  <div className="font-medium text-amber-900 text-xs md:text-sm group-hover:text-amber-700">
                     {event.name}
                   </div>
-                  <div className="text-xs text-amber-700 mt-1.5 bg-amber-50 inline-block px-2 py-0.5 rounded">
+                  <div className="text-[10px] md:text-xs text-amber-700 mt-1.5 bg-amber-50 inline-block px-2 py-0.5 rounded">
                     📅 {event.year}
                   </div>
                 </div>
@@ -460,10 +462,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("prehistory")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.prehistory.img}
@@ -475,7 +477,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.prehistory.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-3 leading-relaxed">
                               {dynastyData.prehistory.desc}
                             </div>
                           </div>
@@ -514,10 +516,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("aulac")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.aulac.img}
@@ -529,7 +531,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.aulac.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-3 leading-relaxed">
                               {dynastyData.aulac.desc}
                             </div>
                           </div>
@@ -568,10 +570,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("phongkientuchu")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.phongkientuchu.img}
@@ -583,7 +585,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.phongkientuchu.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-2 leading-relaxed">
                               {dynastyData.phongkientuchu.desc}
                             </div>
                           </div>
@@ -622,10 +624,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("phapdoho")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.phapdoho.img}
@@ -637,7 +639,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.phapdoho.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-2 leading-relaxed">
                               {dynastyData.phapdoho.desc}
                             </div>
                           </div>
@@ -676,10 +678,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("khangchienchongphap")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.khangchienchongphap.img}
@@ -691,7 +693,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.khangchienchongphap.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-2 leading-relaxed">
                               {dynastyData.khangchienchongphap.desc}
                             </div>
                           </div>
@@ -731,10 +733,10 @@ export default function VanHoaLichSu() {
                         <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("khangchienchongmy")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.khangchienchongmy.img}
@@ -746,7 +748,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.khangchienchongmy.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-2 leading-relaxed">
                               {dynastyData.khangchienchongmy.desc}
                             </div>
                           </div>
@@ -782,14 +784,14 @@ export default function VanHoaLichSu() {
 
                     {/* Hiện đại */}
                     {dynastyData.modern && (
-                      <div className="relative">
-                        <div className="absolute -left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
+                      <div className="relative mb-6 last:mb-0">
+                        <div className="absolute -left-[28px] md:-left-[30px] top-4 w-5 h-5 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-4 border-white shadow-md z-10"></div>
 
                         <div
-                          className="flex items-center gap-4 p-4 rounded-xl cursor-pointer bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 min-h-[88px]"
+                          className="group flex flex-col md:flex-row items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl cursor-pointer bg-white border border-amber-100 hover:border-amber-400 hover:shadow-2xl transition-all duration-500"
                           onClick={() => toggleDynasty("modern")}
                         >
-                          <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
+                          <div className="w-full md:w-20 h-32 md:h-20 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-white">
                             <img
                               loading="lazy"
                               src={dynastyData.modern.img}
@@ -801,7 +803,7 @@ export default function VanHoaLichSu() {
                             <div className="font-bold text-amber-900 text-base mb-1">
                               {dynastyData.modern.title}
                             </div>
-                            <div className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                            <div className="text-sm text-gray-600 line-clamp-none md:line-clamp-2 leading-relaxed">
                               {dynastyData.modern.desc}
                             </div>
                           </div>
@@ -906,7 +908,7 @@ export default function VanHoaLichSu() {
           {eventModalData && (
             <div className="max-w-[920px] w-full max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-amber-50 rounded-2xl shadow-2xl relative border-2 border-amber-300">
               {/* Hero Image Section with Title Overlay */}
-              <div className="relative h-[450px] rounded-t-2xl overflow-hidden">
+              <div className="relative h-[300px] sm:h-[350px] md:h-[450px] rounded-t-2xl overflow-hidden">
                 {/* Background Image */}
                 {/* <img
                   src={eventModalData.image || nhangoImg}
@@ -925,13 +927,13 @@ export default function VanHoaLichSu() {
 
                 {/* Content Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                  <h2 className="text-4xl font-bold mb-3 drop-shadow-lg">
+                  <h2 className="text-2xl md:text-4xl font-bold mb-3 drop-shadow-lg">
                     {eventModalData.name}
                   </h2>
-                  <div className="flex flex-wrap items-center gap-4 text-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4 text-sm md:text-lg">
                     <div className="flex items-center gap-2">
                       <svg
-                        className="w-5 h-5"
+                        className="w-4 h-4 md:w-5 md:h-5"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -1024,7 +1026,7 @@ export default function VanHoaLichSu() {
                   if (relatedEvents.length > 0) {
                     return (
                       <div className="mt-8 pt-6 border-t-2 border-amber-200">
-                        <h3 className="text-xl font-bold text-[#dc2626] mb-6">
+                        <h3 className="text-lg md:text-xl font-bold text-[#dc2626] mb-6">
                           Các sự kiện liên quan
                         </h3>
                         <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -1103,7 +1105,7 @@ export default function VanHoaLichSu() {
           <div className="max-w-[800px] w-full max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white to-amber-50 rounded-2xl shadow-2xl relative border-2 border-amber-300">
             {/* Close Button */}
             <button
-              className="absolute top-4 right-4 z-20 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-gray-700 hover:text-amber-700 text-2xl transition-all hover:rotate-90 duration-300 shadow-lg"
+              className="absolute top-3 right-3 md:top-4 md:right-4 z-30 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-gray-700 hover:text-amber-700 text-2xl transition-all hover:rotate-90 duration-300 shadow-lg"
               onClick={closeHeroDetail}
               aria-label="Đóng"
             >
@@ -1111,7 +1113,7 @@ export default function VanHoaLichSu() {
             </button>
 
             {/* Hero Image Section */}
-            <div className="relative h-[400px] rounded-t-2xl overflow-hidden">
+            <div className="relative h-[250px] sm:h-[300px] md:h-[400px] rounded-t-2xl overflow-hidden">
               <img
                 src={heroDetailModal.img}
                 alt={heroDetailModal.name}
@@ -1126,14 +1128,14 @@ export default function VanHoaLichSu() {
               {/* Content overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-4xl">⭐</span>
-                  <h2 className="text-4xl font-bold drop-shadow-lg">
+                  <span className="text-2xl md:text-4xl">⭐</span>
+                  <h2 className="text-2xl md:text-4xl font-bold drop-shadow-lg">
                     {heroDetailModal.name}
                   </h2>
                 </div>
-                <div className="flex items-center gap-2 text-lg">
+                <div className="flex items-center gap-2 text-sm md:text-lg">
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4 md:w-5 md:h-5"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -1149,7 +1151,7 @@ export default function VanHoaLichSu() {
             {/* Content Section */}
             <div className="p-8">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-amber-900 mb-4 flex items-center gap-2">
+                <h3 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 flex items-center gap-2">
                   <svg
                     className="w-6 h-6"
                     fill="currentColor"
@@ -1163,7 +1165,7 @@ export default function VanHoaLichSu() {
                   </svg>
                   Tiểu sử
                 </h3>
-                <p className="text-gray-700 leading-relaxed text-base">
+                <p className="text-gray-700 leading-relaxed text-sm md:text-base">
                   {heroDetailModal.bio}
                 </p>
               </div>

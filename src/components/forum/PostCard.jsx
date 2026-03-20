@@ -114,7 +114,7 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
       transition={{ duration: 0.15, ease: "easeOut" }}
       className="bg-zinc-50 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer border border-amber-100"
     >
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Author Info */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -139,7 +139,14 @@ export default function PostCard({ post, author, onPostClick, onAvatarClick }) {
             </div>
           </div>
           <span
-            className={`px-3 py-1 bg-gradient-to-r ${categoryStyle} text-sm rounded-full font-medium shadow-sm`}
+            className={`
+      /* Mobile: chữ siêu nhỏ (xs), padding hẹp (px-2 py-0.5) */
+      text-[10px] px-2 py-0.5 
+      /* Desktop: chữ nhỏ (sm), padding rộng (px-3 py-1) */
+      md:text-sm md:px-3 md:py-1 
+      bg-gradient-to-r ${categoryStyle} 
+      rounded-full font-medium shadow-sm whitespace-nowrap
+    `}
           >
             {categoryName}
           </span>
