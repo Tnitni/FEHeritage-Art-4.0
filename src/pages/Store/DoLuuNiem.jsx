@@ -1,5 +1,5 @@
 // src/pages/Store/DoLuuNiem.jsx
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useArts } from "../../context/ArtContext";
@@ -19,60 +19,83 @@ export default function DoLuuNiem() {
   const [maxPrice, setMaxPrice] = useState(5000000);
   const [sortOrder, setSortOrder] = useState("none");
 
-  // Danh sách loại sản phẩm
-  const PRODUCT_CATEGORIES = [
-    "Tất cả",
-    "Áo Thun",
-    "Cốc/Ly", 
-    "Túi Vải",
-    "Móc Khóa",
-    "Tranh Mini",
-    "Digital Art",
-    "Nón Lá",
-    "Postcard",
-    "Bookmark",
-    "Magnet",
-    "Đèn Lồng",
-    "Balo"
-  ];
+  useEffect(() => {
+    const invalidLinkProducts = souvenirs.filter((product) => {
+      const productLink = product?.shopeeLink || product?.link || product?.url;
+      return !productLink || productLink.trim() === "";
+    });
 
-  // Danh sách chủ đề
-  const TOPICS = [
-    "Tất cả",
-    "Di tích lịch sử",
-    "Văn hóa", 
-    "Phố cổ",
-    "Thiên nhiên"
-  ];
+    console.log("[DoLuuNiem] Total souvenirs:", souvenirs.length);
+    if (invalidLinkProducts.length > 0) {
+      console.warn(
+        "[DoLuuNiem] Products missing link:",
+        invalidLinkProducts.map((p) => ({
+          id: p.id,
+          title: p.title,
+          shopeeLink: p.shopeeLink,
+          link: p.link,
+          url: p.url,
+        }))
+      );
+    }
+  }, [souvenirs]);
+
+  // Danh sách loại sản phẩm lấy động từ data để luôn hiển thị đủ
+  const PRODUCT_CATEGORIES = useMemo(() => {
+    const types = new Set(
+      souvenirs
+        .map((item) => item?.souvenirType)
+        .filter(Boolean)
+    );
+    return ["Tất cả", ...Array.from(types)];
+  }, [souvenirs]);
+
+  // Danh sách chủ đề lấy động từ data
+  const TOPICS = useMemo(() => {
+    const topics = new Set(
+      souvenirs
+        .map((item) => item?.category)
+        .filter(Boolean)
+    );
+    return ["Tất cả", ...Array.from(topics)];
+  }, [souvenirs]);
 
   // Lọc sản phẩm
   const filteredProducts = souvenirs
     .filter((product) =>
-      product.title.toLowerCase().includes(searchTerm.toLowerCase())
+      (product?.title || "").toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((product) => {
       if (filterCategory === "Tất cả") return true;
-      return product.souvenirType === filterCategory;
+      return (product?.souvenirType || "") === filterCategory;
     })
     .filter((product) => {
       if (filterTopic === "Tất cả") return true;
-      return product.category === filterTopic;
+      return (product?.category || "") === filterTopic;
     })
     .filter((product) => {
-      const type = selectedTypes[product.id] || Object.keys(product.price)[0];
-      const price = product.price[type];
+      const priceObj = product?.price || {};
+      const firstType = Object.keys(priceObj)[0];
+      if (!firstType) return true;
+
+      const type = selectedTypes[product.id] || firstType;
+      const price = Number(priceObj[type] || 0);
       return price >= minPrice && price <= maxPrice;
     })
     .sort((a, b) => {
       if (sortOrder === "asc") {
-        const typeA = selectedTypes[a.id] || Object.keys(a.price)[0];
-        const typeB = selectedTypes[b.id] || Object.keys(b.price)[0];
-        return a.price[typeA] - b.price[typeB];
+        const typeA = selectedTypes[a.id] || Object.keys(a?.price || {})[0];
+        const typeB = selectedTypes[b.id] || Object.keys(b?.price || {})[0];
+        const priceA = Number((a?.price || {})[typeA] || 0);
+        const priceB = Number((b?.price || {})[typeB] || 0);
+        return priceA - priceB;
       }
       if (sortOrder === "desc") {
-        const typeA = selectedTypes[a.id] || Object.keys(a.price)[0];
-        const typeB = selectedTypes[b.id] || Object.keys(b.price)[0];
-        return b.price[typeB] - a.price[typeA];
+        const typeA = selectedTypes[a.id] || Object.keys(a?.price || {})[0];
+        const typeB = selectedTypes[b.id] || Object.keys(b?.price || {})[0];
+        const priceA = Number((a?.price || {})[typeA] || 0);
+        const priceB = Number((b?.price || {})[typeB] || 0);
+        return priceB - priceA;
       }
       return 0;
     });
@@ -97,8 +120,23 @@ export default function DoLuuNiem() {
 
   // Redirect sang Shopee affiliate link
   const handleBuyNow = (product) => {
+    const productLink = product.shopeeLink || product.link || product.url;
+
+    console.log("[DoLuuNiem] Buy click:", {
+      id: product?.id,
+      title: product?.title,
+      shopeeLink: product?.shopeeLink,
+      link: product?.link,
+      url: product?.url,
+      resolvedLink: productLink,
+    });
+
     // Kiểm tra xem sản phẩm có link Shopee không
-    if (!product.shopeeLink || product.shopeeLink.trim() === "") {
+    if (!productLink || productLink.trim() === "") {
+      console.warn("[DoLuuNiem] Missing link for product:", {
+        id: product?.id,
+        title: product?.title,
+      });
       toast.error("❌ Sản phẩm chưa có link mua hàng!");
       return;
     }
@@ -107,7 +145,7 @@ export default function DoLuuNiem() {
     
     // Mở tab mới đến Shopee
     setTimeout(() => {
-      window.open(product.shopeeLink, '_blank');
+      window.open(productLink, '_blank');
     }, 500);
   };
 
@@ -225,9 +263,12 @@ export default function DoLuuNiem() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredProducts.length > 0 ? (
               filteredProducts.map((product) => {
-                const selectedType = selectedTypes[product.id] || Object.keys(product.price)[0];
-                const price = product.price[selectedType];
-                const imageUrl = product.images[selectedType];
+                const selectedType = selectedTypes[product.id] || Object.keys(product.price || {})[0];
+                const imageUrl =
+                  product.images?.[selectedType] ||
+                  product.image ||
+                  product.thumbnail ||
+                  "https://via.placeholder.com/600x600?text=No+Image";
 
                 return (
                   <motion.div

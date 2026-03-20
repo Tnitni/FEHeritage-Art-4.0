@@ -500,6 +500,20 @@ export default function ChiTietTranh() {
 
   // Kiểm tra loại sản phẩm
   const isSouvenir = art.type === "souvenir";
+  const productLink = art?.shopeeLink || art?.link || art?.url;
+
+  useEffect(() => {
+    if (!art || !isSouvenir) return;
+
+    console.log("[ChiTietTranh] Souvenir loaded:", {
+      id: art.id,
+      title: art.title,
+      shopeeLink: art.shopeeLink,
+      link: art.link,
+      url: art.url,
+      resolvedLink: productLink,
+    });
+  }, [art, isSouvenir, productLink]);
 
   // Toast
   const toastAddCart = () => toast.success("Đã thêm vào giỏ hàng");
@@ -510,15 +524,28 @@ export default function ChiTietTranh() {
   // ═════════════════════════════════════════════════════════════
   const handleAddToCart = () => {
     if (isSouvenir) {
+      console.log("[ChiTietTranh] AddToCart souvenir click:", {
+        id: art?.id,
+        title: art?.title,
+        resolvedLink: productLink,
+      });
+
       // Kiểm tra link Shopee
-      if (!art.shopeeLink || art.shopeeLink.trim() === "") {
+      if (!productLink || productLink.trim() === "") {
+        console.warn("[ChiTietTranh] Missing link on AddToCart:", {
+          id: art?.id,
+          title: art?.title,
+          shopeeLink: art?.shopeeLink,
+          link: art?.link,
+          url: art?.url,
+        });
         toast.error("❌ Sản phẩm chưa có link mua hàng!");
         return;
       }
       
       toast.success("🛍️ Đang chuyển đến cửa hàng...");
       setTimeout(() => {
-        window.open(art.shopeeLink, '_blank');
+        window.open(productLink, '_blank');
       }, 500);
     } else {
       // Logic cũ cho tranh in
@@ -533,15 +560,28 @@ export default function ChiTietTranh() {
 
   const handleBuyNow = () => {
     if (isSouvenir) {
+      console.log("[ChiTietTranh] BuyNow souvenir click:", {
+        id: art?.id,
+        title: art?.title,
+        resolvedLink: productLink,
+      });
+
       // Kiểm tra link Shopee
-      if (!art.shopeeLink || art.shopeeLink.trim() === "") {
+      if (!productLink || productLink.trim() === "") {
+        console.warn("[ChiTietTranh] Missing link on BuyNow:", {
+          id: art?.id,
+          title: art?.title,
+          shopeeLink: art?.shopeeLink,
+          link: art?.link,
+          url: art?.url,
+        });
         toast.error("❌ Sản phẩm chưa có link mua hàng!");
         return;
       }
       
       toast.success("🛍️ Đang chuyển đến cửa hàng...");
       setTimeout(() => {
-        window.open(art.shopeeLink, '_blank');
+        window.open(productLink, '_blank');
       }, 500);
     } else {
       // Logic cũ cho tranh in

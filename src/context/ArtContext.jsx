@@ -6,7 +6,74 @@ import { souvenirSamples } from "../data/souvenirs";
 const ArtContext = createContext();
 
 // 🔹 VERSION CONTROL - Tăng số này mỗi khi cập nhật data trong file
-const DATA_VERSION = "1.3"; // Thay đổi thành "1.2", "1.3" khi update data
+const DATA_VERSION = "1.8"; // Tăng version để đồng bộ lại dữ liệu mới từ file
+
+const buildSouvenirMap = (items) => {
+  const byId = new Map();
+  const byTitle = new Map();
+
+  items.forEach((item) => {
+    byId.set(item.id, item);
+    byTitle.set(item.title, item);
+  });
+
+  return { byId, byTitle };
+};
+
+const normalizeSouvenirs = (items) => {
+  const { byId, byTitle } = buildSouvenirMap(souvenirSamples);
+  let repairedCount = 0;
+
+  const normalizedIncoming = (items || []).map((item) => {
+    const source = byId.get(item.id) || byTitle.get(item.title);
+    const resolvedLink = item?.shopeeLink || item?.link || item?.url || source?.shopeeLink || "";
+    const resolvedImages = item?.images || source?.images || {};
+
+    const repaired = {
+      ...item,
+      shopeeLink: resolvedLink,
+      images: resolvedImages,
+    };
+
+    const hadNoLink = !item?.shopeeLink && !item?.link && !item?.url;
+    if (hadNoLink && repaired.shopeeLink) repairedCount += 1;
+
+    return repaired;
+  });
+
+  // Luôn lấy đủ toàn bộ sản phẩm từ file data gốc
+  const mergedWithSource = souvenirSamples.map((sourceItem) => {
+    const incomingItem = normalizedIncoming.find(
+      (item) => item.id === sourceItem.id || item.title === sourceItem.title
+    );
+
+    if (!incomingItem) return sourceItem;
+
+    return {
+      ...sourceItem,
+      ...incomingItem,
+      shopeeLink: incomingItem.shopeeLink || sourceItem.shopeeLink,
+      images: incomingItem.images || sourceItem.images,
+    };
+  });
+
+  // Nếu có sản phẩm custom do admin thêm mà không có trong file gốc thì vẫn giữ lại
+  const customExtras = normalizedIncoming.filter(
+    (item) => !souvenirSamples.some((sourceItem) => sourceItem.id === item.id || sourceItem.title === item.title)
+  );
+
+  const normalized = [...mergedWithSource, ...customExtras];
+
+  if (repairedCount > 0) {
+    console.warn("[ArtContext] Repaired missing souvenir links:", repairedCount);
+  }
+
+  if (normalized.length !== souvenirSamples.length) {
+    console.log("[ArtContext] Souvenir list merged. Source:", souvenirSamples.length, "Final:", normalized.length);
+  }
+
+  return normalized;
+};
 
 export function ArtProvider({ children }) {
   const [arts, setArts] = useState([]);
@@ -40,14 +107,14 @@ export function ArtProvider({ children }) {
     // Nếu version khác hoặc chưa có data → load từ file
     if (savedVersion !== DATA_VERSION || !saved) {
       console.log("🔄 Loading souvenirs from file (version:", DATA_VERSION, ")");
-      setSouvenirs(souvenirSamples);
+      setSouvenirs(normalizeSouvenirs(souvenirSamples));
       localStorage.setItem("souvenirs_version", DATA_VERSION);
     } else {
       try {
         console.log("📦 Loading souvenirs from localStorage");
-        setSouvenirs(JSON.parse(saved));
+        setSouvenirs(normalizeSouvenirs(JSON.parse(saved)));
       } catch {
-        setSouvenirs(souvenirSamples);
+        setSouvenirs(normalizeSouvenirs(souvenirSamples));
       }
     }
   }, []);
