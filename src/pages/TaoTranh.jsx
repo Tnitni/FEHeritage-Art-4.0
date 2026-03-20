@@ -430,14 +430,8 @@ const ImageCreator = () => {
 
   // Hàm xử lý Filter Bar
   const handleFilterClick = (category) => {
-    if (category === "Nghệ thuật") {
-      setActiveFilter(category);
-    } else {
-      toast.warning(`Chức năng "${category}" đang được phát triển!`, {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
+    setActiveFilter(category);
+    setResultUrl(null);
   };
 
   // Hàm xử lý upload ảnh
@@ -537,56 +531,58 @@ const ImageCreator = () => {
 
   //Hàm tạo ảnh
   const generateImage = async () => {
-    // 1. Kiểm tra đăng nhập và ảnh đầu vào
     if (!isLoggedIn) {
       setShowLoginPopup(true);
       return;
     }
     if (!imageFile) {
-      toast.warning("Vui lòng tải lên hoặc chụp một bức ảnh đầu vào!", {
-        position: "top-right",
-      });
+      toast.warning("Vui lòng chọn ảnh đầu vào!");
       return;
     }
 
     setLoading(true);
-    setResultUrl(null);
 
     try {
-      // Cắt ảnh thành đúng tỷ lệ bằng Canvas
-      const croppedImageUrl = await cropImageByRatio(previewUrl, aspectRatio);
-      const croppedImageFile = await createFileFromUrl(
-        croppedImageUrl,
-        "cropped-image.png",
-      );
-      // 2. Tạo gói dữ liệu (FormData) để gửi File và Style
       const formData = new FormData();
-      formData.append("image", croppedImageFile);
-      formData.append("style", selectedStyle);
+      let apiUrl = "";
 
-      // 3. Gửi hỏa tốc lên con AI
-      const response = await axios.post(
-        "https://nova-ai-3-n1yj.onrender.com/style_transfer/style-transfer",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          responseType: "blob",
-        },
-      );
+      if (activeFilter === "Nghệ thuật") {
+        // --- LOGIC STYLE TRANSFER ---
+        apiUrl =
+          "https://nova-ai-3-n1yj.onrender.com/style_transfer/style-transfer";
+        const croppedImageUrl = await cropImageByRatio(previewUrl, aspectRatio);
+        const croppedImageFile = await createFileFromUrl(
+          croppedImageUrl,
+          "input.png",
+        );
 
-      // 4. Nhận kết quả file ảnh, biến thành URL và hiển thị
-      const imageUrl = URL.createObjectURL(response.data);
-      setResultUrl(imageUrl);
-      toast.success("Tạo ảnh thành công!", { position: "top-right" });
-    } catch (error) {
-      console.error("Lỗi tạo ảnh AI:", error);
-      toast.error("Có lỗi xảy ra từ máy chủ AI. Vui lòng thử lại!", {
-        position: "top-right",
+        formData.append("image", croppedImageFile);
+        formData.append("style", selectedStyle);
+      } else if (activeFilter === "Nhân vật") {
+        // --- LOGIC FACE SWAP ---
+        if (!templateFile) {
+          toast.warning("Vui lòng upload ảnh Template để đổi mặt!");
+          setLoading(false);
+          return;
+        }
+        apiUrl = "https://nova-ai-3-n1yj.onrender.com/faceswap/faceswap/style";
+
+        formData.append("file", imageFile);
+        formData.append("template", templateFile);
+        formData.append("art_style", "3D Pixar animated style");
+      }
+
+      const response = await axios.post(apiUrl, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        responseType: "blob",
       });
+
+      setResultUrl(URL.createObjectURL(response.data));
+      toast.success("Tạo ảnh thành công!");
+    } catch (error) {
+      toast.error("Lỗi máy chủ AI!");
     } finally {
-      setLoading(false); // Tắt hiệu ứng quay vòng
+      setLoading(false);
     }
   };
 
@@ -631,7 +627,7 @@ const ImageCreator = () => {
         setImageFile(file);
       });
 
-      stopCamera(); // Chụp xong thì tắt camera
+      stopCamera();
     }
   };
 
@@ -640,7 +636,7 @@ const ImageCreator = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
       const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop()); // Dừng tất cả các luồng camera
+      tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
     setShowCamera(false);
@@ -655,7 +651,7 @@ const ImageCreator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* === CỘT TRÁI: UPLOAD & CAMERA === */}
         <div className="flex flex-col gap-4 w-full">
-          {/* 1. Khung ảnh */}
+          {/* 1. KHUNG ẢNH */}
           <div
             className="relative w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center group hover:bg-slate-100 transition-all duration-500 ease-in-out cursor-pointer overflow-hidden shadow-inner"
             style={{ aspectRatio: aspectRatio }}
@@ -775,78 +771,93 @@ const ImageCreator = () => {
               className={`border rounded-2xl p-5 transition-all duration-300 ${isCopyright ? "bg-pink-50/30 border-rose-100 shadow-sm" : "bg-pink-50/30 border-pink-200"}`}
             >
               {/* HEADER */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Flower2 className="w-6 h-6 text-pink-400 fill-pink-50" />
-                  <span className="font-bold text-gray-700 text-base">
+              {/* PHẦN ĐÓNG DẤU BẢN QUYỀN MỚI */}
+              <div className="flex items-center justify-between gap-4 w-full bg-pink-50/30 border border-pink-200 rounded-2xl p-5 transition-all duration-300">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Flower2 className="w-6 h-6 text-pink-400 flex-shrink-0" />
+                  <span className="font-bold text-gray-700 text-sm sm:text-base truncate">
                     Đóng dấu bản quyền
                   </span>
                 </div>
 
-                <button
+                {/* CUSTOM CHECKBOX THAY THẾ CHO TOGGLE */}
+                <div
                   onClick={() => setIsCopyright(!isCopyright)}
-                  className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 flex items-center ${
-                    isCopyright ? "bg-green-600" : "bg-gray-300"
-                  }`}
+                  className="flex-shrink-0 cursor-pointer group"
                 >
                   <div
-                    className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                      isCopyright ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
+                    className={`
+                      w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-300
+                      ${
+                        isCopyright
+                          ? "bg-green-500 border-green-500 shadow-md scale-110"
+                          : "bg-white border-gray-300 group-hover:border-pink-300"
+                      }
+                    `}
+                  >
+                    {isCopyright && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                        <Check className="w-5 h-5 text-white stroke-[3px]" />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* BODY (HIỆN KHI BẬT) */}
-              {isCopyright && (
-                <div className="mt-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {/* Ô NHẬP TÊN */}
-                  <input
-                    type="text"
-                    value={copyrightText}
-                    maxLength={15}
-                    onChange={(e) => setCopyrightText(e.target.value)}
-                    placeholder="Nhập tên của bạn..."
-                    className="w-full p-3 border border-rose-200 rounded-xl text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 transition-all text-center font-medium bg-white shadow-sm mb-4"
-                  />
+              <AnimatePresence>
+                {isCopyright && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                    animate={{ height: "auto", opacity: 1, marginTop: 20 }}
+                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                    transition={{ duration: 0.1, ease: "easeInOut" }}
+                    className="overflow-hidden" // Quan trọng để hiệu ứng trượt không bị lỗi hiển thị
+                  >
+                    {/* Ô NHẬP TÊN */}
+                    <input
+                      type="text"
+                      value={copyrightText}
+                      maxLength={15}
+                      onChange={(e) => setCopyrightText(e.target.value)}
+                      placeholder="Nhập tên của bạn..."
+                      className="w-full p-3 border border-rose-200 rounded-xl text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 transition-all text-center font-medium bg-white shadow-sm mb-4"
+                    />
 
-                  {/* GRID CHỌN FONT */}
-                  <div>
-                    <p className="text-sm font-bold text-gray-600 mb-2">
-                      Chọn kiểu chữ:
-                    </p>
+                    {/* GRID CHỌN FONT */}
+                    <div>
+                      <p className="text-sm font-bold text-gray-600 mb-2">
+                        Chọn kiểu chữ:
+                      </p>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {FONT_OPTIONS.map((font) => (
-                        <div
-                          key={font.id}
-                          onClick={() => setSelectedFont(font.id)}
-                          className={`cursor-pointer h-24 rounded-xl border flex flex-col items-center justify-between py-2 px-1 transition-all ${
-                            selectedFont === font.id
-                              ? "border-rose-500 bg-rose-50 ring-1 ring-rose-200 shadow-sm"
-                              : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                          }`}
-                        >
-                          {/* KHUNG CHỨA CHỮ REVIEW */}
-                          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
-                            <span
-                              className={`text-[16px] text-[#B91C1C] ${font.className} leading-tight break-words w-full text-center`}
-                            >
-                              {/* Nếu có nhập text thì hiện text, không thì hiện "Tên" */}
-                              {copyrightText || "Tên"}
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {FONT_OPTIONS.map((font) => (
+                          <div
+                            key={font.id}
+                            onClick={() => setSelectedFont(font.id)}
+                            className={`cursor-pointer h-24 rounded-xl border flex flex-col items-center justify-between py-2 px-1 transition-all ${
+                              selectedFont === font.id
+                                ? "border-rose-500 bg-rose-50 ring-1 ring-rose-200 shadow-sm"
+                                : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                            }`}
+                          >
+                            <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
+                              <span
+                                className={`text-[16px] text-[#B91C1C] ${font.className} leading-tight break-words w-full text-center`}
+                              >
+                                {copyrightText || "Tên"}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 text-center leading-none mt-1">
+                              {font.name}
                             </span>
                           </div>
-
-                          {/* TÊN FONT (Subtitle nhỏ và mờ) */}
-                          <span className="text-[10px] text-gray-400 text-center leading-none mt-1">
-                            {font.name}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* B. Chọn kiểu áp dụng */}
@@ -855,7 +866,7 @@ const ImageCreator = () => {
                 Chọn kiểu áp dụng
               </h3>
 
-              {/* Tabs Style/Upload */}
+              {/* GIỮ NGUYÊN 2 TABS LỚN THEO Ý SẾP */}
               <div className="flex gap-4 mb-5">
                 <button
                   onClick={() => setActiveTab("available")}
@@ -871,107 +882,165 @@ const ImageCreator = () => {
                 </button>
               </div>
 
-              {/* Tab Style available */}
+              {/* NỘI DUNG TRONG TAB STYLE CÓ SẴN */}
               {activeTab === "available" ? (
                 <div className="animate-in fade-in zoom-in duration-300">
-                  {/* FILTER CẤP 1 */}
-                  <div className="flex items-center justify-between bg-slate-50 rounded-xl p-1.5 mb-4">
+                  {/* 4 SUB-TABS (Nghệ thuật, Nhân vật...) */}
+                  <div className="flex items-center justify-between bg-slate-50 rounded-xl p-1 mb-4">
                     {filterCategories.map((category) => (
                       <button
                         key={category}
                         onClick={() => handleFilterClick(category)}
-                        className={`flex-1 py-2 text-sm rounded-lg transition-all ${activeFilter === category ? "bg-white text-rose-500 font-bold shadow-sm" : "text-gray-500 font-medium cursor-pointer hover:text-gray-700"}`}
+                        className={`
+                          flex-1 px-1 py-2 text-sm rounded-lg transition-all
+                          break-words leading-tight
+                          flex items-center justify-center text-center
+                          ${
+                            activeFilter === category
+                              ? "bg-white text-rose-500 font-bold shadow-sm"
+                              : "text-gray-500 font-medium cursor-pointer hover:text-gray-700"
+                          }
+                        `}
                       >
                         {category}
                       </button>
                     ))}
                   </div>
 
-                  {/* FILTER CẤP 2 */}
-                  <div className="flex justify-center gap-3 mb-4">
-                    <button
-                      onClick={() => setActiveSubTab("vietnam")}
-                      className={`px-5 py-1.5 rounded-full cursor-pointer text-xs font-bold transition-all border ${activeSubTab === "vietnam" ? "bg-purple-50 text-purple-600 border-purple-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
-                    >
-                      Nghệ thuật Việt
-                    </button>
-                    <button
-                      onClick={() => setActiveSubTab("other")}
-                      className={`px-5 py-1.5 rounded-full cursor-pointer text-xs font-bold transition-all border ${activeSubTab === "other" ? "bg-purple-50 text-purple-600 border-purple-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
-                    >
-                      Khác
-                    </button>
-                  </div>
-
-                  {/* SLIDER ẢNH */}
-                  <div className="mb-2">
-                    <h4 className="text-sm font-bold text-gray-700 mb-3 flex justify-between items-center">
-                      Phong cách nghệ thuật
-                      <div className="flex gap-2">
+                  {/* NẾU LÀ SUB-TAB NGHỆ THUẬT -> HIỆN SLIDER NHƯ CŨ */}
+                  {activeFilter === "Nghệ thuật" && (
+                    <div className="animate-in fade-in duration-300">
+                      <div className="flex justify-center gap-3 mb-4">
                         <button
-                          onClick={() => scrollList("left")}
-                          className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100 bg-white shadow-sm active:scale-95 transition-all"
+                          onClick={() => setActiveSubTab("vietnam")}
+                          className={`px-5 py-1.5 rounded-full cursor-pointer text-xs font-bold transition-all border ${activeSubTab === "vietnam" ? "bg-purple-50 text-purple-600 border-purple-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
                         >
-                          <ChevronLeft size={16} className="text-gray-600" />
+                          Nghệ thuật Việt
                         </button>
                         <button
-                          onClick={() => scrollList("right")}
-                          className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100 bg-white shadow-sm active:scale-95 transition-all"
+                          onClick={() => setActiveSubTab("other")}
+                          className={`px-5 py-1.5 rounded-full cursor-pointer text-xs font-bold transition-all border ${activeSubTab === "other" ? "bg-purple-50 text-purple-600 border-purple-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}
                         >
-                          <ChevronRight size={16} className="text-gray-600" />
+                          Khác
                         </button>
                       </div>
-                    </h4>
 
-                    {/* Container cuộn */}
-                    <div
-                      ref={scrollRef}
-                      className="flex gap-3 overflow-x-auto pb-4 scroll-smooth no-scrollbar"
-                      style={{
-                        scrollbarWidth: "none",
-                        msOverflowStyle: "none",
-                      }}
-                    >
-                      {currentStyles.map((style) => (
-                        <div
-                          key={style.id}
-                          onClick={() => setSelectedStyle(style.id)}
-                          className="flex-shrink-0 w-[100px] cursor-pointer group relative"
-                        >
-                          <div
-                            className={`overflow-hidden rounded-xl aspect-square border-2 transition-all ${selectedStyle === style.id ? "border-green-500 ring-2 ring-green-100" : "border-transparent"}`}
-                          >
-                            <img
-                              src={style.img}
-                              alt={style.name}
-                              className="w-full h-full object-cover"
-                            />
+                      <div className="mb-2">
+                        <h4 className="text-sm font-bold text-gray-700 mb-3 flex justify-between items-center">
+                          Phong cách nghệ thuật
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => scrollList("left")}
+                              className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm active:scale-95 transition-all"
+                            >
+                              <ChevronLeft size={16} />
+                            </button>
+                            <button
+                              onClick={() => scrollList("right")}
+                              className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm active:scale-95 transition-all"
+                            >
+                              <ChevronRight size={16} />
+                            </button>
                           </div>
-                          {selectedStyle === style.id && (
-                            <div className="absolute top-1 right-1 bg-green-500 text-white p-0.5 rounded-full">
-                              <Check size={10} />
+                        </h4>
+                        <div
+                          ref={scrollRef}
+                          className="flex gap-3 overflow-x-auto pb-4 scroll-smooth no-scrollbar"
+                          style={{ scrollbarWidth: "none" }}
+                        >
+                          {currentStyles.map((style) => (
+                            <div
+                              key={style.id}
+                              onClick={() => setSelectedStyle(style.id)}
+                              className="flex-shrink-0 w-[100px] cursor-pointer group relative"
+                            >
+                              <div
+                                className={`overflow-hidden rounded-xl aspect-square border-2 transition-all ${selectedStyle === style.id ? "border-green-500 ring-2 ring-green-100" : "border-transparent"}`}
+                              >
+                                <img
+                                  src={style.img}
+                                  alt={style.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              {selectedStyle === style.id && (
+                                <div className="absolute top-1 right-1 bg-green-500 text-white p-0.5 rounded-full">
+                                  <Check size={10} />
+                                </div>
+                              )}
+                              <p
+                                className={`text-center text-[11px] font-semibold mt-2 ${selectedStyle === style.id ? "text-green-600" : "text-gray-600"}`}
+                              >
+                                {style.name}
+                              </p>
                             </div>
-                          )}
-                          <p
-                            className={`text-center text-[11px] font-semibold mt-2 transition-colors ${selectedStyle === style.id ? "text-green-600" : "text-gray-600"}`}
-                          >
-                            {style.name}
-                          </p>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* NẾU LÀ SUB-TAB NHÂN VẬT -> HIỆN KHUNG UPLOAD TEMPLATE NHỎ */}
+                  {activeFilter === "Nhân vật" && (
+                    <div className="animate-in fade-in zoom-in duration-300">
+                      <div className="text-center text-gray-500 text-sm mb-3 font-semibold italic">
+                        Tải ảnh mẫu Face Swap
+                      </div>
+                      <div className="border-2 border-dashed border-amber-200 rounded-xl bg-white min-h-[140px] flex flex-col items-center justify-center cursor-pointer hover:bg-amber-50 transition-colors relative overflow-hidden group">
+                        {!templatePreviewUrl ? (
+                          <label className="w-full h-32 flex flex-col items-center justify-center cursor-pointer">
+                            <FolderOpen
+                              size={32}
+                              className="text-amber-500 mb-2 group-hover:scale-110 transition-transform"
+                            />
+                            <span className="font-bold text-gray-700 text-xs">
+                              Chọn ảnh mẫu muốn ghép
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleTemplateUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative w-full p-2">
+                            <img
+                              src={templatePreviewUrl}
+                              alt="Template"
+                              className="w-full h-32 object-contain mx-auto rounded-lg"
+                            />
+                            <div className="absolute bottom-2 left-0 right-0 bg-green-500/80 py-1 flex items-center justify-center text-[10px] text-white font-bold">
+                              <Check size={12} className="mr-1" /> ĐÃ CHỌN
+                              TEMPLATE
+                            </div>
+                            <button
+                              onClick={clearTemplate}
+                              className="absolute top-3 right-3 bg-white/90 p-1 rounded-full text-red-500 shadow-sm"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CÁC SUB-TAB CÒN LẠI */}
+                  {(activeFilter === "Nhóm" || activeFilter === "Khác") && (
+                    <div className="py-10 text-center text-gray-400 italic text-sm">
+                      Tính năng "{activeFilter}" đang phát triển...
+                    </div>
+                  )}
                 </div>
               ) : (
-                // Tab Upload Template
+                /* TAB UPLOAD LỚN (GIỮ NGUYÊN CODE CŨ) */
                 <div className="animate-in fade-in zoom-in duration-300">
                   <div className="text-center text-gray-500 text-sm mb-2">
                     Upload Template
                   </div>
-
                   <div className="border-2 border-dashed border-gray-300 rounded-xl bg-white min-h-[130px] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors relative overflow-hidden">
                     {!templatePreviewUrl ? (
-                      // TRẠNG THÁI CHƯA UPLOAD
                       <label className="w-full h-32 flex flex-col items-center justify-center cursor-pointer">
                         <FolderOpen
                           size={40}
@@ -979,9 +1048,6 @@ const ImageCreator = () => {
                         />
                         <span className="font-bold text-gray-700 text-sm">
                           Chọn ảnh template
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          click_to_upload
                         </span>
                         <input
                           type="file"
@@ -991,41 +1057,21 @@ const ImageCreator = () => {
                         />
                       </label>
                     ) : (
-                      // TRẠNG THÁI ĐÃ UPLOAD
-                      <div className="relative w-full p-2 animate-in fade-in duration-500">
-                        <div className="relative rounded-lg overflow-hidden shadow-md">
-                          <img
-                            src={templatePreviewUrl}
-                            alt="Template Preview"
-                            className="w-full h-auto max-h-64 object-contain mx-auto"
-                          />
-                          {/* Lớp phủ overlay màu xanh lá phía dưới ảnh */}
-                          <div className="absolute bottom-0 left-0 right-0 bg-green-500/80 py-2 flex items-center justify-center">
-                            <span className="text-white font-bold text-xs flex items-center gap-1">
-                              <Check size={14} /> Đã chọn template
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Nút xóa để chọn lại */}
+                      <div className="relative w-full p-2">
+                        <img
+                          src={templatePreviewUrl}
+                          alt="Template Preview"
+                          className="w-full h-auto max-h-64 object-contain mx-auto rounded-lg shadow-md"
+                        />
                         <button
                           onClick={clearTemplate}
-                          className="absolute top-4 right-4 bg-white/90 p-1.5 rounded-full text-red-500 hover:bg-red-100 shadow-sm transition-all"
+                          className="absolute top-4 right-4 bg-white/90 p-1.5 rounded-full text-red-500 shadow-sm"
                         >
                           <X size={16} />
                         </button>
                       </div>
                     )}
                   </div>
-
-                  {/* Thông báo sẵn sàng bên dưới khung (Hiện khi đã có ảnh) */}
-                  {templatePreviewUrl && (
-                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-center animate-in slide-in-from-top-2 duration-500">
-                      <p className="text-green-700 text-xs font-medium leading-relaxed">
-                        Template của bạn đã sẵn sàng! Nhấn nút tạo ảnh để xử lý.
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -1063,6 +1109,8 @@ const ImageCreator = () => {
                   setResultUrl(null);
                   setImageFile(null);
                   setPreviewUrl(null);
+                  setTemplateFile(null);
+                  setTemplatePreviewUrl(null);
                 }}
                 className="px-6 py-2 bg-gray-100 rounded-full font-medium hover:bg-gray-200"
               >
