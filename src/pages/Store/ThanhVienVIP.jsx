@@ -26,7 +26,7 @@ export default function ThanhVienVIP() {
       tier: "free",
       priceMonthly: 0,
       benefits: [
-        { text: "Tạo ảnh AI giới hạn lượt/ngày", tooltip: "Giới hạn số lượt tạo ảnh mỗi ngày" },
+        { text: "Tạo ảnh AI 2 lượt/ngày", tooltip: "Mỗi ngày được tạo tối đa 2 lượt ảnh AI" },
         { text: "Sử dụng mẫu di sản có sẵn", tooltip: "Chọn từ thư viện mẫu cơ bản" },
         { text: "Tham gia cộng đồng sáng tạo", tooltip: "Tương tác, học hỏi, chia sẻ tác phẩm" },
         { text: "Xem nội dung văn hóa Việt", tooltip: "Truy cập miễn phí các bài viết, video văn hóa" },
@@ -38,7 +38,7 @@ export default function ThanhVienVIP() {
       tier: "premium",
       priceMonthly: 149000,
       benefits: [
-        { text: "Tạo ảnh AI không giới hạn", tooltip: "Không giới hạn số lượt tạo ảnh mỗi ngày" },
+        { text: "Tạo ảnh AI 50 lượt/tháng", tooltip: "Mỗi tháng được tạo tối đa 50 lượt ảnh AI" },
         { text: "Tùy chỉnh phong cách sáng tạo", tooltip: "Tùy biến phong cách AI theo sở thích" },
         { text: "Truy cập thư viện di sản phong phú", tooltip: "Kho dữ liệu di sản, mẫu AI nâng cao" },
         { text: "Quyền thương mại hóa sản phẩm", tooltip: "Được phép in ấn, NFT, merchandise" },
@@ -62,11 +62,11 @@ export default function ThanhVienVIP() {
 
   // Tổng hợp quyền lợi
   const allBenefits = [
-    "Tạo ảnh AI giới hạn lượt/ngày",
+    "Tạo ảnh AI 2 lượt/ngày",
     "Sử dụng mẫu di sản có sẵn",
     "Tham gia cộng đồng sáng tạo",
     "Xem nội dung văn hóa Việt",
-    "Tạo ảnh AI không giới hạn",
+    "Tạo ảnh AI 50 lượt/tháng",
     "Tùy chỉnh phong cách sáng tạo",
     "Truy cập thư viện di sản phong phú",
     "Quyền thương mại hóa sản phẩm",

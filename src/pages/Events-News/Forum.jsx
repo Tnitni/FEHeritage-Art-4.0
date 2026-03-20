@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PostCard from "../../components/forum/PostCard";
 import CreatePostModal from "../../components/forum/CreatePostModal";
 import Filters from "../../components/forum/Filters";
@@ -7,7 +7,11 @@ import MessageModal from "../../components/forum/MessageModal";
 // import EditPostModal from '../../components/forum/EditPostModal'
 import UserProfileModal from "../../components/forum/UserProfileModal";
 import PostDetailModal from "../../components/forum/PostDetailModal";
-
+import EditPostModal from "../../components/forum/EditPostModal";
+import forumService from "../../services/forumService";
+import authService from "../../services/authService";
+import { useUser } from "../../context/UserContext";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
@@ -16,7 +20,13 @@ import {
   TrendingUp,
   Users,
   FileX,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Search,
+  X,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 // Mock data
 // const initialPosts = [
@@ -239,145 +249,145 @@ const mockForumPostStages = [
   },
 ];
 
-const mockForumPostVotes = [
-  // Post 1 - 45 likes, 32 hearts, 12 shares
-  ...Array.from({ length: 45 }, (_, i) => ({
-    post_vote_id: 1000 + i,
-    post_id: 1,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-22T${String(9 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 32 }, (_, i) => ({
-    post_vote_id: 2000 + i,
-    post_id: 1,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-22T${String(10 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 17) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 12 }, (_, i) => ({
-    post_vote_id: 3000 + i,
-    post_id: 1,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-22T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 19) % 60).padStart(2, "0")}:00Z`,
-  })),
+// const mockForumPostVotes = [
+//   // Post 1 - 45 likes, 32 hearts, 12 shares
+//   ...Array.from({ length: 45 }, (_, i) => ({
+//     post_vote_id: 1000 + i,
+//     post_id: 1,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-22T${String(9 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 32 }, (_, i) => ({
+//     post_vote_id: 2000 + i,
+//     post_id: 1,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-22T${String(10 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 17) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 12 }, (_, i) => ({
+//     post_vote_id: 3000 + i,
+//     post_id: 1,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-22T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 19) % 60).padStart(2, "0")}:00Z`,
+//   })),
 
-  // Post 2 - 78 likes, 56 hearts, 23 shares
-  ...Array.from({ length: 78 }, (_, i) => ({
-    post_vote_id: 4000 + i,
-    post_id: 2,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-21T${String(15 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 56 }, (_, i) => ({
-    post_vote_id: 5000 + i,
-    post_id: 2,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-21T${String(16 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 23 }, (_, i) => ({
-    post_vote_id: 6000 + i,
-    post_id: 2,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-21T${String(17 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
-  })),
+//   // Post 2 - 78 likes, 56 hearts, 23 shares
+//   ...Array.from({ length: 78 }, (_, i) => ({
+//     post_vote_id: 4000 + i,
+//     post_id: 2,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-21T${String(15 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 56 }, (_, i) => ({
+//     post_vote_id: 5000 + i,
+//     post_id: 2,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-21T${String(16 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 23 }, (_, i) => ({
+//     post_vote_id: 6000 + i,
+//     post_id: 2,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-21T${String(17 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
+//   })),
 
-  // Post 3 - 34 likes, 28 hearts, 15 shares
-  ...Array.from({ length: 34 }, (_, i) => ({
-    post_vote_id: 7000 + i,
-    post_id: 3,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-20T${String(10 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 12) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 28 }, (_, i) => ({
-    post_vote_id: 8000 + i,
-    post_id: 3,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-20T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 14) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 15 }, (_, i) => ({
-    post_vote_id: 9000 + i,
-    post_id: 3,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-20T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 16) % 60).padStart(2, "0")}:00Z`,
-  })),
+//   // Post 3 - 34 likes, 28 hearts, 15 shares
+//   ...Array.from({ length: 34 }, (_, i) => ({
+//     post_vote_id: 7000 + i,
+//     post_id: 3,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-20T${String(10 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 12) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 28 }, (_, i) => ({
+//     post_vote_id: 8000 + i,
+//     post_id: 3,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-20T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 14) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 15 }, (_, i) => ({
+//     post_vote_id: 9000 + i,
+//     post_id: 3,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-20T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 16) % 60).padStart(2, "0")}:00Z`,
+//   })),
 
-  // Post 4 - 56 likes, 45 hearts, 18 shares
-  ...Array.from({ length: 56 }, (_, i) => ({
-    post_vote_id: 10000 + i,
-    post_id: 4,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-19T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 45 }, (_, i) => ({
-    post_vote_id: 11000 + i,
-    post_id: 4,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-19T${String(13 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 18 }, (_, i) => ({
-    post_vote_id: 12000 + i,
-    post_id: 4,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-19T${String(14 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
-  })),
+//   // Post 4 - 56 likes, 45 hearts, 18 shares
+//   ...Array.from({ length: 56 }, (_, i) => ({
+//     post_vote_id: 10000 + i,
+//     post_id: 4,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-19T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 45 }, (_, i) => ({
+//     post_vote_id: 11000 + i,
+//     post_id: 4,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-19T${String(13 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 18 }, (_, i) => ({
+//     post_vote_id: 12000 + i,
+//     post_id: 4,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-19T${String(14 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
+//   })),
 
-  // Post 5 - 42 likes, 31 hearts, 9 shares
-  ...Array.from({ length: 42 }, (_, i) => ({
-    post_vote_id: 13000 + i,
-    post_id: 5,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-18T${String(16 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 12) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 31 }, (_, i) => ({
-    post_vote_id: 14000 + i,
-    post_id: 5,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-18T${String(17 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 14) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 9 }, (_, i) => ({
-    post_vote_id: 15000 + i,
-    post_id: 5,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-18T${String(18 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 16) % 60).padStart(2, "0")}:00Z`,
-  })),
+//   // Post 5 - 42 likes, 31 hearts, 9 shares
+//   ...Array.from({ length: 42 }, (_, i) => ({
+//     post_vote_id: 13000 + i,
+//     post_id: 5,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-18T${String(16 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 12) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 31 }, (_, i) => ({
+//     post_vote_id: 14000 + i,
+//     post_id: 5,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-18T${String(17 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 14) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 9 }, (_, i) => ({
+//     post_vote_id: 15000 + i,
+//     post_id: 5,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-18T${String(18 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 16) % 60).padStart(2, "0")}:00Z`,
+//   })),
 
-  // Post 6 - 92 likes, 71 hearts, 34 shares
-  ...Array.from({ length: 92 }, (_, i) => ({
-    post_vote_id: 16000 + i,
-    post_id: 6,
-    user_id: (i % 4) + 1,
-    vote_type: "like",
-    created_date: `2026-01-17T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 71 }, (_, i) => ({
-    post_vote_id: 17000 + i,
-    post_id: 6,
-    user_id: (i % 4) + 1,
-    vote_type: "dislike",
-    created_date: `2026-01-17T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
-  })),
-  ...Array.from({ length: 34 }, (_, i) => ({
-    post_vote_id: 18000 + i,
-    post_id: 6,
-    user_id: (i % 4) + 1,
-    vote_type: "share",
-    created_date: `2026-01-17T${String(13 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
-  })),
-];
+//   // Post 6 - 92 likes, 71 hearts, 34 shares
+//   ...Array.from({ length: 92 }, (_, i) => ({
+//     post_vote_id: 16000 + i,
+//     post_id: 6,
+//     user_id: (i % 4) + 1,
+//     vote_type: "like",
+//     created_date: `2026-01-17T${String(11 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 11) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 71 }, (_, i) => ({
+//     post_vote_id: 17000 + i,
+//     post_id: 6,
+//     user_id: (i % 4) + 1,
+//     vote_type: "dislike",
+//     created_date: `2026-01-17T${String(12 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 13) % 60).padStart(2, "0")}:00Z`,
+//   })),
+//   ...Array.from({ length: 34 }, (_, i) => ({
+//     post_vote_id: 18000 + i,
+//     post_id: 6,
+//     user_id: (i % 4) + 1,
+//     vote_type: "share",
+//     created_date: `2026-01-17T${String(13 + Math.floor(i / 10)).padStart(2, "0")}:${String((i * 15) % 60).padStart(2, "0")}:00Z`,
+//   })),
+// ];
 
 const mockForumPosts = [
   {
@@ -478,6 +488,22 @@ const mockForumPosts = [
   },
 ];
 
+// const calculateTop8Tags = (postsData) => {
+//   const allTags = postsData.flatMap((post) => post.tags || []);
+//   const tagCounts = allTags.reduce((acc, tag) => {
+//     const tagName = typeof tag === "string" ? tag : tag.name;
+//     if (tagName) {
+//       acc[tagName] = (acc[tagName] || 0) + 1;
+//     }
+//     return acc;
+//   }, {});
+
+//   return Object.entries(tagCounts)
+//     .sort((a, b) => b[1] - a[1])
+//     .slice(0, 8)
+//     .map(([tag, count]) => ({ tag, count }));
+// };
+
 export default function Forum() {
   // const [showCreateModal, setShowCreateModal] = useState(false);
   // const [posts, setPosts] = useState(initialPosts);
@@ -488,15 +514,42 @@ export default function Forum() {
   // const [sortBy, setSortBy] = useState("newest");
   const [users, setUsers] = useState(mockUsersData);
   const [comments, setComments] = useState(mockForumPostComments);
-  const [votes, setVotes] = useState(mockForumPostVotes);
+  // const [votes, setVotes] = useState(mockForumPostVotes);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [stages, setStages] = useState(mockForumPostStages);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [selectedTag, setSelectedTag] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messageRecipient, setMessageRecipient] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialPage = parseInt(searchParams.get("page")) || 1;
+  const initialCategory = searchParams.get("category") || "all";
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [commentToDelete, setCommentToDelete] = useState(null); // Lưu { id, postId }
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [allFeaturedTags, setAllFeaturedTags] = useState([]);
+  const [hasFetchedTotalTags, setHasFetchedTotalTags] = useState(false);
+  const [allPostsForTags, setAllPostsForTags] = useState([]);
+  const [isFiltersLoading, setIsFiltersLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [tempSearch, setTempSearch] = useState("");
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
+  const { user: currentUser } = useUser();
+  const postsListRef = useRef(null);
+  const prevPageRef = useRef(currentPage);
 
   // const categories = [
   //   "Tất cả",
@@ -507,154 +560,428 @@ export default function Forum() {
   //   "Di sản",
   // ];
 
-  const getPostWithStats = (post) => {
-    const comments = mockForumPostComments.filter(
-      (c) => c.post_id === post.post_id,
-    );
-    const votes = mockForumPostVotes.filter((v) => v.post_id === post.post_id);
+  const loadInitialData = async () => {
+    try {
+      setIsLoading(true);
+      if (categories.length === 0) setIsFiltersLoading(true);
 
-    // Views được tính dựa trên post_id để giữ consistency
-    const viewsMapping = {
-      1: 234,
-      2: 456,
-      3: 189,
-      4: 312,
-      5: 267,
-      6: 589,
-    };
+      // Xác định có đang lọc hay không
+      const isPopular = sortBy === "popular";
+      const isMine = sortBy === "myself";
 
-    return {
-      ...post,
-      tags: JSON.parse(post.tag),
-      images: JSON.parse(post.images),
-      commentsCount: comments.length,
-      likes: votes.filter((v) => v.vote_type === "like").length,
-      dislikes: votes.filter((v) => v.vote_type === "dislike").length,
-      shares: votes.filter((v) => v.vote_type === "share").length,
-      views: viewsMapping[post.post_id] || 0,
-    };
+      const [postRes, catRes] = await Promise.all([
+        forumService.getAllPosts({
+          page: currentPage,
+          limit: 10,
+          category: selectedCategory,
+          sortBy: sortBy,
+          tag: selectedTag,
+          popular: isPopular,
+          myself: isMine,
+          search: searchTerm,
+        }),
+        forumService.getCategories(),
+      ]);
+
+      if (postRes.success) {
+        // Cập nhật state pagination từ API
+        setPagination(postRes.pagination);
+
+        const formattedPosts = postRes.data.map((post) => ({
+          ...post,
+
+          likes: post.likes || 0,
+          dislikes: post.dislikes || 0,
+          commentsCount: post.comment_count || 0,
+          views: post.views || 0,
+          liked: post.like || false,
+          disliked: post.dislike || false,
+
+          tags: post.tags
+            ? post.tags.map((t) => (typeof t === "string" ? t : t.name))
+            : [],
+          displayImages: (post.images || []).map((img) => img.image_url),
+          displayVideos: (post.videos || []).map((vid) => vid.video_url),
+        }));
+
+        setPosts(formattedPosts);
+      }
+      // So sánh nếu currentPage hiện tại khác với currentPage ở lần render trước
+
+      if (catRes.success) {
+        setCategories(catRes.data);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải bài viết:", error);
+    } finally {
+      setIsLoading(false);
+      setIsFiltersLoading(false);
+    }
   };
 
-  const [posts, setPosts] = useState(mockForumPosts.map(getPostWithStats));
+  useEffect(() => {
+    loadInitialData();
+  }, [currentPage, selectedCategory, sortBy, selectedTag, searchTerm]);
+
+  useEffect(() => {
+    if (prevPageRef.current !== currentPage) {
+      if (postsListRef.current) {
+        const yOffset = -100;
+        const element = postsListRef.current;
+        const y =
+          element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+
+    prevPageRef.current = currentPage;
+  }, [currentPage]);
+
+  useEffect(() => {
+    const params = {};
+    if (currentPage > 1) params.page = currentPage;
+    if (selectedCategory !== "all") params.category = selectedCategory;
+    if (sortBy !== "newest") params.sort = sortBy;
+    if (selectedTag) params.tag = selectedTag;
+
+    setSearchParams(params, { replace: true });
+  }, [currentPage, selectedCategory, sortBy, selectedTag]);
+
+  useEffect(() => {
+    const getGlobalTopTags = async () => {
+      if (hasFetchedTotalTags) return;
+      try {
+        const res = await forumService.getTags();
+        if (Array.isArray(res)) {
+          const formattedTags = res.map((item) => ({
+            tag: item.tag?.name || "N/A",
+            count: parseInt(item.usage_count) || 0,
+          }));
+          setAllFeaturedTags(formattedTags);
+        } else if (res && res.success && Array.isArray(res.data)) {
+          const formattedTags = res.data.map((item) => ({
+            tag: item.tag?.name || "N/A",
+            count: parseInt(item.usage_count) || 0,
+          }));
+          setAllFeaturedTags(formattedTags);
+        }
+      } catch (err) {
+        console.error("Lỗi thống kê tag tổng thể:", err);
+      } finally {
+        setHasFetchedTotalTags(true);
+      }
+    };
+    getGlobalTopTags();
+  }, [hasFetchedTotalTags]);
+
+  // 3. Reset về trang 1 khi người dùng thay đổi bộ lọc
+  // Chỉ reset về trang 1 nếu người dùng chủ động thay đổi Category/Tag trên giao diện
+  // useEffect(() => {
+  //   // Lấy giá trị hiện tại trên URL để đối chiếu
+  //   const urlCategory = searchParams.get("category") || "all";
+  //   const urlTag = searchParams.get("tag") || null;
+
+  //   // Nếu Category thay đổi HOẶC Tag thay đổi so với URL -> Reset về trang 1
+  //   if (selectedCategory !== urlCategory || selectedTag !== urlTag) {
+  //     setCurrentPage(1);
+  //   }
+  // }, [selectedCategory, selectedTag, searchParams]);
+
+  // const getPostWithStats = (post) => {
+  //   const comments = mockForumPostComments.filter(
+  //     (c) => c.post_id === post.post_id,
+  //   );
+  //   const votes = mockForumPostVotes.filter((v) => v.post_id === post.post_id);
+
+  //   // Views được tính dựa trên post_id để giữ consistency
+  //   const viewsMapping = {
+  //     1: 234,
+  //     2: 456,
+  //     3: 189,
+  //     4: 312,
+  //     5: 267,
+  //     6: 589,
+  //   };
+
+  //   return {
+  //     ...post,
+  //     tags: JSON.parse(post.tag),
+  //     images: JSON.parse(post.images),
+  //     commentsCount: comments.length,
+  //     likes: votes.filter((v) => v.vote_type === "like").length,
+  //     dislikes: votes.filter((v) => v.vote_type === "dislike").length,
+  //     shares: votes.filter((v) => v.vote_type === "share").length,
+  //     views: viewsMapping[post.post_id] || 0,
+  //   };
+  // };
+
+  // const [posts, setPosts] = useState(mockForumPosts.map(getPostWithStats));
 
   // Create new post
-  const handleCreatePost = (newPost) => {
-    const post = {
-      post_id: Date.now(),
-      user_id: 1, // Current user
-      content: newPost.content,
-      status: "published",
-      tag: JSON.stringify(newPost.tags),
-      created_date: new Date().toISOString(),
-      title: newPost.title,
-      category: newPost.category,
-      images: JSON.stringify(newPost.images || []),
-    };
-    const newStage = {
-      post_stage_id: Date.now() + 1,
-      post_id: post.post_id,
-      stage_name: "published",
-      created_date: new Date().toISOString(),
-    };
-    setStages([...stages, newStage]);
+  const handleCreatePost = async (fullData) => {
+    try {
+      const response = await forumService.createPost(fullData);
 
-    // Transform và thêm post
-    const transformedPost = getPostWithStats(post);
-    setPosts([transformedPost, ...posts]);
-    setIsCreateModalOpen(false);
+      if (response.success) {
+        // const newPostFromApi = response.data;
+
+        // // Chuẩn hóa dữ liệu bài viết mới đồng bộ với cấu trúc list hiện tại
+        // const formattedNewPost = {
+        //   ...newPostFromApi,
+
+        //   post_id: newPostFromApi.id || newPostFromApi.post_id,
+
+        //   tags: newPostFromApi.tags
+        //     ? newPostFromApi.tags.map((t) =>
+        //         typeof t === "string" ? t : t.name,
+        //       )
+        //     : [],
+
+        //   likes: newPostFromApi.likes || 0,
+        //   commentsCount: 0,
+        //   views: 0,
+
+        //   // Chuẩn hóa media URL
+        //   displayImages: (newPostFromApi.images || []).map(
+        //     (img) => img.image_url || img,
+        //   ),
+        //   displayVideos: (newPostFromApi.videos || []).map(
+        //     (vid) => vid.video_url || vid,
+        //   ),
+
+        //   // Thông tin author và category
+        //   author: newPostFromApi.author,
+        //   post_category: newPostFromApi.post_category,
+        //   category: newPostFromApi.post_category?.name,
+        // };
+
+        // // ✅ Cập nhật state thêm bài mới vào đầu mảng posts
+        // setPosts((prevPosts) => [formattedNewPost, ...prevPosts]);
+
+        // setAllPostsForTags((prevAll) => {
+        //   const updatedAll = [formattedNewPost, ...prevAll];
+        //   setAllFeaturedTags(calculateTop8Tags(updatedAll));
+        //   return updatedAll;
+        // });
+        // setPagination((prev) => ({
+        //   ...prev,
+        //   total: (prev.total || 0) + 1,
+        // }));
+        setHasFetchedTotalTags(false);
+        toast.success(
+          "Tạo bài viết mới thành công! Bài viết đang chờ xét duyệt",
+          {
+            duration: 5000,
+          },
+        );
+        setIsCreateModalOpen(false);
+      }
+    } catch (error) {
+      toast.error(
+        "Lỗi: " + (error.response?.data?.message || "Không thể đăng bài"),
+      );
+    }
+  };
+
+  const handleEditPost = async (response) => {
+    const currentScrollY = window.scrollY;
+    if (!response || !response.success || !response.data) {
+      toast.error("Dữ liệu phản hồi không hợp lệ");
+      return;
+    }
+    const updatedPostData = response.data;
+    try {
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => {
+          const isTarget =
+            String(p.id) === String(updatedPostData.id) ||
+            String(p.post_id) === String(updatedPostData.id);
+
+          if (isTarget) {
+            return {
+              ...p,
+              ...updatedPostData,
+
+              post_id: updatedPostData.id,
+
+              tags: updatedPostData.tags
+                ? updatedPostData.tags.map((t) =>
+                    typeof t === "string" ? t : t.name,
+                  )
+                : [],
+
+              displayImages: (updatedPostData.images || []).map(
+                (img) => img.image_url,
+              ),
+              displayVideos: (updatedPostData.videos || []).map(
+                (vid) => vid.video_url,
+              ),
+
+              category: updatedPostData.post_category?.name,
+            };
+          }
+          return p;
+        }),
+      );
+
+      setEditingPost(null);
+
+      setHasFetchedTotalTags(false);
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: currentScrollY,
+          behavior: "instant",
+        });
+      }, 0);
+
+      toast.success("Bài viết ở trang diễn đàn đã được cập nhật!");
+
+      // const newStage = {
+      //   post_stage_id: Date.now(),
+      //   post_id: updatedPost.post_id || updatedPost.id,
+      //   stage_name: "edited",
+      //   created_date: new Date().toISOString(),
+      // };
+      // setStages((prevStages) => [...prevStages, newStage]);
+    } catch (error) {
+      console.error("Lỗi sau khi chỉnh sửa bài viết:", error);
+
+      toast.error("Cập nhật giao diện thất bại. Vui lòng tải lại trang.");
+    }
   };
 
   const getPostComments = (postId) => {
     return mockForumPostComments.filter((c) => c.post_id === postId);
   };
 
-  const getUserVoteForPost = (postId, userId) => {
-    return mockForumPostVotes.filter(
-      (v) => v.post_id === postId && v.user_id === userId,
-    );
-  };
+  // const getUserVoteForPost = (postId, userId) => {
+  //   return mockForumPostVotes.filter(
+  //     (v) => v.post_id === postId && v.user_id === userId,
+  //   );
+  // };
 
-  const filteredAndSortedPosts = posts
-    .filter((post) => {
-      if (selectedCategory !== "all" && post.category !== selectedCategory)
-        return false;
-      if (selectedTag && !post.tags.includes(selectedTag)) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "newest") {
-        return (
-          new Date(b.created_date).getTime() -
-          new Date(a.created_date).getTime()
-        );
-      } else {
-        return b.likes - a.likes;
-      }
-    });
+  const filteredAndSortedPosts = posts.filter((post) => {
+    if (selectedCategory !== "all" && post.category_id !== selectedCategory)
+      return false;
 
-  // Get featured tags
-  const allTags = posts.flatMap((post) => post.tags);
+    if (selectedTag) {
+      const hasTag = post.tags?.some((t) =>
+        typeof t === "string" ? t === selectedTag : t.name === selectedTag,
+      );
+      if (!hasTag) return false;
+    }
+    return true;
+  });
+
+  const allTags = posts.flatMap((post) => post.tags || []);
   const tagCounts = allTags.reduce((acc, tag) => {
-    acc[tag] = (acc[tag] || 0) + 1;
+    const tagName = typeof tag === "string" ? tag : tag.name;
+    if (tagName) {
+      acc[tagName] = (acc[tagName] || 0) + 1;
+    }
     return acc;
   }, {});
+
   const featuredTags = Object.entries(tagCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([tag, count]) => ({ tag, count }));
 
-  const handleLikePost = (postId) => {
-    // Kiểm tra xem user đã like chưa
-    const existingLike = votes.find(
-      (v) => v.post_id === postId && v.user_id === 1 && v.vote_type === "like",
+  const handleReaction = async (postId, type) => {
+    const oldPosts = [...posts];
+    const oldSelectedPost = selectedPost ? { ...selectedPost } : null;
+
+    const currentPost = posts.find(
+      (p) =>
+        String(p.id) === String(postId) || String(p.post_id) === String(postId),
     );
 
-    if (!existingLike) {
-      const newVote = {
-        post_vote_id: Date.now(),
-        post_id: postId,
-        user_id: 1,
-        vote_type: "like",
-        created_date: new Date().toISOString(),
-      };
-      setVotes([...votes, newVote]);
+    if (!currentPost) {
+      console.error("Không tìm thấy bài viết với ID:", postId);
+      return;
+    }
+    console.log("Trạng thái hiện tại bài viết:", currentPost.liked);
 
-      // Cập nhật post với stats mới
-      setPosts(
-        posts.map((post) =>
-          post.post_id === postId ? { ...post, likes: post.likes + 1 } : post,
-        ),
-      );
+    const updateUI = (newLiked, newDisliked, likesDelta, dislikesDelta) => {
+      const updater = (p) => {
+        const isTarget =
+          String(p.id) === String(postId) ||
+          String(p.post_id) === String(postId);
+        if (isTarget) {
+          return {
+            ...p,
+            liked: newLiked,
+            disliked: newDisliked,
+            likes: Math.max(0, (p.likes || 0) + likesDelta),
+            dislikes: Math.max(0, (p.dislikes || 0) + dislikesDelta),
+          };
+        }
+        return p;
+      };
+
+      setPosts((prev) => prev.map(updater));
+      if (selectedPost) {
+        setSelectedPost((prev) => (prev ? updater(prev) : null));
+      }
+    };
+
+    if (type === "LIKE") {
+      if (currentPost.liked === true) {
+        updateUI(false, false, -1, 0);
+      } else {
+        const dislikeOffset = currentPost.disliked ? -1 : 0;
+        updateUI(true, false, 1, dislikeOffset);
+      }
+    } else {
+      if (currentPost.disliked === true) {
+        updateUI(false, false, 0, -1);
+      } else {
+        const likeOffset = currentPost.liked ? -1 : 0;
+        updateUI(false, true, likeOffset, 1);
+      }
+    }
+
+    try {
+      const res = await forumService.reactPost(postId, type);
+
+      if (res.success) {
+        // Cập nhật lại số liệu chuẩn xác từ Server trả về
+        const syncWithServer = (p) => ({
+          ...p,
+          likes: res.likes,
+          dislikes: res.dislikes,
+          liked: res.liked,
+          disliked: res.disliked,
+        });
+
+        setPosts((prev) =>
+          prev.map((p) =>
+            String(p.id) === String(postId) ||
+            String(p.post_id) === String(postId)
+              ? syncWithServer(p)
+              : p,
+          ),
+        );
+
+        if (selectedPost) {
+          setSelectedPost((prev) => (prev ? syncWithServer(prev) : null));
+        }
+      } else {
+        throw new Error("API trả về thất bại");
+      }
+    } catch (error) {
+      setPosts(oldPosts);
+      setSelectedPost(oldSelectedPost);
+      console.error("Lỗi tương tác:", error);
+      toast.error("Không thể thực hiện thao tác này", { id: "react-error" });
     }
   };
 
-  const handleDislikePost = (postId) => {
-    // Kiểm tra xem user đã dislike chưa
-    const existingDislike = votes.find(
-      (v) =>
-        v.post_id === postId && v.user_id === 1 && v.vote_type === "dislike",
-    );
-
-    if (!existingDislike) {
-      const newVote = {
-        post_vote_id: Date.now(),
-        post_id: postId,
-        user_id: 1,
-        vote_type: "dislike",
-        created_date: new Date().toISOString(),
-      };
-      setVotes([...votes, newVote]);
-
-      // Cập nhật post với stats mới
-      setPosts(
-        posts.map((post) =>
-          post.post_id === postId
-            ? { ...post, dislike: post.dislikes + 1 }
-            : post,
-        ),
-      );
-    }
-  };
+  // Gọi hàm chung cho cả 2 hành động
+  // const handleLikePost = (postId) => handleReaction(postId, "LIKE");
+  // const handleDislikePost = (postId) => handleReaction(postId, "DISLIKE");
 
   const handleSharePost = (postId) => {
     const newVote = {
@@ -675,46 +1002,139 @@ export default function Forum() {
     alert("Đã sao chép liên kết bài viết!");
   };
 
-  const handleViewPost = (post) => {
-    // Tăng view count
-    const updatedPost = { ...post, views: post.views + 1 };
-    // Lấy comments cho post này
-    const postComments = comments.filter((c) => c.post_id === post.post_id);
-    const postWithComments = {
-      ...updatedPost,
-      comments: postComments,
-    };
+  const handleViewPost = async (post) => {
+    setSelectedPost({
+      ...post,
+      isLoadingDetail: true,
+    });
+    try {
+      // Gọi API lấy chi tiết
+      const response = await forumService.getPostById(post.id);
 
-    setPosts(posts.map((p) => (p.post_id === post.post_id ? updatedPost : p)));
-    setSelectedPost(postWithComments);
+      if (response.success) {
+        const apiData = response.data;
+        console.log("API detail:", apiData);
+        // Sắp xếp bình luận từ mới nhất đến cũ nhất
+        const sortedComments = (apiData.comments || []).sort((a, b) => {
+          return (
+            new Date(b.created_date).getTime() -
+            new Date(a.created_date).getTime()
+          );
+        });
+
+        // Chuẩn hóa dữ liệu từ API
+        const formattedPost = {
+          ...apiData,
+          user_id: apiData.user_id || apiData.author?.id,
+          post_id: apiData.id || apiData.post_id,
+
+          categoryName: apiData.post_category?.name,
+
+          displayTags: apiData.tags?.map((t) => t.name) || [],
+
+          displayImages: apiData.images?.map((img) => img.image_url) || [],
+          displayVideos: apiData.videos?.map((vid) => vid.video_url) || [],
+          liked: apiData.like,
+          disliked: apiData.dislike,
+
+          comments: sortedComments,
+          likes: apiData.likes || 0,
+          dislikes: apiData.dislikes || 0,
+          views: apiData.views || 0,
+          shares: apiData.shares || 0,
+          isLoadingDetail: false,
+        };
+
+        setSelectedPost(formattedPost);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải chi tiết bài viết:", error);
+      toast.error("Không thể tải nội dung bài viết chi tiết.");
+      setSelectedPost(null);
+    }
   };
 
-  const handleAddComment = (postId, comment) => {
-    const newComment = {
-      post_comment_id: Date.now(),
-      post_id: postId,
-      user_id: 1,
-      content: comment,
-      created_date: new Date().toISOString(),
-    };
-    setComments([...comments, newComment]);
+  const handleAddComment = async (postId, commentContent) => {
+    try {
+      const response = await forumService.postComment(postId, commentContent);
 
-    // Cập nhật số lượng comment trong post
-    setPosts(
-      posts.map((post) =>
-        post.post_id === postId
-          ? { ...post, commentsCount: post.commentsCount + 1 }
-          : post,
-      ),
-    );
+      if (response.success) {
+        const newCommentApi = response.data;
 
-    // Cập nhật selectedPost nếu đang mở
-    if (selectedPost && selectedPost.post_id === postId) {
-      setSelectedPost({
-        ...selectedPost,
-        comments: [...(selectedPost.comments || []), newComment],
-        commentsCount: selectedPost.commentsCount + 1,
-      });
+        // Cập nhật số lượng bình luận
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
+            const isTargetPost =
+              String(post.post_id) === String(postId) ||
+              String(post.id) === String(postId);
+            return isTargetPost
+              ? { ...post, commentsCount: (post.commentsCount || 0) + 1 }
+              : post;
+          }),
+        );
+
+        // Cập nhật nội dung Modal nếu đang mở bài viết
+        if (selectedPost) {
+          const isCurrentModal =
+            String(selectedPost.post_id) === String(postId) ||
+            String(selectedPost.id) === String(postId);
+
+          if (isCurrentModal) {
+            setSelectedPost((prev) => ({
+              ...prev,
+              // Thêm comment mới vào mảng
+              comments: [newCommentApi, ...(prev.comments || [])],
+              commentsCount: (prev.commentsCount || 0) + 1,
+            }));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi bình luận:", error);
+      alert("Không thể gửi bình luận. Vui lòng thử lại sau!");
+    }
+  };
+
+  const triggerDeleteComment = (commentId, postId) => {
+    setCommentToDelete({ id: commentId, postId: postId });
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+
+    setIsDeletingComment(true);
+
+    try {
+      const { id, postId } = commentToDelete;
+      const response = await forumService.deleteComment(id);
+
+      if (response.success) {
+        if (selectedPost) {
+          setSelectedPost((prev) => ({
+            ...prev,
+            comments: prev.comments.filter(
+              (c) => c.id !== id && c.post_comment_id !== id,
+            ),
+            commentsCount: Math.max(0, (prev.commentsCount || 1) - 1),
+          }));
+        }
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.post_id === postId || post.id === postId
+              ? {
+                  ...post,
+                  commentsCount: Math.max(0, (post.commentsCount || 1) - 1),
+                }
+              : post,
+          ),
+        );
+        toast.success("Đã xóa bình luận!");
+        setCommentToDelete(null);
+      }
+    } catch (error) {
+      toast.error("Lỗi: " + (error.message || "Không thể xóa"));
+    } finally {
+      setIsDeletingComment(false);
     }
   };
 
@@ -723,6 +1143,90 @@ export default function Forum() {
       `Tin nhắn đã được gửi đến ${users.find((u) => u.user_id === userId)?.name}: ${message}`,
     );
     setMessageRecipient(null);
+  };
+
+  const handleDeletePost = async (postId) => {
+    const toastId = toast.loading("Đang xóa bài viết...");
+    try {
+      const response = await forumService.deletePost(postId);
+
+      if (response.success) {
+        // Xóa bài viết khỏi mảng posts hiện tại
+        setPosts((prevPosts) =>
+          prevPosts.filter(
+            (p) =>
+              String(p.id) !== String(postId) &&
+              String(p.post_id) !== String(postId),
+          ),
+        );
+
+        // Cập nhật kho tổng và tính lại tag
+        // setAllPostsForTags((prevAll) => {
+        //   const updatedAll = prevAll.filter(
+        //     (p) => String(p.id || p.post_id) !== String(postId),
+        //   );
+        //   setAllFeaturedTags(calculateTop8Tags(updatedAll));
+        //   return updatedAll;
+        // });
+
+        setPagination((prev) => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1),
+        }));
+
+        setSelectedPost(null);
+        setHasFetchedTotalTags(false);
+        toast.success("Xóa bài viết thành công!", { id: toastId });
+      } else {
+        toast.error("Lỗi: " + response.message, { id: toastId });
+      }
+    } catch (error) {
+      toast.error("Lỗi kết nối máy chủ", { id: toastId });
+    }
+  };
+
+  const handleEditPostClick = () => {
+    setEditingPost(selectedPost);
+    setSelectedPost(null);
+  };
+
+  const handleShowProfile = async (userId) => {
+    try {
+      setSelectedUser({ isLoading: true });
+
+      const [userRes, postsRes] = await Promise.all([
+        forumService.getUserById(userId),
+        forumService.getMyPosts(userId),
+      ]);
+
+      if (userRes.success) {
+        const apiUser = userRes.data.user;
+        const totalPostsFromApi = postsRes?.pagination?.total || 0;
+        const allUserPosts = postsRes?.success ? postsRes.data : [];
+        const top2Posts = allUserPosts.slice(0, 2);
+
+        // Chuẩn hóa dữ liệu để khớp với UserProfileModal
+        const formattedUser = {
+          user_id: apiUser.id,
+          name: apiUser.name,
+          avatar: apiUser.avatar,
+          bio: apiUser.intro || "Chưa có giới thiệu",
+          joinedDate: apiUser.create_at,
+          email: apiUser.email,
+          totalPosts: totalPostsFromApi,
+          userOwnPosts: top2Posts,
+        };
+
+        setSelectedUser(formattedUser);
+      } else {
+        toast.error("Không thể tải thông tin người dùng");
+        setSelectedUser(null);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải profile:", error);
+      toast.error("Đã xảy ra lỗi khi tải hồ sơ");
+      setSelectedUser(null);
+    }
   };
 
   //
@@ -945,7 +1449,7 @@ export default function Forum() {
       <motion.main
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.1 }}
+        viewport={{ once: true, amount: 0.01 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
       >
@@ -987,67 +1491,233 @@ export default function Forum() {
             />
           </motion.button>
         </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto w-full mb-8"
+        >
+          <div className="relative group">
+            {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+            </div> */}
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tiêu đề, nội dung bài viết..."
+              value={tempSearch}
+              onChange={(e) => setTempSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isLoading) {
+                  setSearchTerm(tempSearch);
+                  setCurrentPage(1);
+                }
+              }}
+              className={`block w-full pl-5 pr-24 py-3.5 border-2 border-zinc-100 rounded-2xl bg-white shadow-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all text-gray-700 font-medium ${
+                isLoading ? "opacity-70" : "opacity-100"
+              }`}
+              disabled={isLoading}
+            />
+            <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1">
+              {tempSearch && !isLoading && (
+                <button
+                  onClick={() => {
+                    setTempSearch("");
+                    setSearchTerm("");
+                    setCurrentPage(1);
+                  }}
+                  className="p-2 text-gray-400 hover:text-red-500 transition-colors mr-1"
+                >
+                  <X size={20} />
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (!isLoading) {
+                    setSearchTerm(tempSearch);
+                    setCurrentPage(1);
+                  }
+                }}
+                disabled={isLoading}
+                className={`${
+                  isLoading
+                    ? "bg-orange-400"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } text-white p-2.5 rounded-xl transition-all active:scale-95 shadow-md shadow-orange-200 min-w-[44px] flex items-center justify-center`}
+              >
+                {isLoading ? (
+                  <Loader2
+                    size={20}
+                    strokeWidth={2.5}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Search size={20} strokeWidth={2.5} />
+                )}
+              </button>
+            </div>
+          </div>
+        </motion.div>
         <Filters
+          isLoading={isFiltersLoading}
           selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
+          onCategoryChange={(newCatId) => {
+            setSelectedCategory(newCatId);
+            setCurrentPage(1);
+          }}
           sortBy={sortBy}
-          onSortChange={setSortBy}
+          onSortChange={(newSort) => {
+            setSortBy(newSort);
+            setCurrentPage(1);
+          }}
+          categories={categories}
         />
+        <div ref={postsListRef} />
         <FeaturedTopics
-          tags={featuredTags}
+          isLoading={!hasFetchedTotalTags}
+          tags={allFeaturedTags}
           selectedTag={selectedTag}
-          onTagClick={setSelectedTag}
+          onTagClick={(tagName) => {
+            const newTag = selectedTag === tagName ? null : tagName;
+            setSelectedTag(newTag);
+            setCurrentPage(1);
+          }}
         />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="space-y-4"
+          className="space-y-4 min-h-[100vh]"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-amber-900 text-2xl">
-              Bài viết <span className="text-orange-600">({posts.length})</span>
+              Bài viết{" "}
+              <span className="text-orange-600">({pagination.total})</span>
             </h3>
           </div>
 
-          {posts.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-md p-12 text-center"
-            >
-              <div className="bg-amber-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileX className="w-10 h-10 text-amber-600" />
-              </div>
-              <h4 className="text-xl font-semibold text-amber-900 mb-2">
-                Không tìm thấy bài viết nào
-              </h4>
-              <p className="text-amber-600">
-                Hãy thử thay đổi bộ lọc hoặc tạo bài viết mới
-              </p>
-            </motion.div>
-          )}
-
-          <div className="space-y-4 mb-6">
-            {filteredAndSortedPosts.map((post, index) => {
-              const author = users.find((u) => u.user_id === post.user_id);
-              return (
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-6 shadow-sm animate-pulse"
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-amber-100 rounded-full" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-amber-100 rounded" />
+                      <div className="h-3 w-24 bg-amber-50 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-6 w-3/4 bg-amber-100 rounded mb-3" />
+                  <div className="h-20 w-full bg-amber-50 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* TRẠNG THÁI TRỐNG */}
+              {posts.length === 0 ? (
                 <motion.div
-                  key={post.post_id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="bg-white rounded-2xl shadow-md p-12 text-center"
                 >
-                  <PostCard
-                    post={post}
-                    author={author}
-                    onPostClick={() => handleViewPost(post)}
-                    onAvatarClick={() => setSelectedUser(author)}
-                  />
+                  <div className="bg-amber-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileX className="w-10 h-10 text-amber-600" />
+                  </div>
+                  <h4 className="text-xl font-semibold text-amber-900 mb-2">
+                    Không tìm thấy bài viết nào
+                  </h4>
+                  <p className="text-amber-600">Hãy thử thay đổi bộ lọc</p>
                 </motion.div>
-              );
-            })}
-          </div>
+              ) : (
+                /* DANH SÁCH BÀI VIẾT */
+                <div className="space-y-4 mb-6">
+                  {filteredAndSortedPosts.map((post, index) => (
+                    <motion.div
+                      key={post.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      <PostCard
+                        post={post}
+                        author={post.author}
+                        onPostClick={() => handleViewPost(post)}
+                        onAvatarClick={() => handleShowProfile(post.author.id)}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {/* Pagination Section */}
+          {!isLoading && pagination.totalPages > 1 && (
+            <div className="flex flex-col items-center gap-4 py-12 border-t border-amber-100 mt-5">
+              <div className="flex items-center gap-2">
+                {/* Nút Previous */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="p-2.5 rounded-xl bg-white border border-amber-200 text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-amber-50 hover:border-orange-300 transition-all shadow-sm"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {/* Danh sách các số trang */}
+                <div className="flex items-center gap-1.5">
+                  {[...Array(pagination.totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    const isActive = currentPage === pageNum;
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-11 h-11 rounded-xl font-bold transition-all duration-300 transform ${
+                          isActive
+                            ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md scale-110 z-10"
+                            : "bg-white text-amber-900 border border-amber-100 hover:border-orange-200 hover:bg-orange-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Nút Next */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(prev + 1, pagination.totalPages),
+                    )
+                  }
+                  disabled={currentPage === pagination.totalPages}
+                  className="p-2.5 rounded-xl bg-white border border-amber-200 text-amber-700 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-amber-50 hover:border-orange-300 transition-all shadow-sm"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Thông tin thống kê */}
+              {/* <p className="text-sm text-amber-800/70 font-medium italic">
+                Đang hiển thị{" "}
+                <span className="text-orange-600 font-bold">
+                  {posts.length}
+                </span>{" "}
+                trên tổng số{" "}
+                <span className="text-orange-600 font-bold">
+                  {pagination.total}
+                </span>{" "}
+                bài viết
+              </p> */}
+            </div>
+          )}
         </motion.div>
       </motion.main>
 
@@ -1058,33 +1728,95 @@ export default function Forum() {
         />
       )}
 
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSubmit={handleEditPost}
+        />
+      )}
+
       {selectedPost && (
         <PostDetailModal
           post={selectedPost}
-          author={users.find((u) => u.user_id === selectedPost.user_id)}
           onClose={() => setSelectedPost(null)}
-          onLike={() => handleLikePost(selectedPost.post_id)}
-          onDislike={() => handleDislikePost(selectedPost.post_id)}
+          onLike={() =>
+            handleReaction(selectedPost.id || selectedPost.post_id, "LIKE")
+          }
+          onDislike={() =>
+            handleReaction(selectedPost.id || selectedPost.post_id, "DISLIKE")
+          }
           onShare={() => handleSharePost(selectedPost.post_id)}
           onAddComment={(comment) =>
             handleAddComment(selectedPost.post_id, comment)
           }
-          currentUser={users[0]}
-          onAvatarClick={setSelectedUser}
+          onDeleteComment={(commentId) =>
+            triggerDeleteComment(commentId, selectedPost.id)
+          }
+          currentUser={currentUser}
+          onAvatarClick={(userId) => handleShowProfile(userId)}
+          onDelete={() => handleDeletePost(selectedPost.post_id)}
+          onEdit={() => handleEditPostClick()}
         />
       )}
 
       {selectedUser && (
         <UserProfileModal
           user={selectedUser}
-          posts={posts.filter((p) => p.user_id === selectedUser.user_id)}
+          posts={selectedUser.userOwnPosts || []}
+          totalPosts={selectedUser.totalPosts || 0}
           onClose={() => setSelectedUser(null)}
           onSendMessage={() => setMessageRecipient(selectedUser)}
           onPostClick={(postId) => {
-            const post = posts.find((p) => p.post_id === postId);
+            const post = (selectedUser.userOwnPosts || []).find(
+              (p) => (p.id || p.post_id) === postId,
+            );
             if (post) handleViewPost(post);
           }}
         />
+      )}
+
+      {commentToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl border border-amber-100"
+          >
+            <h3 className="text-xl font-bold text-amber-900 mb-2 text-center">
+              Xác nhận xóa?
+            </h3>
+            <p className="text-amber-700 text-center mb-6">
+              Hành động này không thể hoàn tác. Bạn có chắc chắn muốn xóa bình
+              luận này không?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCommentToDelete(null)}
+                disabled={isDeletingComment}
+                className="flex-1 py-2.5 rounded-lg font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmDeleteComment}
+                disabled={isDeletingComment}
+                className="flex-1 py-2.5 rounded-lg font-medium text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDeletingComment ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="leading-none">Đang xóa...</span>
+                  </>
+                ) : (
+                  <span className="leading-none">Xóa ngay</span>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
       {messageRecipient && (

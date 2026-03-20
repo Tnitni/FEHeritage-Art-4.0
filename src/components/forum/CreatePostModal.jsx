@@ -1,6 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Image as ImageIcon, Hash, Upload } from "lucide-react";
+import {
+  X,
+  Image as ImageIcon,
+  Hash,
+  Upload,
+  VideoIcon,
+  Loader2,
+} from "lucide-react";
+import forumService from "../../services/forumService";
+import toast from "react-hot-toast";
 
 const categories = [
   { value: "technology", label: "Công nghệ" },
@@ -12,23 +21,65 @@ const categories = [
 
 export default function CreatePostModal({ onClose, onSubmit }) {
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("technology");
+  // const [category, setCategory] = useState(categories[0].value);
+  const [categoryId, setCategoryId] = useState(""); // Lưu ID
+  const [apiCategories, setApiCategories] = useState([]); // Lưu danh sách từ API
   const [content, setContent] = useState("");
-  const [images, setImages] = useState([]);
+  // const [images, setImages] = useState([]);
   const [tags, setTags] = useState([]);
   const [currentTag, setCurrentTag] = useState("");
 
+  const [imageFiles, setImageFiles] = useState([]);
+  const [videoFiles, setVideoFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]); // URL previews cho ảnh
+  const [videoPreviews, setVideoPreviews] = useState([]); // URL previews cho video
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Tải danh mục từ API khi component mount
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const res = await forumService.getCategories();
+        if (res.success && res.data) {
+          setApiCategories(res.data);
+          if (res.data.length > 0) setCategoryId(res.data[0].category_id);
+        }
+      } catch (err) {
+        console.error("Lỗi tải danh mục:", err);
+      }
+    };
+    fetchCats();
+  }, []);
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter((file) => file.size <= 5 * 1024 * 1024); // 5MB max
+    // Kiểm tra dung lượng 5MB
+    const validFiles = files.filter((file) => file.size <= 5 * 1024 * 1024);
 
-    if (validFiles.length + images.length > 4) {
-      alert("Tối đa 4 ảnh!");
-      return;
+    if (files.length > validFiles.length) {
+      toast.error("Mỗi hình ảnh tối đa 5 MB");
     }
 
-    const imageUrls = validFiles.map((file) => URL.createObjectURL(file));
-    setImages([...images, ...imageUrls]);
+    // Kiểm tra tổng số lượng (Tối đa 4)
+    if (validFiles.length + imageFiles.length > 4) {
+      toast.error("Bạn chỉ được tải tối đa 4 ảnh!");
+
+      const spaceLeft = 4 - imageFiles.length;
+      if (spaceLeft <= 0) return;
+
+      const limitedFiles = validFiles.slice(0, spaceLeft);
+      setImageFiles([...imageFiles, ...limitedFiles]);
+      setImagePreviews([
+        ...imagePreviews,
+        ...limitedFiles.map((f) => URL.createObjectURL(f)),
+      ]);
+    } else {
+      setImageFiles([...imageFiles, ...validFiles]);
+      setImagePreviews([
+        ...imagePreviews,
+        ...validFiles.map((f) => URL.createObjectURL(f)),
+      ]);
+    }
   };
 
   const handleImagePaste = (e) => {
@@ -38,21 +89,62 @@ export default function CreatePostModal({ onClose, onSubmit }) {
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("image") !== -1) {
         const file = items[i].getAsFile();
-        if (file && file.size <= 5 * 1024 * 1024 && images.length < 4) {
-          const imageUrl = URL.createObjectURL(file);
-          setImages([...images, imageUrl]);
+        if (file && file.size <= 5 * 1024 * 1024 && imageFiles.length < 4) {
+          setImageFiles((prev) => [...prev, file]);
+          setImagePreviews((prev) => [...prev, URL.createObjectURL(file)]);
         }
       }
     }
   };
 
   const removeImage = (index) => {
-    setImages(images.filter((_, i) => i !== index));
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  };
+
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    // Kiểm tra dung lượng 50MB
+    const validFiles = files.filter((file) => file.size <= 50 * 1024 * 1024);
+
+    if (files.length > validFiles.length) {
+      toast.error("Mỗi video tối đa 50 MB");
+    }
+
+    // Kiểm tra tổng số lượng (Tối đa 4)
+    if (validFiles.length + videoFiles.length > 4) {
+      toast.error("Tối đa 4 video cho mỗi bài viết");
+      const spaceLeft = 4 - videoFiles.length;
+      if (spaceLeft <= 0) return;
+
+      const limitedFiles = validFiles.slice(0, spaceLeft);
+      setVideoFiles([...videoFiles, ...limitedFiles]);
+      setVideoPreviews([
+        ...videoPreviews,
+        ...limitedFiles.map((f) => URL.createObjectURL(f)),
+      ]);
+    } else {
+      setVideoFiles([...videoFiles, ...validFiles]);
+      setVideoPreviews([
+        ...videoPreviews,
+        ...validFiles.map((f) => URL.createObjectURL(f)),
+      ]);
+    }
+  };
+
+  const removeVideo = (index) => {
+    setVideoFiles(videoFiles.filter((_, i) => i !== index));
+    setVideoPreviews(videoPreviews.filter((_, i) => i !== index));
   };
 
   const addTag = () => {
-    if (currentTag && tags.length < 5 && !tags.includes(currentTag)) {
-      setTags([...tags, currentTag]);
+    // Giới hạn tối đa 5 tags
+    if (tags.length >= 5) {
+      toast.error("Tối đa 5 thẻ tag");
+      return;
+    }
+    if (currentTag.trim() && !tags.includes(currentTag.trim())) {
+      setTags([...tags, currentTag.trim()]);
       setCurrentTag("");
     }
   };
@@ -61,19 +153,31 @@ export default function CreatePostModal({ onClose, onSubmit }) {
     setTags(tags.filter((t) => t !== tag));
   };
 
-  const handleSubmit = () => {
-    if (!title || !content) {
-      alert("Vui lòng điền đầy đủ tiêu đề và nội dung!");
+  const handleSubmit = async () => {
+    // Kiểm tra validation cơ bản
+    if (!title.trim() || !content.trim() || !categoryId) {
+      toast.error("Vui lòng điền đầy đủ tiêu đề và nội dung!");
       return;
     }
 
-    onSubmit({
-      title,
-      category,
-      content,
-      images,
-      tags,
-    });
+    setIsSubmitting(true);
+
+    // Gom tất cả trường dữ liệu để gửi đi
+    const postData = {
+      title: title.trim(),
+      content: content.trim(),
+      category_id: categoryId,
+      tag: tags,
+      imageFiles: imageFiles,
+      videoFiles: videoFiles,
+    };
+
+    try {
+      await onSubmit(postData);
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi chuẩn bị dữ liệu.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -97,6 +201,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/40 rounded-full transition-colors"
+                title="Đóng"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -125,13 +230,13 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                 Danh mục <span className="text-red-600">*</span>
               </label>
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
               >
-                {categories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
+                {apiCategories.map((cat) => (
+                  <option key={cat.category_id} value={cat.category_id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -146,7 +251,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onPaste={handleImagePaste}
-                placeholder="Chia sẻ suy nghĩ của bạn... (Bạn có thể dán ảnh trực tiếp vào đây)"
+                placeholder="Chia sẻ suy nghĩ của bạn..."
                 rows={6}
                 className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors resize-none"
               />
@@ -155,7 +260,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
             {/* Images */}
             <div>
               <label className="block text-sm font-medium text-amber-900 mb-2">
-                Hình ảnh (Tối đa 4 ảnh, mỗi ảnh tối đa 5MB)
+                Hình ảnh (Tối đa 4 ảnh, mỗi hình ảnh tối đa 5 MB)
               </label>
 
               <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all group">
@@ -172,9 +277,9 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                 />
               </label>
 
-              {images.length > 0 && (
+              {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                  {images.map((image, index) => (
+                  {imagePreviews.map((image, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={image}
@@ -193,10 +298,54 @@ export default function CreatePostModal({ onClose, onSubmit }) {
               )}
             </div>
 
+            {/* PHẦN VIDEO */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-amber-900">
+                Video (Tối đa 4 video, mỗi video tối đa 50 MB)
+              </label>
+              <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-blue-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
+                <VideoIcon className="w-6 h-6 text-blue-600 group-hover:text-blue-700" />
+                <span className="text-blue-700 group-hover:text-blue-800 font-medium">
+                  Tải video lên từ thiết bị
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept="video/*"
+                  onChange={handleVideoUpload}
+                  className="hidden"
+                />
+              </label>
+
+              {videoPreviews.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                  {videoPreviews.map((src, index) => (
+                    <div key={index} className="relative group">
+                      <video
+                        src={src}
+                        className="w-full h-24 object-cover rounded-lg border-2 border-blue-100 bg-black"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-8 h-8 bg-white/30 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-white border-b-[5px] border-b-transparent ml-1" />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeVideo(index)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-amber-900 mb-2">
-                Thẻ tag (Tối đa 5 thẻ)
+                Thẻ tag (Tối đa 5 tag)
               </label>
               <div className="flex gap-2 mb-3">
                 <input
@@ -205,7 +354,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                   onChange={(e) => setCurrentTag(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && addTag()}
                   placeholder="Nhập tag và nhấn Enter hoặc nút Thêm..."
-                  disabled={tags.length >= 5}
+                  disabled={tags.length >= 6}
                   className="flex-1 px-4 py-2 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors disabled:bg-gray-100"
                 />
                 <motion.button
@@ -247,18 +396,26 @@ export default function CreatePostModal({ onClose, onSubmit }) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
+              disabled={isSubmitting}
               className="px-6 py-3 border border-amber-300 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors font-medium"
             >
               Hủy
             </motion.button>
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={!isSubmitting ? { scale: 1.05 } : {}}
+              whileTap={!isSubmitting ? { scale: 0.95 } : {}}
               onClick={handleSubmit}
-              disabled={!title.trim() || !content.trim()}
-              className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || !title.trim() || !content.trim()}
+              className="px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all shadow-lg font-medium disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Đăng bài
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Đang đăng bài...</span>
+                </>
+              ) : (
+                "Đăng bài"
+              )}
             </motion.button>
           </div>
         </motion.div>

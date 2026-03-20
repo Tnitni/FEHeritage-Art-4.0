@@ -17,11 +17,15 @@
 }
 
 .site-footer::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -20% -30% auto -30%;
   height: 120%;
-  background: radial-gradient(circle at top, rgba(255, 215, 0, 0.16), transparent 60%);
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 215, 0, 0.16),
+    transparent 60%
+  );
   pointer-events: none;
 }
 
@@ -83,9 +87,24 @@
 
 .footer-contact-list li {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row; /* Đổi column thành row */
+  align-items: flex-start; /* Căn lề trên để chúng cân đối */
+  gap: 8px; /* Tạo khoảng cách vừa phải */
   font-size: 0.98rem;
+}
+
+.footer-contact-list li .icon {
+  display: flex; /* Giúp icon căn giữa trục dọc */
+  align-items: center;
+  margin-top: 3px; /* Đẩy nhẹ icon xuống một xíu cho bằng mặt với dòng chữ */
+}
+
+/* Thêm khối này để bọc chữ "Hotline:" và "0399..." */
+.footer-contact-list li .contact-info {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap; /* Cho phép rớt dòng nếu màn hình quá nhỏ */
+  gap: 6px; /* Khoảng cách giữa nhãn (VD: Hotline:) và giá trị (VD: 0399...) */
 }
 
 .footer-contact-list span {
@@ -163,7 +182,9 @@
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 0.04em;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .footer-links a:hover {
@@ -182,21 +203,23 @@
   gap: 10px;
 }
 
-.footer-form-row input[type='email'] {
+.footer-form-row input[type="email"] {
   flex: 1;
   padding: 12px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255, 215, 0, 0.3);
   background: rgba(15, 10, 6, 0.7);
   color: #fff1c7;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.footer-form-row input[type='email']::placeholder {
+.footer-form-row input[type="email"]::placeholder {
   color: rgba(255, 241, 199, 0.5);
 }
 
-.footer-form-row input[type='email']:focus {
+.footer-form-row input[type="email"]:focus {
   outline: none;
   border-color: rgba(255, 215, 0, 0.8);
   box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.25);
@@ -211,7 +234,9 @@
   background: linear-gradient(135deg, #ffd86d, #ffb347);
   color: #201307;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .footer-form-row button:hover {
@@ -306,18 +331,18 @@
   }
 
   .footer-form-row button {
-  width: 100%;
-}
+    width: 100%;
+  }
 
-.footer-bottom {
-  flex-direction: column;
-  align-items: flex-start;
-}
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-.footer-supplemental-links {
-  width: 100%;
-  justify-content: space-between;
-}
+  .footer-supplemental-links {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* top wrapper to align logo with footer content width */
@@ -333,5 +358,4 @@
   display: flex;
   align-items: center;
   justify-content: flex-start; /* left align the logo */
-
 }

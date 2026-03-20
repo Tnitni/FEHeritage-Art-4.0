@@ -9,6 +9,7 @@ import tuivaicanvas from '../assets/tuivaicanvas.jpeg';
 import aothunhue from '../assets/aothunhue.jpeg';
 import tranhmini from '../assets/tranhmini.jpg';
 import balocanvas from '../assets/balocanvas.jpg';
+import fileanh from '../assets/fileanh.jpg';
 
 export const souvenirSamples = [
   {
@@ -75,6 +76,7 @@ export const souvenirSamples = [
     type: "souvenir",
     souvenirType: "Digital Art",
     style: "Hiện đại",
+    shopeeLink: "https://shopee.vn/File-T%C3%BAi-%C4%90%E1%BB%B1ng-T%C3%A0i-Li%E1%BB%87u-Ch%E1%BB%A9ng-T%E1%BB%AB-A4-Ch%E1%BB%91ng-N%C6%B0%E1%BB%9Bc-Ch%E1%BB%91ng-B%E1%BB%A5i-D%C3%A0y-D%E1%BA%BDo-30-60-100-L%C3%A1-V%C4%83n-Ph%C3%B2ng-i.1475958592.42950307165?extraParams=%7B%22display_model_id%22%3A280024125814%2C%22model_selection_logic%22%3A3%7D&sp_atk=ce5b728f-f56b-4fd2-9960-7ab4cc68092f&xptdk=ce5b728f-f56b-4fd2-9960-7ab4cc68092f",
     description: "Mô tả sản phẩm:\n- Loại file: JPG (nén chuẩn), PNG (trong suốt), PSD (chỉnh sửa được)\n- Độ phân giải: 4K (3840 x 2160 pixels)\n- Dung lượng: JPG ~5MB, PNG ~15MB, PSD ~50MB\n- Chất lượng: Độ nét cao, màu sắc chân thực\n\nNội dung file:\n- Hình ảnh Phố Cổ Hà Nội với các góc nhìn đẹp nhất\n- Phù hợp cho in ấn, thiết kế đồ họa, làm tranh treo tường\n- File PSD gồm nhiều layer tách biệt, dễ dàng chỉnh sửa\n\nƯu điểm:\n- Giao hàng ngay lập tức qua email sau khi thanh toán\n- Không giới hạn số lần tải về\n- Được sử dụng cho mục đích cá nhân và thương mại\n- Hỗ trợ kỹ thuật miễn phí trong 30 ngày\n\nHướng dẫn sử dụng:\n- File JPG: Mở trực tiếp bằng bất kỳ phần mềm xem ảnh nào\n- File PNG: Phù hợp cho thiết kế, ghép ảnh nhờ nền trong suốt\n- File PSD: Cần Adobe Photoshop CS6 trở lên để mở và chỉnh sửa\n\nĐiều khoản sử dụng:\n- Không được bán lại file gốc dưới bất kỳ hình thức nào\n- Không chấp nhận hoàn tiền sau khi đã gửi file\n- Vui lòng kiểm tra email spam nếu không nhận được file trong 5 phút\n\nLưu ý: Do là sản phẩm kỹ thuật số, chúng tôi không hỗ trợ đổi trả. File Kỹ Thuật Số Phố Cổ Hà Nội - Lưu giữ nét đẹp văn hóa trong từng pixel!",
     price: {
       "File JPG": 50000,
@@ -82,9 +84,9 @@ export const souvenirSamples = [
       "File PSD": 150000,
     },
     images: {
-      "File JPG": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=500",
-      "File PNG": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=500",
-      "File PSD": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=500",
+      "File JPG": fileanh,
+      "File PNG": fileanh,
+      "File PSD": fileanh,
     },
     details: {
       warrantyType: "Không áp dụng",

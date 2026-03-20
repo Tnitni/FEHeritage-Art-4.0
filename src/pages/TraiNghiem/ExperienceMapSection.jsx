@@ -122,7 +122,7 @@ const ExperienceMapSection = ({
   });
 
   const [visibleCount, setVisibleCount] = useState(mapData.length);
-
+  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [detailPlace, setDetailPlace] = useState(null);
   const [detailImageIndex, setDetailImageIndex] = useState(0);
 
@@ -616,7 +616,7 @@ const ExperienceMapSection = ({
         data-aos-delay="100"
         id="experience-map-section"
       >
-        <div className="mx-auto mb-6 max-w-7xl rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-50 border border-amber-100 p-5 md:p-6 shadow-2xl backdrop-blur-lg">
+        <div className="relative z-[1000] mx-auto mb-6 max-w-7xl rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-50 border border-amber-100 p-5 md:p-6 shadow-2xl backdrop-blur-lg">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-700">
@@ -687,49 +687,131 @@ const ExperienceMapSection = ({
           </div>
 
           <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1 min-w-[260px]">
+            {/* THỜI KỲ LỊCH SỬ (Dạng Dropdown Multi-select) */}
+            <div className="flex-1 min-w-[260px] relative z-[50]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-amber-600">
                   Thời kỳ lịch sử
                 </span>
+                {/* Nút bấm để chọn/bỏ chọn tất cả cho nhanh (Tùy chọn) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMapFilters((prev) => ({
+                      ...prev,
+                      periods:
+                        prev.periods.size === periods.length
+                          ? new Set()
+                          : new Set(periods),
+                    }));
+                  }}
+                  className="text-[10px] font-bold text-[#dc8154] cursor-pointer hover:underline"
+                >
+                  {mapFilters.periods.size === periods.length
+                    ? "Bỏ chọn tất cả"
+                    : "Chọn tất cả"}
+                </button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {periods.map((period) => {
-                  const color = PERIOD_COLORS[period] || "#dc8154";
-                  const isActive = mapFilters.periods.has(period);
-                  return (
-                    <label
-                      key={period}
-                      className="relative inline-flex cursor-pointer select-none items-center"
-                    >
-                      <input
-                        type="checkbox"
-                        className="peer sr-only"
-                        checked={isActive}
-                        onChange={() =>
-                          handleMapFilterChange("periods", period)
-                        }
-                      />
-                      <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs md:text-sm transition-all duration-150 shadow-sm ${
-                          isActive ? "text-white shadow-md" : "text-[#2e1e10]"
-                        }`}
-                        style={{
-                          backgroundColor: isActive
-                            ? color
-                            : "rgba(255,255,255,0.9)",
-                          borderColor: color,
-                        }}
-                      >
-                        <span className="whitespace-nowrap">{period}</span>
-                        <span className="rounded-full bg-black/5 px-1.5 py-0.5 text-[10px] font-semibold leading-none">
-                          {periodCounts[period] ?? 0}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+
+              {/* Nút bấm hiển thị Dropdown */}
+              <button
+                type="button"
+                onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-white/90 px-4 py-2.5 text-sm font-medium text-[#2e1e10] shadow-sm hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
+              >
+                <span className="truncate">
+                  {mapFilters.periods.size === 0
+                    ? "Chưa chọn thời kỳ nào"
+                    : mapFilters.periods.size === periods.length
+                      ? "Tất cả thời kỳ"
+                      : `Đã chọn (${mapFilters.periods.size}) thời kỳ`}
+                </span>
+                <svg
+                  className={`ml-2 h-4 w-4 transition-transform duration-200 ${isPeriodDropdownOpen ? "rotate-180 text-amber-500" : "text-gray-400"}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Bảng Dropdown xổ xuống */}
+              {isPeriodDropdownOpen && (
+                <>
+                  {/* Một lớp phủ tàng hình để click ra ngoài thì đóng Dropdown */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsPeriodDropdownOpen(false)}
+                  ></div>
+
+                  <div className="absolute left-0 mt-2 w-full z-50 rounded-xl border border-amber-100 bg-white p-2 shadow-xl animate-fadein-fast max-h-64 overflow-y-auto">
+                    {periods.map((period) => {
+                      const color = PERIOD_COLORS[period] || "#dc8154";
+                      const isActive = mapFilters.periods.has(period);
+
+                      return (
+                        <label
+                          key={period}
+                          className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-amber-50"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Checkbox ẩn */}
+                            <input
+                              type="checkbox"
+                              className="peer sr-only"
+                              checked={isActive}
+                              onChange={() =>
+                                handleMapFilterChange("periods", period)
+                              }
+                            />
+                            {/* Chấm màu đặc trưng cho từng thời kỳ */}
+                            <div
+                              className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${isActive ? "border-transparent" : "border-gray-300"}`}
+                              style={{
+                                backgroundColor: isActive
+                                  ? color
+                                  : "transparent",
+                              }}
+                            >
+                              {isActive && (
+                                <svg
+                                  className="h-3 w-3 text-white"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            <span
+                              className={`text-sm font-medium ${isActive ? "text-[#2e1e10]" : "text-gray-600"}`}
+                            >
+                              {period}
+                            </span>
+                          </div>
+
+                          {/* Con số đếm địa danh */}
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
+                            {periodCounts[period] ?? 0}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex-1 min-w-[220px]">

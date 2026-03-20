@@ -64,6 +64,7 @@ function App() {
                 },
               }}
             />
+           
           </CartProvider>
         </ArtProvider>
       </UserProvider>

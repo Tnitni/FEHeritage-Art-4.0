@@ -1,7 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import CKEditorField from "../../components/common/CKEditorField";
+import {
+  getPosts,
+  deletePost,
+  createPost,
+  updatePost,
+} from "../../services/api";
 
-// Dữ liệu mẫu góc nhìn 
+/**
+ * Danh sách mẫu bài viết Góc Nhìn, dùng làm dữ liệu fallback khi load API thất bại.
+ */
 const initialGocNhinPosts = [
   {
     id: "G-001",
@@ -14,8 +22,7 @@ const initialGocNhinPosts = [
   {
     id: "G-002",
     title: "Góc nhìn di sản đô thị hiện đại",
-    summary:
-      "Bảo tồn giá trị cũ trong sự phát triển hiện đại ở Hà Nội.",
+    summary: "Bảo tồn giá trị cũ trong sự phát triển hiện đại ở Hà Nội.",
     content:
       "<p>Không gian văn hóa cũ hòa quyện cùng nhịp sống đô thị...</p>",
     thumbnail: "",
@@ -24,49 +31,202 @@ const initialGocNhinPosts = [
 
 const ITEMS_PER_PAGE = 5;
 
+/**
+ * Cập nhật bài viết Góc Nhìn.
+ * Sử dụng FormData để hỗ trợ upload file và gửi lên API Laravel (giao thức _method spoofing).
+ * @param {string} id - ID bài viết cần cập nhật
+ * @param {Object} form - Dữ liệu bài viết (form state)
+ * @returns {Promise<boolean>} - Kết quả thành công/thất bại
+ */
+const handleUpdate = async (id, form) => {
+  try {
+    const formData = new FormData();
+
+    formData.append("title", form.title);
+    formData.append("caption", form.title);
+    formData.append("summary", form.summary);
+    formData.append("content", form.content);
+
+    // Dùng _method để backend Laravel nhận diện PUT qua POST (nếu RESTful không chấp nhận upload image qua PUT)
+    formData.append("_method", "PUT");
+
+    if (form.thumbnail instanceof File) {
+      formData.append("image", form.thumbnail); // Trường hợp upload ảnh mới
+    } else if (typeof form.thumbnail === "string" && form.thumbnail) {
+      // Nếu không đổi ảnh, gửi lại URL cũ để backend không báo thiếu ảnh
+      formData.append("image_url", form.thumbnail); 
+    }
+
+    const response = await updatePost(id, formData);
+    console.log("DỮ LIỆU SERVER TRẢ VỀ:", response);
+
+    // Kiểm tra thành công dựa trên trường 'success'
+    return response?.success === true;
+  } catch (error) {
+    console.error("Lỗi cập nhật chi tiết:", error?.response?.data || error?.message);
+    return false;
+  }
+};
+
+/**
+ * Tạo mới bài viết Góc Nhìn.
+ * Kiểm tra validate và sử dụng FormData để upload ảnh.
+ * @param {Event} e - Sự kiện submit form
+ * @param {Object} form - Dữ liệu bài viết
+ * @param {Function} resetForm - Hàm reset form sau khi thành công
+ * @param {Function} loadData - Hàm reload danh sách bài viết
+ */
+const handlePost = async (e, form, resetForm, loadData) => {
+  e.preventDefault();
+
+  // Kiểm tra đầu vào bắt buộc
+  if (!form.title.trim() || !form.content.trim() || !form.thumbnail) {
+    alert("Vui lòng nhập tiêu đề, nội dung và chọn ảnh đại diện!");
+    return;
+  }
+
+  const formData = new FormData(); 
+
+  formData.append("title", form.title);
+  formData.append("caption", form.title);
+  formData.append("summary", form.summary);
+  formData.append("content", form.content);
+  formData.append("type", "gocnhin");
+
+  if (form.thumbnail instanceof File) {
+    formData.append("image", form.thumbnail);
+  }
+
+  // Debug nội dung formData
+  console.log("--- DEBUG PAYLOAD ---");
+  for (var pair of formData.entries()) {
+    console.log(pair[0] + ": " + pair[1]);
+  }
+  try {
+    const response = await createPost(formData);
+    console.log("Server Response:", response);
+    
+    if (response.status === 200 || response.status === 201 || response.success) { 
+      alert("Đăng bài thành công!");
+      await loadData();
+      resetForm();
+    }
+  } catch (error) {
+    // Xử lý lỗi trả về từ server hoặc mạng
+    console.error("LỖI PHÁT SINH TỪ SERVER:");
+    if (error.response) {
+      // Lỗi API trả về
+      console.log("Data lỗi:", error.response.data); 
+      console.log("Status code:", error.response.status);
+      alert(`Server báo lỗi (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+    } else {
+      // Lỗi mạng hoặc không có response
+      console.log("Message:", error.message);
+    }
+  }
+};
+
 const AdminGocnhin = () => {
-  // State quản lý list, form, trạng thái modals, phân trang, tìm kiếm
-  const [items, setItems] = useState(initialGocNhinPosts);
+  // State quản lý danh sách bài viết, trạng thái form, modal, tìm kiếm, phân trang,...
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     id: "",
     title: "",
     summary: "",
     content: "",
+    caption: "",
     thumbnail: "",
   });
-  const [, setThumbnailPreview] = useState("");
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [viewItem, setViewItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset form về giá trị mặc định và đóng modal
+  /**
+   * Fetch danh sách bài viết Góc Nhìn từ API, fallback sang initial data nếu lỗi.
+   * Áp dụng useCallback để hạn chế re-create function khi dependencies không đổi.
+   */
+  const loadData = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      // API lấy danh sách bài viết loại "gocnhin"
+      const res = await getPosts({ type: "gocnhin" });
+      if (res?.success && Array.isArray(res.data)) {
+        const normalized = res.data.map((post) => ({
+          id: post.id,
+          title: post.caption || post.title || "Không có tiêu đề", 
+          caption: post.caption || post.title || "",
+          summary: post.summary || post.caption || "",              
+          content: post.content || "",
+          thumbnail: post.cloudinary_url || "",
+        }));
+        setItems(normalized);
+      }
+    } catch (err) {
+      // Nếu fetch lỗi, dùng dữ liệu mẫu cho trải nghiệm offline
+      console.error("Failed to fetch:", err);
+      setItems(initialGocNhinPosts);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  /**
+   * Đặt lại dữ liệu form và các trạng thái liên quan về mặc định (đóng modal,...)
+   */
   const resetForm = () => {
-    setForm({ id: "", title: "", summary: "", content: "", thumbnail: "" });
+    setForm({ id: "", title: "", summary: "", content: "", thumbnail: "", caption: "" });
     setThumbnailPreview("");
     setEditingIndex(null);
+    setEditingId(null);
     setIsAdding(false);
+    // Clear input file nếu có
     const input = document.getElementById("gocnhin-image-upload");
     if (input) input.value = "";
   };
 
-  // Bắt đầu thêm mới
+  /**
+   * Bắt đầu quá trình thêm mới một bài viết.
+   */
   const startAdd = () => {
     resetForm();
     setIsAdding(true);
   };
 
-  // Bắt đầu sửa, nạp dữ liệu bài viết vào form
+  /**
+   * Vào chế độ chỉnh sửa một bài viết.
+   * @param {number} index - Index trong mảng items
+   */
   const startEdit = (index) => {
     const item = items[index];
     setEditingIndex(index);
-    setForm(item);
+    setEditingId(item.id);
+
+    setForm({
+      id: item.id,
+      title: item.title,      // Đồng bộ với caption từ normalize
+      summary: item.summary,  
+      content: item.content,
+      caption: item.title,    // Caption = title cho thống nhất
+      thumbnail: item.thumbnail 
+    });
+
     setThumbnailPreview(item.thumbnail || "");
     setIsAdding(true);
   };
 
-  // SVG Icon đóng modal/hành động
+  /**
+   * SVG Icon dấu X, dùng cho nút đóng/hủy/loại bỏ.
+   */
   const X = (props) => (
     <svg
       viewBox="0 0 24 24"
@@ -85,73 +245,62 @@ const AdminGocnhin = () => {
     </svg>
   );
 
-  // Lưu (thêm mới hoặc cập nhật)
-  const handleSubmit = (e) => {
+  /**
+   * Xử lý submit tạo mới hoặc cập nhật bài viết Góc Nhìn.
+   * Nếu có editingId sẽ update, ngược lại sẽ tạo mới.
+   */
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.title.trim()) {
-      alert("Vui lòng nhập: Tiêu đề góc nhìn!");
-      return;
-    }
-    if (!form.summary.trim()) {
-      alert("Vui lòng nhập: Mô tả ngắn!");
-      return;
-    }
-    if (!form.content.trim()) {
-      alert("Vui lòng nhập: Nội dung bài viết!");
-      return;
-    }
-    if (!form.thumbnail) {
-      alert("Vui lòng upload ảnh đại diện!");
+    if (!form.title || !form.content || !form.thumbnail) {
+      alert("Vui lòng điền đầy đủ tiêu đề, nội dung và ảnh!");
       return;
     }
 
-    if (editingIndex !== null) {
-      // Cập nhật dữ liệu đang sửa
-      const updated = [...items];
-      updated[editingIndex] = { ...form, id: items[editingIndex].id };
-      setItems(updated);
-      resetForm();
+    if (editingId) {
+      const success = await handleUpdate(editingId, form);
+      if (success) {
+        alert("Cập nhật thành công!");
+        await loadData(); // Reload danh sách bài viết sau khi update
+        resetForm();     // Đóng modal, làm sạch dữ liệu form
+      } else {
+        alert("Cập nhật thất bại. Vui lòng kiểm tra lại dữ liệu hoặc Console.");
+      }
     } else {
-      // Thêm mới, sinh ID tự động dạng G-00x
-      const lastIdNum = items.length
-        ? Math.max(
-            ...items
-              .map((it) => {
-                const match = it.id.match(/^G-(\d+)/);
-                return match ? parseInt(match[1], 10) : 0;
-              })
-              .filter((x) => !Number.isNaN(x))
-          )
-        : 0;
-      const nextId = `G-${String(lastIdNum + 1).padStart(3, "0")}`;
-      setItems([...items, { ...form, id: nextId }]);
-      resetForm();
+      await handlePost(e, form, resetForm, loadData);
     }
   };
 
-  // Xóa bài viết
-  const handleDelete = (index) => {
-    if (window.confirm("Bạn có chắc muốn xóa bài viết này không?")) {
+  /**
+   * Xóa một bài viết Góc Nhìn, có xác nhận người dùng trước khi thực hiện.
+   * @param {number} index - Index mục cần xóa trong mảng items
+   */
+  const handleDelete = async (index) => {
+    if (!window.confirm("Bạn có chắc muốn xóa bài viết này không?")) return;
+    const id = items[index]?.id;
+    try {
+      if (id) await deletePost(id);
+      // Cập nhật lại danh sách đã xóa
       const filtered = items.filter((_, i) => i !== index);
       setItems(filtered);
-      // Điều chỉnh trang nếu cần sau khi xóa
+
+      // Điều chỉnh trang hiện tại nếu có thay đổi về số lượng trang
       const filteredTotalPages =
         Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
       if (filtered.length && currentPage > filteredTotalPages) {
         setCurrentPage(filteredTotalPages);
       }
       if (editingIndex === index) resetForm();
-      if (
-        viewItem &&
-        items[index] &&
-        items[index].id === viewItem.id
-      )
+      if (viewItem && items[index] && items[index].id === viewItem.id)
         setViewItem(null);
+    } catch (err) {
+      alert("Xóa thất bại. Vui lòng thử lại!");
     }
   };
 
-  // Xóa ảnh đại diện khỏi form
+  /**
+   * Xóa/hủy ảnh đại diện khỏi form.
+   */
   const removeThumbnail = () => {
     setForm((prev) => ({ ...prev, thumbnail: "" }));
     setThumbnailPreview("");
@@ -159,26 +308,31 @@ const AdminGocnhin = () => {
     if (input) input.value = "";
   };
 
-  // Xử lý upload ảnh đại diện (giới hạn kích thước 5MB)
+  /**
+   * Xử lý upload ảnh thumbnail cho bài viết Góc Nhìn.
+   * @param {Event} e - Sự kiện thay đổi input file
+   */
   const handleThumbnailUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Ảnh tối đa 5MB!");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setForm((prev) => ({ ...prev, thumbnail: ev.target.result }));
-        setThumbnailPreview(ev.target.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (file) {
-      alert("Vui lòng chọn file hình ảnh hợp lệ!");
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Giải phóng URL cũ nếu có để tránh memory leak
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
     }
+
+    setForm((prev) => ({
+      ...prev,
+      thumbnail: file, // Lưu file, sẽ gửi qua API khi submit
+    }));
+
+    const previewUrl = URL.createObjectURL(file);
+    setThumbnailPreview(previewUrl);
   };
 
-  // Trả về danh sách đã lọc theo searchTerm
+  /**
+   * Lọc danh sách bài viết dựa trên tiêu đề hoặc mô tả ngắn theo từ khóa tìm kiếm.
+   */
   const getFilteredData = () => {
     return items.filter(
       (item) =>
@@ -198,7 +352,9 @@ const AdminGocnhin = () => {
     startIndex + ITEMS_PER_PAGE
   );
 
-  // Sinh dãy số trang cho phân trang
+  /**
+   * Sinh ra mảng số trang phục vụ hiển thị phân trang, tối ưu tránh quá nhiều nút nếu danh sách dài.
+   */
   const getPageNumbers = () => {
     if (totalPages <= 8)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -211,14 +367,13 @@ const AdminGocnhin = () => {
       for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
     } else {
       pages.push(1, "...");
-      for (let i = currentPage - 1; i <= currentPage + 1; i++)
-        pages.push(i);
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
       pages.push("...", totalPages);
     }
     return pages;
   };
 
-  // Render UI chính
+  // JSX phần giao diện chính
   return (
     <div>
       <div className="max-w-7xl mx-auto">
@@ -227,7 +382,7 @@ const AdminGocnhin = () => {
             Góc Nhìn
           </span>
         </div>
-        {/* Header, toolbar filter, thêm mới */}
+        {/* Toolbar: Filter + Tìm kiếm + Thông tin tổng + Nút Thêm mới */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-7 rounded-t-2xl border-b border-emerald-100 shadow">
           {/* Ô tìm kiếm */}
           <div className="flex items-center w-full md:max-w-md relative">
@@ -257,7 +412,7 @@ const AdminGocnhin = () => {
               className="w-full pl-10 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 bg-blue-50 transition"
             />
           </div>
-          {/* Thông tin số lượng + nút thêm mới */}
+          {/* Số lượng bài viết và nút Thêm mới */}
           <div className="flex flex-row gap-3 items-center mt-2 md:mt-0">
             <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-extrabold px-4 py-1 rounded-full">
               {filteredData.length} bài viết
@@ -272,175 +427,176 @@ const AdminGocnhin = () => {
             </button>
           </div>
         </div>
-        {/* Danh sách bài viết (table) */}
-        <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden w-full overflow-x-auto pt-1 pb-4">
-          {/* Header bảng */}
-          <div className="min-w-[800px] grid grid-cols-12 items-center bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200 px-6 py-4 text-xs font-bold text-blue-600 tracking-wider uppercase">
-            <div className="col-span-1 text-center">STT</div>
-            <div className="col-span-2 text-center">Ảnh</div>
-            <div className="col-span-4 text-center">Tiêu đề</div>
-            <div className="col-span-3 text-center">Mô tả ngắn</div>
-            <div className="col-span-2 flex justify-end">Hành động</div>
+        {/* Danh sách bài viết dạng table responsive */}
+        {loading ? (
+          // Skeleton loading UI
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
-          {/* Dòng dữ liệu */}
-          {currentData.length > 0 ? (
-            currentData.map((item, idx) => {
-              const globalIndex = items.findIndex((i) => i.id === item.id);
-              return (
-                <div
-                  key={item.id}
-                  className="group min-w-[800px] grid grid-cols-12 items-center border-b last:border-0 border-emerald-50 px-6 py-3 text-base transition hover:bg-emerald-50"
-                >
-                  {/* STT */}
-                  <div className="col-span-1 text-center">
-                    <span className="inline-block px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-700 rounded-md tracking-wide">
-                      {startIndex + idx + 1}
-                    </span>
-                  </div>
-                  {/* Ảnh đại diện hoặc placeholder */}
-                  <div className="col-span-2 flex items-center justify-center">
-                    <div className="h-12 w-20 flex items-center justify-center rounded-xl overflow-hidden bg-white border border-emerald-100">
-                      {item.thumbnail ? (
-                        <img
-                          src={item.thumbnail}
-                          alt={item.title}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center flex-col text-emerald-200">
-                          <svg
-                            className="w-10 h-10"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth={1.2}
-                            viewBox="0 0 24 24"
-                          >
-                            <rect x="4" y="4" width="16" height="16" rx="4" />
-                            <path d="M8 16l2.822-3.494a1.5 1.5 0 0 1 2.357-.088L16 16" />
-                            <circle cx="9.5" cy="9.5" r="1" />
-                          </svg>
-                        </div>
-                      )}
+        ) : (
+          <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden w-full overflow-x-auto pt-1 pb-4">
+            {/* Header các cột thông tin */}
+            <div className="min-w-[800px] grid grid-cols-12 items-center bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200 px-6 py-4 text-xs font-bold text-blue-600 tracking-wider uppercase">
+              <div className="col-span-1 text-center">STT</div>
+              <div className="col-span-2 text-center">Ảnh</div>
+              <div className="col-span-4 text-center">Tiêu đề</div>
+              <div className="col-span-3 text-center">Mô tả ngắn</div>
+              <div className="col-span-2 flex justify-end">Hành động</div>
+            </div>
+            {/* Dữ liệu từng dòng */}
+            {currentData.length > 0 ? (
+              currentData.map((item, idx) => {
+                const globalIndex = items.findIndex((i) => i.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className="group min-w-[800px] grid grid-cols-12 items-center border-b last:border-0 border-emerald-50 px-6 py-3 text-base transition hover:bg-emerald-50"
+                  >
+                    {/* Số thứ tự (STT) */}
+                    <div className="col-span-1 text-center">
+                      <span className="inline-block px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-700 rounded-md tracking-wide">
+                        {startIndex + idx + 1}
+                      </span>
+                    </div>
+                    {/* Ảnh đại diện hoặc placeholder nếu chưa có ảnh */}
+                    <div className="col-span-2 flex items-center justify-center">
+                      <div className="h-12 w-20 flex items-center justify-center rounded-xl overflow-hidden bg-white border border-emerald-100">
+                        {item.thumbnail ? (
+                          <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            className="w-full h-full object-cover rounded-xl"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <span className="text-gray-500 text-xs">Không có ảnh</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Tiêu đề bài viết */}
+                    <div className="col-span-4 flex flex-col gap-1 min-w-0">
+                      <span className="text-emerald-900 font-bold truncate">
+                        {item.title}
+                      </span>
+                    </div>
+                    {/* Mô tả ngắn, giới hạn dòng */}
+                    <div className="col-span-3">
+                      <div className="text-gray-700 text-sm line-clamp-2">{item.summary}</div>
+                    </div>
+                    {/* Nhóm nút hành động thao tác */}
+                    <div className="col-span-2 flex flex-row gap-2 justify-end items-center pr-2">
+                      {/* Nút xem chi tiết */}
+                      <button
+                        className="w-9 h-9 flex items-center justify-center bg-emerald-50 border border-emerald-200 rounded-full shadow-md hover:bg-emerald-100 group/action transition"
+                        onClick={() => setViewItem(item)}
+                        title="Xem chi tiết"
+                        type="button"
+                      >
+                        <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="3.5" />
+                          <path d="M2 12C4 7.5 8.5 5 12 5s8 2.5 10 7c-2 4.5-6.5 7-10 7s-8-2.5-10-7z" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {/* Nút chỉnh sửa bài viết */}
+                      <button
+                        className="w-9 h-9 flex items-center justify-center bg-yellow-50 border border-yellow-200 rounded-full shadow-md hover:bg-yellow-100 group/action transition"
+                        onClick={() => startEdit(globalIndex)}
+                        title="Chỉnh sửa"
+                        type="button"
+                      >
+                        <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                          <path d="M15.232 5.232l3.536 3.536M9 13l6.207-6.207c.39-.39 1.024-.39 1.414 0l2.586 2.586c.39.39.39 1.024 0 1.414L13 17H9v-4z" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {/* Nút xóa bài viết */}
+                      <button
+                        className="w-9 h-9 flex items-center justify-center bg-red-50 border border-red-200 rounded-full shadow-md hover:bg-red-100 group/action transition"
+                        onClick={() => handleDelete(globalIndex)}
+                        title="Xóa"
+                        type="button"
+                      >
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                          <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="10" y1="11" x2="10" y2="17"/>
+                          <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  {/* Tiêu đề */}
-                  <div className="col-span-4 flex flex-col gap-1 min-w-0">
-                    <span className="text-emerald-900 font-bold truncate">
-                      {item.title}
-                    </span>
-                  </div>
-                  {/* Mô tả ngắn */}
-                  <div className="col-span-3">
-                    <div className="text-gray-700 text-sm line-clamp-2">{item.summary}</div>
-                  </div>
-                  {/* Các nút hành động */}
-                  <div className="col-span-2 flex flex-row gap-2 justify-end items-center pr-2">
-                    <button
-                      className="w-9 h-9 flex items-center justify-center bg-emerald-50 border border-emerald-200 rounded-full shadow-md hover:bg-emerald-100 group/action transition"
-                      onClick={() => setViewItem(item)}
-                      title="Xem chi tiết"
-                      type="button"
-                    >
-                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3.5" />
-                        <path d="M2 12C4 7.5 8.5 5 12 5s8 2.5 10 7c-2 4.5-6.5 7-10 7s-8-2.5-10-7z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                    <button
-                      className="w-9 h-9 flex items-center justify-center bg-yellow-50 border border-yellow-200 rounded-full shadow-md hover:bg-yellow-100 group/action transition"
-                      onClick={() => startEdit(globalIndex)}
-                      title="Chỉnh sửa"
-                      type="button"
-                    >
-                      <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                        <path d="M15.232 5.232l3.536 3.536M9 13l6.207-6.207c.39-.39 1.024-.39 1.414 0l2.586 2.586c.39.39.39 1.024 0 1.414L13 17H9v-4z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                    <button
-                      className="w-9 h-9 flex items-center justify-center bg-red-50 border border-red-200 rounded-full shadow-md hover:bg-red-100 group/action transition"
-                      onClick={() => handleDelete(globalIndex)}
-                      title="Xóa"
-                      type="button"
-                    >
-                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                        <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" strokeLinecap="round" strokeLinejoin="round"/>
-                        <line x1="10" y1="11" x2="10" y2="17"/>
-                        <line x1="14" y1="11" x2="14" y2="17"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="py-10 text-center text-gray-400 col-span-12">
-              Chưa có bài viết
-            </div>
-          )}
-          {/* Phân trang nếu > 1 trang */}
-          {totalPages > 1 && (
-            <div className="flex flex-col md:flex-row items-center justify-between px-4 py-5 bg-gradient-to-r from-emerald-50 to-sky-50 border-t border-emerald-100 mt-2 rounded-b-2xl">
-              <div className="text-sm text-gray-700 mb-3 md:mb-0 font-semibold">
-                Hiển thị{" "}
-                <span className="font-bold">
-                  {filteredData.length === 0 ? 0 : startIndex + 1}
-                </span>
-                {" - "}
-                <span className="font-bold">
-                  {filteredData.length === 0
-                    ? 0
-                    : Math.min(
-                        startIndex + ITEMS_PER_PAGE,
-                        filteredData.length
-                      )}
-                </span>
-                {" trên "}
-                <span className="font-bold">
-                  {filteredData.length}
-                </span>{" "}
-                bài viết
+                );
+              })
+            ) : (
+              <div className="py-10 text-center text-gray-400 col-span-12">
+                Chưa có bài viết
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  type="button"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
-                {getPageNumbers().map((page, i) => (
+            )}
+            {/* Hiện thanh phân trang nếu dữ liệu có nhiều trang */}
+            {totalPages > 1 && (
+              <div className="flex flex-col md:flex-row items-center justify-between px-4 py-5 bg-gradient-to-r from-emerald-50 to-sky-50 border-t border-emerald-100 mt-2 rounded-b-2xl">
+                <div className="text-sm text-gray-700 mb-3 md:mb-0 font-semibold">
+                  Hiển thị{" "}
+                  <span className="font-bold">
+                    {filteredData.length === 0 ? 0 : startIndex + 1}
+                  </span>
+                  {" - "}
+                  <span className="font-bold">
+                    {filteredData.length === 0
+                      ? 0
+                      : Math.min(
+                          startIndex + ITEMS_PER_PAGE,
+                          filteredData.length
+                        )}
+                  </span>
+                  {" trên "}
+                  <span className="font-bold">
+                    {filteredData.length}
+                  </span>{" "}
+                  bài viết
+                </div>
+                {/* Các nút số trang */}
+                <div className="flex items-center gap-2">
                   <button
-                    key={i}
-                    onClick={() => typeof page === "number" && setCurrentPage(page)}
-                    disabled={page === "..."}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition shadow ${
-                      page === currentPage
-                        ? "bg-gradient-to-tr from-sky-600 to-emerald-500 text-white"
-                        : page === "..."
-                        ? "cursor-default text-gray-400 bg-transparent"
-                        : "hover:bg-emerald-100 text-gray-700"
-                    }`}
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
                     type="button"
                   >
-                    {page}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </button>
-                ))}
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  type="button"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </button>
+                  {getPageNumbers().map((page, i) => (
+                    <button
+                      key={i}
+                      onClick={() => typeof page === "number" && setCurrentPage(page)}
+                      disabled={page === "..."}
+                      className={`px-4 py-2 rounded-lg text-sm font-bold transition shadow ${
+                        page === currentPage
+                          ? "bg-gradient-to-tr from-sky-600 to-emerald-500 text-white"
+                          : page === "..."
+                          ? "cursor-default text-gray-400 bg-transparent"
+                          : "hover:bg-emerald-100 text-gray-700"
+                      }`}
+                      type="button"
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    type="button"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-        {/* Modal thêm/sửa bài viết */}
+            )}
+          </div>
+        )}
+        {/* Modal: Thêm/Sửa bài viết */}
         {isAdding && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-[1.5px] transition animate-fadein-fast">
             <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[96vh] overflow-y-auto border border-emerald-200">
@@ -459,9 +615,9 @@ const AdminGocnhin = () => {
                   <X className="w-7 h-7" />
                 </button>
               </div>
-              {/* Body modal */}
+              {/* Body modal: Form nhập liệu */}
               <form className="p-6 space-y-6" onSubmit={handleSubmit}>
-                {/* Tiêu đề */}
+                {/* Tiêu đề bài viết */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Tiêu đề <span className="text-red-500">*</span>
@@ -469,15 +625,13 @@ const AdminGocnhin = () => {
                   <input
                     type="text"
                     value={form.title}
-                    onChange={(e) =>
-                      setForm({ ...form, title: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
                     className="w-full px-4 py-3 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-emerald-900 bg-emerald-50 font-semibold transition shadow-sm"
                     placeholder="Nhập tiêu đề bài viết"
                     autoFocus
                   />
                 </div>
-                {/* Mô tả ngắn */}
+                {/* Tóm tắt/Mô tả ngắn bài viết */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Mô tả ngắn <span className="text-red-500">*</span>
@@ -485,25 +639,23 @@ const AdminGocnhin = () => {
                   <input
                     type="text"
                     value={form.summary}
-                    onChange={(e) =>
-                      setForm({ ...form, summary: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, summary: e.target.value })}
                     className="w-full px-4 py-3 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-emerald-900 bg-emerald-50 font-semibold transition shadow-sm"
                     placeholder="Tóm tắt nội dung"
                   />
                 </div>
-                {/* Nội dung bài viết góc nhìn */}
+                {/* Nội dung đầy đủ của bài viết (CKEditor) */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Nội dung bài viết <span className="text-red-500">*</span>
                   </label>
                   <CKEditorField
                     value={form.content}
-                    onChange={content => setForm({ ...form, content })}
+                    onChange={(content) => setForm({ ...form, content })}
                     placeholder="Nhập nội dung góc nhìn..."
                   />
                 </div>
-                {/* Ảnh đại diện upload/đổi/xóa */}
+                {/* Trường upload và hiển thị ảnh đại diện */}
                 <div>
                   <label className="block text-sm font-bold text-emerald-700 mb-2">
                     Ảnh đại diện <span className="text-red-500">*</span>
@@ -546,7 +698,7 @@ const AdminGocnhin = () => {
                   {form.thumbnail && (
                     <div className="relative w-fit mt-3 mx-auto">
                       <img
-                        src={form.thumbnail}
+                        src={thumbnailPreview || form.thumbnail}
                         alt="preview"
                         className="max-w-xs max-h-44 object-contain rounded-xl border border-emerald-100 shadow-lg bg-white"
                       />
@@ -582,11 +734,11 @@ const AdminGocnhin = () => {
           </div>
         )}
       </div>
-      {/* Modal xem chi tiết */}
+      {/* Modal xem chi tiết bài viết */}
       {viewItem && (
         <div className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center min-h-screen overflow-y-auto animate-fadein-fast p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl p-0 relative border border-emerald-200 flex flex-col max-h-[96vh] overflow-y-auto">
-            {/* Header chi tiết */}
+            {/* Header modal chi tiết */}
             <div className="flex justify-between items-center px-8 pt-8 pb-4 border-b border-emerald-50 sticky top-0 bg-white z-10">
               <h3 className="text-xl font-extrabold text-emerald-700">
                 {viewItem.title}
@@ -599,7 +751,7 @@ const AdminGocnhin = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            {/* Nội dung chi tiết */}
+            {/* Nội dung chi tiết bài viết */}
             <div className="px-8 pb-8 pt-4 flex flex-col gap-3">
               {viewItem.thumbnail && (
                 <img

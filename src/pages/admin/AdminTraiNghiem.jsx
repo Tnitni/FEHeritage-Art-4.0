@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import toast, { Toaster } from 'react-hot-toast';
 
 import {
-    Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Save, Image as ImageIcon, Upload,
+    Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Save, Image as ImageIcon, Upload, Eye,
 } from 'lucide-react';
+
+import { getPosts, deletePost } from '../../services/api';
 
 // Import ảnh địa danh
 import DinhDocLap from "../../assets/Dinh Độc Lập.png";
@@ -2684,6 +2686,7 @@ const TABS = [
     { key: "food", label: "Bài Viết Ẩm Thực" },
     { key: "travel", label: "Bài Viết Du Lịch" },
     { key: "hotel", label: "Bài Viết Khách Sạn" },
+    { key: "posts", label: "Bài viết cộng đồng" },
 ];
 
 const EditPromptButton = ({ onClick }) => (
@@ -2781,6 +2784,61 @@ const AdminTraiNghiem = () => {
     const [hotelFormData, setHotelFormData] = useState(initialHotelFormState);
     const [hotelImagePreview, setHotelImagePreview] = useState([]);
 
+    // Bài viết cộng đồng (experience-posts API)
+    const [experiencePosts, setExperiencePosts] = useState([]);
+    const [loadingExperiencePosts, setLoadingExperiencePosts] = useState(false);
+    const [viewExperiencePost, setViewExperiencePost] = useState(null);
+    const [deletingExperienceId, setDeletingExperienceId] = useState(null);
+
+    const loadExperiencePosts = async () => {
+        setLoadingExperiencePosts(true);
+        try {
+            const res = await getPosts();
+            if (res?.success && Array.isArray(res.data)) {
+                setExperiencePosts(res.data);
+            } else {
+                setExperiencePosts([]);
+            }
+        } catch (err) {
+            console.error("Lỗi tải bài viết cộng đồng:", err);
+            toast.error("Không tải được danh sách bài viết.");
+            setExperiencePosts([]);
+        } finally {
+            setLoadingExperiencePosts(false);
+        }
+    };
+
+    useEffect(() => {
+        loadExperiencePosts();
+    }, []);
+
+    const handleDeleteExperiencePost = async (post) => {
+        if (!window.confirm(`Xóa bài viết "${(post.caption || "").slice(0, 50)}..."?`)) return;
+        try {
+            setDeletingExperienceId(post.id);
+            const res = await deletePost(post.id);
+            if (res?.success !== false) {
+                setExperiencePosts((prev) => prev.filter((p) => p.id !== post.id));
+                setViewExperiencePost((prev) => (prev?.id === post.id ? null : prev));
+                toast.success("Đã xóa bài viết.");
+            } else {
+                toast.error(res?.message || "Không xóa được bài viết.");
+            }
+        } catch (err) {
+            toast.error(err?.message || "Lỗi khi xóa bài viết.");
+        } finally {
+            setDeletingExperienceId(null);
+        }
+    };
+
+    const formatPostDate = (dateStr) => {
+        if (!dateStr) return "—";
+        return new Date(dateStr).toLocaleDateString("vi-VN", {
+            day: "2-digit", month: "2-digit", year: "numeric",
+            hour: "2-digit", minute: "2-digit",
+        });
+    };
+
     // ---------- HANDLE IMAGE UPLOAD (MULTI IMAGES) ----------
     const handleImageUpload = (e, type = "heritage") => {
         const files = Array.from(e.target.files);
@@ -2836,6 +2894,17 @@ const AdminTraiNghiem = () => {
 
     // FILTER & PAGINATION
     const getFilteredData = () => {
+        if (tab === "posts") {
+            if (!searchTerm.trim()) return experiencePosts;
+            const term = searchTerm.toLowerCase();
+            return experiencePosts.filter(
+                (p) =>
+                    (p.caption || "").toLowerCase().includes(term) ||
+                    (p.author?.display_name || "").toLowerCase().includes(term) ||
+                    (p.historical_period?.name || "").toLowerCase().includes(term) ||
+                    (p.region || "").toLowerCase().includes(term)
+            );
+        }
         let dataSet;
         if (tab === "heritage") dataSet = data;
         else if (tab === "food") dataSet = foodData;
@@ -2857,6 +2926,7 @@ const AdminTraiNghiem = () => {
     const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const currentData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const currentExperienceData = tab === "posts" ? filteredData : [];
 
     // --- Thêm/Sửa DI TÍCH ---
     const handleAddOrUpdate = () => {
@@ -3222,6 +3292,7 @@ const AdminTraiNghiem = () => {
         if (tab === "food") return "Tên món ăn";
         if (tab === "travel") return "Tên điểm du lịch";
         if (tab === "hotel") return "Tên khách sạn";
+        if (tab === "posts") return "Nội dung";
         return "Tên bài viết";
     }
     // Nút thêm mới theo loại tab
@@ -3230,6 +3301,7 @@ const AdminTraiNghiem = () => {
         if (tab === "food") return "Thêm mới ẩm thực";
         if (tab === "travel") return "Thêm mới bài du lịch";
         if (tab === "hotel") return "Thêm mới khách sạn";
+        if (tab === "posts") return "Tải lại";
         return "Thêm mới";
     }
 
@@ -3239,6 +3311,7 @@ const AdminTraiNghiem = () => {
         if (tab === "food") return "🔎 Tìm theo tên món ăn, tỉnh hoặc vùng...";
         if (tab === "travel") return "🔎 Tìm điểm du lịch, tỉnh hoặc vùng...";
         if (tab === "hotel") return "🔎 Tìm khách sạn, tỉnh hoặc vùng...";
+        if (tab === "posts") return "🔎 Tìm theo nội dung, tác giả, thời kỳ...";
         return "🔎 Tìm kiếm...";
     }
 
@@ -3311,7 +3384,9 @@ const AdminTraiNghiem = () => {
                             </div>
                             <button
                                 onClick={() => {
-                                    if (tab === "heritage") {
+                                    if (tab === "posts") {
+                                        loadExperiencePosts();
+                                    } else if (tab === "heritage") {
                                         resetForm();
                                         setIsAdding(true);
                                     } else if (tab === "food") {
@@ -3334,6 +3409,103 @@ const AdminTraiNghiem = () => {
                     </div>
                     {/* Bảng danh sách */}
                     <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden">
+                        {/* Tab Bài viết cộng đồng (API experience-posts) */}
+                        {tab === "posts" && (
+                            <>
+                                {loadingExperiencePosts ? (
+                                    <div className="py-16 text-center text-gray-500">
+                                        <div className="inline-block w-10 h-10 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mb-3" />
+                                        <p>Đang tải bài viết...</p>
+                                    </div>
+                                ) : currentExperienceData.length === 0 ? (
+                                    <div className="py-16 text-center text-gray-400">Chưa có bài viết cộng đồng nào.</div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full min-w-[700px]">
+                                            <thead className="bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200">
+                                                <tr>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase w-14">STT</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase w-24">Ảnh/Video</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase">Nội dung</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase w-32">Tác giả</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase w-28">Thời kỳ / Vùng</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-bold text-blue-600 uppercase w-36">Ngày đăng</th>
+                                                    <th className="text-right py-3 px-4 text-xs font-bold text-blue-600 uppercase w-28">Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentExperienceData.map((post, idx) => (
+                                                    <tr key={post.id} className="border-b border-blue-50 hover:bg-blue-50/50">
+                                                        <td className="py-3 px-4">
+                                                            <span className="inline-block px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded">{startIndex + idx + 1}</span>
+                                                        </td>
+                                                        <td className="py-3 px-4">
+                                                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                                                                {post.type === "video" ? (
+                                                                    <video src={post.cloudinary_url} className="w-full h-full object-cover" muted playsInline />
+                                                                ) : (
+                                                                    <img src={post.cloudinary_url || "https://via.placeholder.com/80"} alt="" className="w-full h-full object-cover" />
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-sm text-gray-800 line-clamp-2 max-w-xs">{post.caption || "—"}</td>
+                                                        <td className="py-3 px-4 text-sm">{post.author?.display_name || "Ẩn danh"}</td>
+                                                        <td className="py-3 px-4 text-sm text-gray-600">{post.historical_period?.name || "—"} / {post.region || "—"}</td>
+                                                        <td className="py-3 px-4 text-sm text-gray-600">{formatPostDate(post.created_at)}</td>
+                                                        <td className="py-3 px-4 text-right">
+                                                            <div className="flex justify-end gap-1">
+                                                                <button type="button" onClick={() => setViewExperiencePost(post)} className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100" title="Xem"><Eye className="w-4 h-4" /></button>
+                                                                <button type="button" onClick={() => handleDeleteExperiencePost(post)} disabled={deletingExperienceId === post.id} className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                {totalPages > 1 && tab === "posts" && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-blue-50/50 border-t border-blue-100">
+                                        <span className="text-sm text-gray-600">Trang {currentPage} / {totalPages} • Tổng {filteredData.length} bài</span>
+                                        <div className="flex gap-2">
+                                            <button type="button" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-800 disabled:opacity-50">Trước</button>
+                                            <button type="button" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-800 disabled:opacity-50">Sau</button>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Modal xem chi tiết bài viết cộng đồng */}
+                                {viewExperiencePost && (
+                                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+                                        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                            <div className="flex justify-between items-center p-4 border-b border-blue-100 sticky top-0 bg-white">
+                                                <h3 className="text-lg font-bold text-blue-800">Chi tiết bài viết</h3>
+                                                <button type="button" onClick={() => setViewExperiencePost(null)} className="p-2 rounded-lg hover:bg-blue-50"><X className="w-5 h-5" /></button>
+                                            </div>
+                                            <div className="p-4 space-y-4">
+                                                {viewExperiencePost.type === "video" ? (
+                                                    <video src={viewExperiencePost.cloudinary_url} controls className="w-full rounded-lg bg-black max-h-80" />
+                                                ) : (
+                                                    <img src={viewExperiencePost.cloudinary_url} alt="" className="w-full rounded-lg object-contain max-h-80 bg-gray-100" />
+                                                )}
+                                                <p className="text-gray-800">{viewExperiencePost.caption || "Không có nội dung."}</p>
+                                                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                                                    <span>Tác giả: {viewExperiencePost.author?.display_name || "Ẩn danh"}</span>
+                                                    <span>Thời kỳ: {viewExperiencePost.historical_period?.name || "—"}</span>
+                                                    <span>Vùng: {viewExperiencePost.region || "—"}</span>
+                                                    <span>Đăng lúc: {formatPostDate(viewExperiencePost.created_at)}</span>
+                                                </div>
+                                                <div className="pt-2">
+                                                    <button type="button" onClick={() => handleDeleteExperiencePost(viewExperiencePost)} disabled={deletingExperienceId === viewExperiencePost.id} className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50">Xóa bài viết</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {tab !== "posts" && (
+                        <>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200">
@@ -3523,6 +3695,8 @@ const AdminTraiNghiem = () => {
                                     </button>
                                 </div>
                             </div>
+                        )}
+                        </>
                         )}
                     </div>
 

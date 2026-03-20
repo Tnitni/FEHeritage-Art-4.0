@@ -30,11 +30,12 @@ import {
   LoginPage,
   RegisterPage,
 } from "../pages";
+import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
 import AppLayout from "../components/layouts/AppLayout.jsx";
 import MainLayout from "../components/layouts/MainLayout.jsx";
 import Cart from "../components/Cart.jsx";
 import Checkout from "../pages/Store/Checkout.jsx";
-import MuaTranhIn from "../pages/Store/MuaTranhIn.jsx";
+import DoLuuNiem from "../pages/Store/DoLuuNiem.jsx";
 import ChiTietTranh from "../pages/Store/ChiTietTranh.jsx";
 import DonatUngHo from "../pages/Store/DonatUngHo.jsx";
 import ThanhVienVIP from "../pages/Store/ThanhVienVIP.jsx";
@@ -232,8 +233,8 @@ const router = createBrowserRouter([
           },
           // Store Routes
           {
-            path: "mua-tranh-in",
-            element: <MuaTranhIn />,
+            path: "do-luu-niem",
+            element: <DoLuuNiem />,
           },
           {
             path: "chi-tiet/:id",
@@ -298,7 +299,11 @@ const router = createBrowserRouter([
       // Admin Routes
       {
         path: "admin",
-        element: <AdminLayout />,
+        element: (
+          <ProtectedRoute requireAdmin={true}>
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
         children: [
           {
             index: true, // Trang mặc định khi vào /admin
@@ -327,12 +332,16 @@ const router = createBrowserRouter([
           {
             path: 'analysis',
             element: <AdminPhanTich />,
-            
+
           },
-          { path: 'TraiNghiem', 
-            element: <AdminTraiNghiem /> },
-          { path: 'viewpoint',
-             element: <AdminGocNhin /> },
+          {
+            path: 'TraiNghiem',
+            element: <AdminTraiNghiem />
+          },
+          {
+            path: 'viewpoint',
+            element: <AdminGocNhin />
+          },
           {
             path: "forum",
             element: <AdminForum />,

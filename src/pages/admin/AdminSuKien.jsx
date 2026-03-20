@@ -1,58 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import CKEditorField from "../../components/common/CKEditorField";
-
-// Danh sách sự kiện mẫu
-const initialEvents = [
-  {
-    id: "SK-101",
-    title: "Lễ hội Giao Lưu Văn Hóa Biển",
-    summary: "Sự kiện kết nối các nền văn hóa ven biển Việt Nam, với nghệ thuật và ẩm thực đặc sắc.",
-    content: "<p>Lễ hội tổ chức tại Đà Nẵng với các hoạt động trình diễn văn nghệ, trưng bày sản phẩm làng chài, cùng các gian hàng ẩm thực truyền thống đặc trưng vùng biển miền Trung và Nam Bộ.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=480&q=80"
-  },
-  {
-    id: "SK-102",
-    title: "Tuần Lễ Di Sản Văn Hóa Bắc Bộ",
-    summary: "Chuỗi hoạt động tôn vinh giá trị di sản phi vật thể vùng đồng bằng Bắc Bộ.",
-    content: "<p>Sự kiện có các cuộc thi biểu diễn quan họ, ca trù, với sự tham gia của các nghệ nhân trẻ, đồng thời tổ chức tọa đàm giao lưu về bảo tồn di sản trong cộng đồng.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=480&q=80"
-  },
-  {
-    id: "SK-103",
-    title: "Liên Hoan Múa Rối Nước Toàn Quốc",
-    summary: "Lễ hội nghệ thuật múa rối nước thu hút các đoàn nổi tiếng trên cả nước.",
-    content: "<p>Diễn ra trong 5 ngày với nhiều suất diễn miễn phí cho thiếu nhi, khu vực trưng bày mô hình và workshop chế tác con rối truyền thống.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=480&q=80"
-  },
-  {
-    id: "SK-104",
-    title: "Ngày Hội Trình Diễn Trang Phục Dân Tộc",
-    summary: "Sự kiện tôn vinh bản sắc các dân tộc Việt Nam qua trang phục truyền thống.",
-    content: "<p>Chương trình quy tụ đông đảo đồng bào cả nước mang đến những phần trình diễn trang phục và lễ hội sắc màu sôi động; giao lưu văn hóa trực tiếp với nghệ nhân.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?auto=format&fit=crop&w=480&q=80"
-  },
-  {
-    id: "SK-105",
-    title: "Ngày Sách Việt Nam",
-    summary: "Chương trình khuyến đọc với chuỗi các hoạt động trao đổi, giao lưu cùng tác giả.",
-    content: "<p>Sự kiện tổ chức tại Hà Nội với hàng trăm gian hàng sách mới và cũ, buổi tọa đàm cùng các tác giả trẻ, tặng sách miễn phí, hoạt động dành cho thiếu nhi.</p>",
-    thumbnail: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=480&q=80"
-  },
-];
+import { getEvents, createEvent, updateEvent, deleteEvent as apiDeleteEvent } from "../../services/api";
 
 const ITEMS_PER_PAGE = 5;
 
-const AdminSuKien = () => {
-  // State quản lý danh sách sự kiện
-  const [events, setEvents] = useState(initialEvents);
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent?.trim() || "";
+};
 
-  // State cho form sự kiện (thêm/sửa)
+const mapEventToItem = (raw) => ({
+  id: raw.id,
+  title: raw.title || "Sự kiện",
+  summary: stripHtml(raw.content).slice(0, 150) || "",
+  content: raw.content || "",
+  thumbnail: raw.thumbnail_url || "",
+  duration: raw.duration,
+  location: raw.location,
+  tag: raw.tag,
+  start_date: raw.start_date,
+  end_date: raw.end_date,
+  status: raw.status,
+});
+
+const AdminSuKien = () => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
   const [form, setForm] = useState({
     id: "",
     title: "",
     summary: "",
     content: "",
-    thumbnail: ""
+    thumbnail: "",
+    duration: "1 ngày",
+    location: "",
+    tag: "",
+    start_date: "",
+    end_date: "",
   });
 
   // State preview ảnh sự kiện
@@ -73,9 +62,36 @@ const AdminSuKien = () => {
   // State phân trang
   const [page, setPage] = useState(1);
 
-  // Đặt lại trạng thái form và ẩn modal
+  const loadEvents = async () => {
+    setLoading(true);
+    try {
+      // Backend giới hạn limit trong khoảng 1-100, nên dùng 100
+      const res = await getEvents({ page: 1, limit: 100 });
+      if (res?.success && Array.isArray(res.data)) {
+        setEvents(res.data.map(mapEventToItem));
+      } else {
+        setEvents([]);
+      }
+    } catch (err) {
+      console.error("Lỗi tải sự kiện:", err);
+      toast.error(err?.message || "Không tải được danh sách sự kiện.");
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const emptyForm = {
+    id: "", title: "", summary: "", content: "", thumbnail: "",
+    duration: "1 ngày", location: "", tag: "", start_date: "", end_date: "",
+  };
+
   const resetAll = () => {
-    setForm({ id: "", title: "", summary: "", content: "", thumbnail: "" });
+    setForm(emptyForm);
     setThumbnailPreview("");
     setEditingIdx(null);
     setShowForm(false);
@@ -89,11 +105,21 @@ const AdminSuKien = () => {
     setShowForm(true);
   };
 
-  // Hiển thị modal chỉnh sửa sự kiện
+  const toDateInput = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 10);
+  };
+
   const doEdit = (idx) => {
     const ev = events[idx];
     setEditingIdx(idx);
-    setForm(ev);
+    setForm({
+      ...ev,
+      start_date: toDateInput(ev.start_date),
+      end_date: toDateInput(ev.end_date),
+    });
     setThumbnailPreview(ev.thumbnail || "");
     setShowForm(true);
   };
@@ -117,77 +143,75 @@ const AdminSuKien = () => {
     </svg>
   );
 
-  // Xử lý lưu (thêm/chỉnh sửa) sự kiện
-  const submitEvent = (e) => {
+  const submitEvent = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) {
-      alert("Vui lòng nhập: Tiêu đề sự kiện!");
+    if (!form.title?.trim()) {
+      toast.error("Vui lòng nhập tiêu đề sự kiện.");
       return;
     }
-    if (!form.summary.trim()) {
-      alert("Vui lòng nhập: Mô tả ngắn!");
+    if (!form.content?.trim()) {
+      toast.error("Vui lòng nhập nội dung sự kiện.");
       return;
     }
-    if (!form.content.trim()) {
-      alert("Vui lòng nhập: Nội dung sự kiện!");
-      return;
-    }
-    if (!form.thumbnail) {
-      alert("Vui lòng upload ảnh đại diện!");
-      return;
-    }
-    // Kiểm tra trùng tiêu đề (bỏ qua case, loại bỏ khoảng trắng)
-    const nameLC = form.title.trim().toLocaleLowerCase();
-    const isDuplicated = events.some(
-      (ev, idx) =>
-        ev.title.trim().toLocaleLowerCase() === nameLC &&
-        (editingIdx === null || idx !== editingIdx)
-    );
-    if (isDuplicated) {
-      alert("Tiêu đề sự kiện đã tồn tại.");
-      return;
-    }
-    if (editingIdx !== null) {
-      // Sửa sự kiện
-      const next = [...events];
-      next[editingIdx] = { ...form, id: events[editingIdx].id };
-      setEvents(next);
-      resetAll();
-    } else {
-      // Thêm mới sự kiện
-      const lastNum =
-        events.length > 0
-          ? Math.max(
-              ...events
-                .map(ev => parseInt(String(ev.id).replace("SK-", ""), 10))
-                .filter(n => !isNaN(n))
-            )
-          : 0;
-      const newId = "SK-" + String(lastNum + 1).padStart(3, "0");
-      setEvents([...events, { ...form, id: newId }]);
-      resetAll();
+    setSubmitting(true);
+    const payload = {
+      title: form.title.trim(),
+      content: form.content.trim(),
+      duration: form.duration?.trim() || "1 ngày",
+      location: form.location?.trim() || "",
+      tag: form.tag?.trim() || "",
+      start_date: form.start_date || new Date().toISOString().slice(0, 10),
+      end_date: form.end_date || new Date().toISOString().slice(0, 10),
+    };
+    try {
+      if (editingIdx !== null && events[editingIdx]?.id) {
+        const id = events[editingIdx].id;
+        const res = await updateEvent(id, payload);
+        if (res?.success !== false && res?.data) {
+          const next = [...events];
+          next[editingIdx] = mapEventToItem(res.data);
+          setEvents(next);
+          toast.success("Đã cập nhật sự kiện.");
+          resetAll();
+        } else {
+          toast.error(res?.message || "Cập nhật thất bại.");
+        }
+      } else {
+        const res = await createEvent(payload);
+        if (res?.success !== false && res?.data) {
+          setEvents((prev) => [...prev, mapEventToItem(res.data)]);
+          toast.success("Đã thêm sự kiện mới.");
+          resetAll();
+        } else {
+          toast.error(res?.message || "Tạo mới thất bại.");
+        }
+      }
+    } catch (err) {
+      toast.error(err?.message || "Có lỗi xảy ra.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // Xóa sự kiện
-  const deleteEvent = (idx) => {
-    if (window.confirm("Xóa sự kiện này?")) {
-      const remained = events.filter((_, i) => i !== idx);
-      setEvents(remained);
-
-      // Kiểm tra lại trang hiện tại nếu số trang bị giảm
-      const lastPage = Math.ceil(remained.length / ITEMS_PER_PAGE) || 1;
-      if (remained.length && page > lastPage) setPage(lastPage);
-
-      // Đóng modal nếu sự kiện bị xóa đang trong mode edit hoặc xem chi tiết
-      if (editingIdx === idx) resetAll();
-      if (
-        detailEvent &&
-        events[idx] &&
-        events[idx].id === detailEvent.id
-      ) {
-        setDetailEvent(null);
+  const deleteEvent = async (idx) => {
+    if (!window.confirm("Xóa sự kiện này?")) return;
+    const id = events[idx]?.id;
+    if (!id) return;
+    try {
+      const res = await apiDeleteEvent(id);
+      if (res?.success !== false) {
+        const remained = events.filter((_, i) => i !== idx);
+        setEvents(remained);
+        const lastPage = Math.ceil(remained.length / ITEMS_PER_PAGE) || 1;
+        if (remained.length && page > lastPage) setPage(lastPage);
+        if (editingIdx === idx) resetAll();
+        if (detailEvent?.id === id) setDetailEvent(null);
+        toast.success("Đã xóa sự kiện.");
+      } else {
+        toast.error(res?.message || "Xóa thất bại.");
       }
+    } catch (err) {
+      toast.error(err?.message || "Không xóa được sự kiện.");
     }
   };
 
@@ -253,6 +277,7 @@ const AdminSuKien = () => {
   // Render UI
   return (
     <div>
+      <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center mb-8 gap-2">
           <span className="inline-block bg-gradient-to-tr from-blue-600 to-green-400 text-white px-3 py-[2px] rounded-lg text-lg font-bold shadow">
@@ -300,6 +325,13 @@ const AdminSuKien = () => {
         </div>
         {/* Danh sách sự kiện */}
         <div className="bg-white rounded-2xl shadow-md border border-blue-100 overflow-hidden w-full overflow-x-auto pt-1 pb-4">
+          {loading ? (
+            <div className="py-16 text-center text-gray-500">
+              <div className="inline-block w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
+              <p>Đang tải sự kiện...</p>
+            </div>
+          ) : (
+          <>
           <div className="min-w-[800px] grid grid-cols-12 items-center bg-gradient-to-tr from-blue-100 to-green-100 border-b border-blue-200 px-6 py-4 text-xs font-bold text-blue-600 tracking-wider uppercase">
             <div className="col-span-1 text-center">STT</div>
             <div className="col-span-2 text-center">Ảnh</div>
@@ -448,6 +480,8 @@ const AdminSuKien = () => {
               </div>
             </div>
           )}
+          </>
+          )}
         </div>
         {/* Modal form thêm/sửa sự kiện */}
         {showForm && (
@@ -505,6 +539,28 @@ const AdminSuKien = () => {
                     onChange={text => setForm(f => ({ ...f, content: text }))}
                     placeholder="Chi tiết thông tin sự kiện..."
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-teal-700 mb-2">Thời lượng</label>
+                    <input type="text" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="w-full px-4 py-2 border border-cyan-200 rounded-lg" placeholder="VD: 1 ngày" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-teal-700 mb-2">Địa điểm</label>
+                    <input type="text" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="w-full px-4 py-2 border border-cyan-200 rounded-lg" placeholder="VD: Hà Nội" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-teal-700 mb-2">Ngày bắt đầu</label>
+                    <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className="w-full px-4 py-2 border border-cyan-200 rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-teal-700 mb-2">Ngày kết thúc</label>
+                    <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} className="w-full px-4 py-2 border border-cyan-200 rounded-lg" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-teal-700 mb-2">Tag (tùy chọn)</label>
+                  <input type="text" value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} className="w-full px-4 py-2 border border-cyan-200 rounded-lg" placeholder="VD: van-hoa, lich-su" />
                 </div>
                 {/* Upload ảnh đại diện sự kiện */}
                 <div>
@@ -567,8 +623,9 @@ const AdminSuKien = () => {
                   <button
                     className="flex items-center gap-2 bg-gradient-to-tr from-sky-600 to-cyan-400 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-xl transition"
                     type="submit"
+                    disabled={submitting}
                   >
-                    {editingIdx !== null ? "Cập nhật" : "Tạo sự kiện"}
+                    {submitting ? "Đang xử lý..." : editingIdx !== null ? "Cập nhật" : "Tạo sự kiện"}
                   </button>
                   <button
                     className="px-6 py-3 rounded-2xl font-semibold border border-cyan-300 bg-white text-cyan-700 hover:bg-cyan-50 transition"

@@ -6,7 +6,7 @@ import { souvenirSamples } from "../data/souvenirs";
 const ArtContext = createContext();
 
 // 🔹 VERSION CONTROL - Tăng số này mỗi khi cập nhật data trong file
-const DATA_VERSION = "1.2"; // Thay đổi thành "1.2", "1.3" khi update data
+const DATA_VERSION = "1.3"; // Thay đổi thành "1.2", "1.3" khi update data
 
 export function ArtProvider({ children }) {
   const [arts, setArts] = useState([]);

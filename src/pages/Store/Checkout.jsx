@@ -22,7 +22,7 @@ export default function Checkout() {
 	useEffect(() => {
 		if (cart.length === 0 && !isProcessingPayment) {
 			// Có thể redirect về trang shop hoặc giữ nguyên
-			// navigate("/mua-tranh-in");
+			// navigate("/do-luu-niem");
 		}
 	}, [cart, isProcessingPayment, navigate]);
 
@@ -134,7 +134,7 @@ export default function Checkout() {
 					<div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
 						<p className="mb-4 text-gray-600">Giỏ hàng trống. Hãy thêm sản phẩm trước khi thanh toán.</p>
 						<Link
-							to="/mua-tranh-in"
+							to="/do-luu-niem"
 							className="inline-block rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 font-medium text-white shadow hover:from-orange-600 hover:to-amber-600"
 						>
 							Tiếp tục mua sắm

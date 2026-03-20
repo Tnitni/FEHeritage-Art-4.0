@@ -483,7 +483,7 @@ const ImageCreator = () => {
       const img = new Image();
       img.src = imageUrl;
       img.onload = () => {
-        // 1. Tách tỷ lệ từ chuỗi (VD: "4/3" -> w=4, h=3)
+        // 1. Tách tỷ lệ từ chuỗi
         const [ratioW, ratioH] = ratioString.split("/").map(Number);
         const targetRatio = ratioW / ratioH;
         const imageRatio = img.width / img.height;
@@ -521,7 +521,7 @@ const ImageCreator = () => {
           0,
           0,
           cropWidth,
-          cropHeight, // Dán vừa khít vào Canvas
+          cropHeight,
         );
 
         resolve(canvas.toDataURL("image/png"));

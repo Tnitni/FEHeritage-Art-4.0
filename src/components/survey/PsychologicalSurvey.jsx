@@ -217,7 +217,7 @@ const PsychologicalSurvey = ({
 
     try {
       // Gọi API để lưu dữ liệu khảo sát
-      const response = await fetch('/api/survey/submit', {
+      const response = await fetch('survey/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
