@@ -477,7 +477,6 @@ const ImageCreator = () => {
     return new File([data], filename, metadata);
   };
 
-  // === HÀM GỌT ẢNH THÀNH HÌNH VUÔNG 1:1 BẰNG CANVAS ===
   // === HÀM GỌT ẢNH THEO TỶ LỆ CHỌN TRÊN GIAO DIỆN ===
   const cropImageByRatio = (imageUrl, ratioString) => {
     return new Promise((resolve) => {
@@ -548,7 +547,7 @@ const ImageCreator = () => {
       let apiUrl = "";
 
       if (activeFilter === "Nghệ thuật") {
-        // --- LOGIC STYLE TRANSFER (CŨ) ---
+        // --- LOGIC STYLE TRANSFER ---
         apiUrl =
           "https://nova-ai-3-n1yj.onrender.com/style_transfer/style-transfer";
         const croppedImageUrl = await cropImageByRatio(previewUrl, aspectRatio);
@@ -560,7 +559,7 @@ const ImageCreator = () => {
         formData.append("image", croppedImageFile);
         formData.append("style", selectedStyle);
       } else if (activeFilter === "Nhân vật") {
-        // --- LOGIC FACE SWAP (MỚI) ---
+        // --- LOGIC FACE SWAP ---
         if (!templateFile) {
           toast.warning("Vui lòng upload ảnh Template để đổi mặt!");
           setLoading(false);
@@ -568,9 +567,9 @@ const ImageCreator = () => {
         }
         apiUrl = "https://nova-ai-3-n1yj.onrender.com/faceswap/faceswap/style";
 
-        formData.append("file", imageFile); // Ảnh mặt mình
-        formData.append("template", templateFile); // Ảnh người mẫu/lịch sử
-        formData.append("upscale", true); // Cho ảnh nét hơn
+        formData.append("file", imageFile);
+        formData.append("template", templateFile);
+        formData.append("art_style", "3D Pixar animated style");
       }
 
       const response = await axios.post(apiUrl, formData, {
@@ -628,7 +627,7 @@ const ImageCreator = () => {
         setImageFile(file);
       });
 
-      stopCamera(); // Chụp xong thì tắt camera
+      stopCamera();
     }
   };
 
@@ -637,7 +636,7 @@ const ImageCreator = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
       const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop()); // Dừng tất cả các luồng camera
+      tracks.forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
     setShowCamera(false);
@@ -652,10 +651,7 @@ const ImageCreator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* === CỘT TRÁI: UPLOAD & CAMERA === */}
         <div className="flex flex-col gap-4 w-full">
-          {/* 1. KHUNG ẢNH BIẾN HÌNH (MAGIC BOX)
-              - Thay aspect-square bằng style={{ aspectRatio }}
-              - Thêm transition-all duration-500 để hiệu ứng mượt mà
-          */}
+          {/* 1. KHUNG ẢNH */}
           <div
             className="relative w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center group hover:bg-slate-100 transition-all duration-500 ease-in-out cursor-pointer overflow-hidden shadow-inner"
             style={{ aspectRatio: aspectRatio }}
@@ -700,8 +696,6 @@ const ImageCreator = () => {
               </label>
             ) : (
               <div className="relative w-full h-full">
-                {/* Ảnh preview: object-cover để tràn khung, object-contain để hiện full ảnh.
-                    Dựa theo yêu cầu "tràn hình vuông", dùng object-cover sẽ đẹp hơn khi đổi tỷ lệ */}
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -777,78 +771,93 @@ const ImageCreator = () => {
               className={`border rounded-2xl p-5 transition-all duration-300 ${isCopyright ? "bg-pink-50/30 border-rose-100 shadow-sm" : "bg-pink-50/30 border-pink-200"}`}
             >
               {/* HEADER */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Flower2 className="w-6 h-6 text-pink-400 fill-pink-50" />
-                  <span className="font-bold text-gray-700 text-base">
+              {/* PHẦN ĐÓNG DẤU BẢN QUYỀN MỚI */}
+              <div className="flex items-center justify-between gap-4 w-full bg-pink-50/30 border border-pink-200 rounded-2xl p-5 transition-all duration-300">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Flower2 className="w-6 h-6 text-pink-400 flex-shrink-0" />
+                  <span className="font-bold text-gray-700 text-sm sm:text-base truncate">
                     Đóng dấu bản quyền
                   </span>
                 </div>
 
-                <button
+                {/* CUSTOM CHECKBOX THAY THẾ CHO TOGGLE */}
+                <div
                   onClick={() => setIsCopyright(!isCopyright)}
-                  className={`w-12 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 flex items-center ${
-                    isCopyright ? "bg-green-600" : "bg-gray-300"
-                  }`}
+                  className="flex-shrink-0 cursor-pointer group"
                 >
                   <div
-                    className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
-                      isCopyright ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
+                    className={`
+                      w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-300
+                      ${
+                        isCopyright
+                          ? "bg-green-500 border-green-500 shadow-md scale-110"
+                          : "bg-white border-gray-300 group-hover:border-pink-300"
+                      }
+                    `}
+                  >
+                    {isCopyright && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                        <Check className="w-5 h-5 text-white stroke-[3px]" />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* BODY (HIỆN KHI BẬT) */}
-              {isCopyright && (
-                <div className="mt-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {/* Ô NHẬP TÊN */}
-                  <input
-                    type="text"
-                    value={copyrightText}
-                    maxLength={15}
-                    onChange={(e) => setCopyrightText(e.target.value)}
-                    placeholder="Nhập tên của bạn..."
-                    className="w-full p-3 border border-rose-200 rounded-xl text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 transition-all text-center font-medium bg-white shadow-sm mb-4"
-                  />
+              <AnimatePresence>
+                {isCopyright && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                    animate={{ height: "auto", opacity: 1, marginTop: 20 }}
+                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                    transition={{ duration: 0.1, ease: "easeInOut" }}
+                    className="overflow-hidden" // Quan trọng để hiệu ứng trượt không bị lỗi hiển thị
+                  >
+                    {/* Ô NHẬP TÊN */}
+                    <input
+                      type="text"
+                      value={copyrightText}
+                      maxLength={15}
+                      onChange={(e) => setCopyrightText(e.target.value)}
+                      placeholder="Nhập tên của bạn..."
+                      className="w-full p-3 border border-rose-200 rounded-xl text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 transition-all text-center font-medium bg-white shadow-sm mb-4"
+                    />
 
-                  {/* GRID CHỌN FONT */}
-                  <div>
-                    <p className="text-sm font-bold text-gray-600 mb-2">
-                      Chọn kiểu chữ:
-                    </p>
+                    {/* GRID CHỌN FONT */}
+                    <div>
+                      <p className="text-sm font-bold text-gray-600 mb-2">
+                        Chọn kiểu chữ:
+                      </p>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {FONT_OPTIONS.map((font) => (
-                        <div
-                          key={font.id}
-                          onClick={() => setSelectedFont(font.id)}
-                          className={`cursor-pointer h-24 rounded-xl border flex flex-col items-center justify-between py-2 px-1 transition-all ${
-                            selectedFont === font.id
-                              ? "border-rose-500 bg-rose-50 ring-1 ring-rose-200 shadow-sm"
-                              : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                          }`}
-                        >
-                          {/* KHUNG CHỨA CHỮ REVIEW */}
-                          <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
-                            <span
-                              className={`text-[16px] text-[#B91C1C] ${font.className} leading-tight break-words w-full text-center`}
-                            >
-                              {/* Nếu có nhập text thì hiện text, không thì hiện "Tên" */}
-                              {copyrightText || "Tên"}
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {FONT_OPTIONS.map((font) => (
+                          <div
+                            key={font.id}
+                            onClick={() => setSelectedFont(font.id)}
+                            className={`cursor-pointer h-24 rounded-xl border flex flex-col items-center justify-between py-2 px-1 transition-all ${
+                              selectedFont === font.id
+                                ? "border-rose-500 bg-rose-50 ring-1 ring-rose-200 shadow-sm"
+                                : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                            }`}
+                          >
+                            <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
+                              <span
+                                className={`text-[16px] text-[#B91C1C] ${font.className} leading-tight break-words w-full text-center`}
+                              >
+                                {copyrightText || "Tên"}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400 text-center leading-none mt-1">
+                              {font.name}
                             </span>
                           </div>
-
-                          {/* TÊN FONT (Subtitle nhỏ và mờ) */}
-                          <span className="text-[10px] text-gray-400 text-center leading-none mt-1">
-                            {font.name}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* B. Chọn kiểu áp dụng */}
@@ -877,12 +886,21 @@ const ImageCreator = () => {
               {activeTab === "available" ? (
                 <div className="animate-in fade-in zoom-in duration-300">
                   {/* 4 SUB-TABS (Nghệ thuật, Nhân vật...) */}
-                  <div className="flex items-center justify-between bg-slate-50 rounded-xl p-1.5 mb-4">
+                  <div className="flex items-center justify-between bg-slate-50 rounded-xl p-1 mb-4">
                     {filterCategories.map((category) => (
                       <button
                         key={category}
                         onClick={() => handleFilterClick(category)}
-                        className={`flex-1 py-2 text-sm rounded-lg transition-all ${activeFilter === category ? "bg-white text-rose-500 font-bold shadow-sm" : "text-gray-500 font-medium cursor-pointer hover:text-gray-700"}`}
+                        className={`
+                          flex-1 px-1 py-2 text-sm rounded-lg transition-all
+                          break-words leading-tight
+                          flex items-center justify-center text-center
+                          ${
+                            activeFilter === category
+                              ? "bg-white text-rose-500 font-bold shadow-sm"
+                              : "text-gray-500 font-medium cursor-pointer hover:text-gray-700"
+                          }
+                        `}
                       >
                         {category}
                       </button>
@@ -1091,6 +1109,8 @@ const ImageCreator = () => {
                   setResultUrl(null);
                   setImageFile(null);
                   setPreviewUrl(null);
+                  setTemplateFile(null);
+                  setTemplatePreviewUrl(null);
                 }}
                 className="px-6 py-2 bg-gray-100 rounded-full font-medium hover:bg-gray-200"
               >
