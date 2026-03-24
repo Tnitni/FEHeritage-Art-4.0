@@ -38,17 +38,32 @@ const ExperienceGallery = ({
   regions,
   activeTab,
   setActiveTab,
-  isFilterPanelVisible,
+  isFilterPanelVisible = false,
   setFilterPanelVisible,
   galleryFilters,
   setGalleryFilters,
-  handleFilterChange,
-  handleYearChange,
+  handleFilterChange: handleFilterChangeProp,
+  handleYearChange: handleYearChangeProp,
   filteredGalleryItems,
   openModal,
+ 
+
 }) => {
   const filterPanelRef = useRef(null);
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+
+  // Use prop if provided (TrienLam), else use internal logic (ExperiencePage)
+  const handleFilterChange = handleFilterChangeProp || ((setter, type, value) => {
+    setter((prev) => {
+      const next = new Set(prev[type]);
+      next.has(value) ? next.delete(value) : next.add(value);
+      return { ...prev, [type]: next };
+    });
+  });
+
+  const handleYearChange = handleYearChangeProp || ((setter, e) => {
+    setter((prev) => ({ ...prev, year: parseInt(e.target.value) || 2026 }));
+  });
 
   const resetFilters = () => {
     setGalleryFilters({
@@ -60,16 +75,10 @@ const ExperienceGallery = ({
 
   const handleSelectAll = (type) => {
     if (type === "periods") {
-      setGalleryFilters((prev) => ({
-        ...prev,
-        periods: new Set(periods),
-      }));
+      setGalleryFilters((prev) => ({ ...prev, periods: new Set(periods) }));
     }
     if (type === "regions") {
-      setGalleryFilters((prev) => ({
-        ...prev,
-        regions: new Set(regions),
-      }));
+      setGalleryFilters((prev) => ({ ...prev, regions: new Set(regions) }));
     }
   };
 
@@ -313,65 +322,75 @@ const ExperienceGallery = ({
                     </svg>
                   </button>
 
-                  {/* Bảng Dropdown xổ xuống */}
-                  {isPeriodDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsPeriodDropdownOpen(false)}
-                      ></div>
-                      <div className="absolute left-0 mt-1 w-full md:w-64 z-50 rounded-xl border border-amber-100 bg-white p-2 shadow-xl animate-fadein-fast max-h-60 overflow-y-auto">
-                        {periods.map((period) => {
-                          const isActive = galleryFilters.periods.has(period);
-                          return (
-                            <label
-                              key={period}
-                              className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-amber-50"
-                            >
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  className="peer sr-only"
-                                  checked={isActive}
-                                  onChange={() =>
-                                    handleFilterChange(
-                                      setGalleryFilters,
-                                      "periods",
-                                      period,
-                                    )
-                                  }
-                                />
-                                <div
-                                  className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${isActive ? "border-[#dc8154] bg-[#dc8154]" : "border-gray-300"}`}
-                                >
-                                  {isActive && (
-                                    <svg
-                                      className="h-3 w-3 text-white"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                      strokeWidth="3"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                  )}
-                                </div>
-                                <span
-                                  className={`text-sm font-medium ${isActive ? "text-[#2e1e10]" : "text-gray-600"}`}
-                                >
-                                  {period}
-                                </span>
+                                {/* Bảng Dropdown xổ xuống */}
+                {isPeriodDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsPeriodDropdownOpen(false)}
+                    ></div>
+                    <div className="absolute left-0 mt-1 w-full md:w-64 z-50 rounded-xl border border-amber-100 bg-white p-2 shadow-xl animate-fadein-fast max-h-60 overflow-y-auto">
+                      {periods.map((periodItem) => {
+                        // 1. Xác định Tên và ID (Xử lý cả trường hợp API Object hoặc mảng String mặc định)
+                        const periodName = typeof periodItem === 'object' ? periodItem.name : periodItem;
+                        const periodKey = typeof periodItem === 'object' ? periodItem.period_id : periodItem;
+                        
+                        // 2. Kiểm tra trạng thái Active dựa trên Tên (để đồng bộ với logic filter hiện tại)
+                        const isActive = galleryFilters.periods.has(periodName);
+
+                        return (
+                          <label
+                            key={periodKey}
+                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors hover:bg-amber-50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                className="peer sr-only"
+                                checked={isActive}
+                                onChange={() =>
+                                  handleFilterChange(
+                                    setGalleryFilters,
+                                    "periods",
+                                    periodName // Truyền Tên vào Set để lọc dữ liệu hiển thị
+                                  )
+                                }
+                              />
+                              <div
+                                className={`flex h-5 w-5 items-center justify-center rounded border-2 transition-all ${
+                                  isActive ? "border-[#dc8154] bg-[#dc8154]" : "border-gray-300"
+                                }`}
+                              >
+                                {isActive && (
+                                  <svg
+                                    className="h-3 w-3 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                )}
                               </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
+                              <span
+                                className={`text-sm font-medium ${
+                                  isActive ? "text-[#2e1e10]" : "text-gray-600"
+                                }`}
+                              >
+                                {periodName}
+                              </span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
                 </div>
               </div>
 
@@ -489,7 +508,7 @@ const ExperienceGallery = ({
         {filteredGalleryItems.map((item, index) => (
           <div
             key={item.id}
-            onClick={() => openModal(index)}
+            onClick={() => openModal && openModal(index)}
             className="group relative mb-6 break-inside-avoid rounded-3xl overflow-hidden shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.03] cursor-pointer border border-amber-100/20"
             data-aos="fade-up"
             data-aos-delay={(index % 3) * 100}
@@ -504,75 +523,28 @@ const ExperienceGallery = ({
               <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/60 to-transparent pointer-events-none"></div>
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
               <div className="relative z-10 flex justify-between items-start">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="flex items-center gap-2 rounded-lg bg-black/50 px-4 py-2 text-white text-sm font-semibold transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                  title="Chỉnh sửa ảnh"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 003-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Edit
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                    title="Thêm vào yêu thích"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="rounded-full bg-black/50 p-2 text-white transition-all duration-300 hover:bg-black/70 focus:outline-none"
-                    title="Dislike"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.682 17.682a4.5 4.5 0 01-6.364 0L12 16.364l-1.318 1.318a4.5 4.5 0 01-6.364-6.364l7.682-7.682 7.682 7.682a4.5 4.5 0 010 6.364z"
-                      />
-                    </svg>
-                  </button>
+                {/* Period + Region tags */}
+                <div className="flex flex-wrap gap-1">
+                  {item.period && (
+                    <span className="rounded-full bg-black/50 px-2 py-0.5 text-white text-xs font-medium backdrop-blur-sm">
+                      {item.period}
+                    </span>
+                  )}
+                  {item.region && (
+                    <span className="rounded-full bg-black/50 px-2 py-0.5 text-white text-xs font-medium backdrop-blur-sm">
+                      {item.region}
+                    </span>
+                  )}
                 </div>
+                {/* Like count */}
+                {item.likeCount > 0 && (
+                  <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-white text-xs font-semibold backdrop-blur-sm">
+                    <svg className="h-4 w-4 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    {item.likeCount}
+                  </div>
+                )}
               </div>
               <div className="relative z-10 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-white text-sm font-semibold">
@@ -587,7 +559,7 @@ const ExperienceGallery = ({
                   <span>{item.authorName || "Người đăng"}</span>
                 </div>
                 <a
-                  href={item.src}
+                 src={item.src}
                   download
                   title="Tải xuống ảnh"
                   onClick={(e) => e.stopPropagation()}

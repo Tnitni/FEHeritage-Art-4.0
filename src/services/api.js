@@ -66,7 +66,7 @@ export const updateProfile = (data) => api.put("/auth/profile", data);
 export const changePassword = (data) => api.put("/auth/change-password", data);
 
 // ==================== EXPERIENCE POSTS ====================
-export const getPosts = () => api.get("/experience-posts");
+export const getPosts = (params) => api.get("/experience-posts", params ? { params } : undefined);
 export const getPostById = (postId) => api.get(`/experience-posts/${postId}`);
 export const getPostsByUser = (userId) => api.get(`/experience-posts/user/${userId}`);
 export const createReply = (commentId, data) => {
@@ -76,6 +76,7 @@ export const createReply = (commentId, data) => {
 export const createPost = (formData) =>
   api.post("/experience-posts", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: 60000,
   });
   export const updatePost = (postId, formData) =>
     api.put(`/experience-posts/${postId}`, formData, {
@@ -83,6 +84,8 @@ export const createPost = (formData) =>
     });
 
 export const deletePost = (postId) => api.delete(`/experience-posts/${postId}`);
+export const updateExperiencePostStatus = (postId, data) =>
+  api.patch(`/experience-posts/${postId}/review`, data);
 
 // ==================== EXPERIENCE COMMENTS ====================
 export const getCommentsByPost = (postId) =>
@@ -116,6 +119,10 @@ export const unlikeComment = (commentId) =>
 // ==================== HISTORICAL PERIODS ====================
 export const getPeriods = () => api.get("/periods");
 export const getPeriodById = (periodId) => api.get(`/periods/${periodId}`);
+
+// ==================== REGIONS ====================
+export const getRegions = () => api.get("/regions");
+export const getRegionById = (regionId) => api.get(`/regions/${regionId}`);
 
 // ==================== UPLOAD ====================
 export const uploadFile = (formData) =>
