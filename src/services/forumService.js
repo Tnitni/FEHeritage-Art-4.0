@@ -1,5 +1,5 @@
 import api from "./api";
-import { API_ENDPOINTS } from "../configs/forumIndex";
+import { API_ENDPOINTS, API_CONFIG } from "../configs/forumIndex";
 
 const forumService = {
   /**
@@ -223,6 +223,10 @@ const forumService = {
       console.error("Fetch admin posts error:", error);
       throw error;
     }
+  },
+
+  getGoogleAuthUrl: () => {
+    return `${API_CONFIG.BASE_URL}${API_ENDPOINTS.LOGINBY.GG}`;
   },
 };
 

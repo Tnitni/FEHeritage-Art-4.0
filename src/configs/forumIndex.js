@@ -6,6 +6,11 @@ export const API_CONFIG = {
 
 // API Endpoints
 export const API_ENDPOINTS = {
+  // login by Google
+  LOGINBY: {
+    GG: "auth/google",
+  },
+
   // Forum
   FORUM: {
     POST: "forums/posts",
