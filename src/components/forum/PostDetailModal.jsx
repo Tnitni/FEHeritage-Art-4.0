@@ -207,7 +207,7 @@ export default function PostDetailModal({
               {/* Header */}
               <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-6 text-white flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 sm:gap-3">
                     <button
                       onClick={() => onAvatarClick(post.author.id)}
                       className="hover:opacity-80 transition-opacity"
@@ -215,7 +215,7 @@ export default function PostDetailModal({
                       <img
                         src={displayAuthor?.avatar}
                         alt={displayAuthor?.name}
-                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white cursor-pointer"
+                        className="w-13 h-13 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white cursor-pointer"
                       />
                     </button>
                     <div>
@@ -223,7 +223,7 @@ export default function PostDetailModal({
                       <p className="text-sm opacity-90">{timeAgo}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center sm:gap-2">
                     {isAuthor && (
                       <>
                         <motion.button

@@ -16,6 +16,7 @@ export function UserProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isInitialCheckDone, setIsInitialCheckDone] = useState(false);
 
   // 🧩 Khi user thay đổi → lưu lại vào localStorage
   useEffect(() => {
@@ -79,6 +80,28 @@ export function UserProvider({ children }) {
       socketService.disconnect();
     }
   }, [isLoggedIn, user]);
+
+  useEffect(() => {
+    const checkAuthOnLoad = async () => {
+      try {
+        // Chỉ cần check nếu có token hoặc nghi ngờ có session cookie
+        const response = await authService.getProfile();
+        if (response.success && response.data.user) {
+          setUser(response.data.user);
+          setIsLoggedIn(true);
+          socketService.connect(response.data.user.id);
+        }
+      } catch (err) {
+        setIsLoggedIn(false);
+        setUser(null);
+      } finally {
+        // QUAN TRỌNG: Đánh dấu đã kiểm tra xong, bất kể thành công hay thất bại
+        setIsInitialCheckDone(true);
+      }
+    };
+
+    checkAuthOnLoad();
+  }, []);
 
   // 🟢 Đăng nhập
   const login = async (email, password) => {
@@ -210,6 +233,7 @@ export function UserProvider({ children }) {
     setUser,
     isLoggedIn,
     loading,
+    isInitialCheckDone,
     error,
     login,
     register,

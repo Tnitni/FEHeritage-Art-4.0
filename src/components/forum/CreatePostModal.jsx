@@ -192,18 +192,20 @@ export default function CreatePostModal({ onClose, onSubmit }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-6 text-white">
+          <div className="bg-gradient-to-r from-orange-400 to-amber-600 p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Tạo bài viết mới</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">
+                Tạo bài viết mới
+              </h2>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/40 rounded-full transition-colors"
                 title="Đóng"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
           </div>
@@ -220,7 +222,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Nhập tiêu đề bài viết..."
-                className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
+                className="w-full px-4 py-2.5 sm:py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
               />
             </div>
 
@@ -232,7 +234,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
+                className="w-full px-4 py-2.5 sm:py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors"
               >
                 {apiCategories.map((cat) => (
                   <option key={cat.category_id} value={cat.category_id}>
@@ -252,7 +254,7 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                 onChange={(e) => setContent(e.target.value)}
                 onPaste={handleImagePaste}
                 placeholder="Chia sẻ suy nghĩ của bạn..."
-                rows={6}
+                rows={window.innerWidth < 640 ? 4 : 6}
                 className="w-full px-4 py-3 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors resize-none"
               />
             </div>
@@ -260,7 +262,8 @@ export default function CreatePostModal({ onClose, onSubmit }) {
             {/* Images */}
             <div>
               <label className="block text-sm font-medium text-amber-900 mb-2">
-                Hình ảnh (Tối đa 4 ảnh, mỗi hình ảnh tối đa 5 MB)
+                Hình ảnh (Tối đa 4 ảnh, mỗi hình ảnh tối đa 5 MB, để xóa nhấn
+                vào ảnh cần xóa)
               </label>
 
               <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all group">
@@ -301,7 +304,8 @@ export default function CreatePostModal({ onClose, onSubmit }) {
             {/* PHẦN VIDEO */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-amber-900">
-                Video (Tối đa 4 video, mỗi video tối đa 50 MB)
+                Video (Tối đa 4 video, mỗi video tối đa 50 MB, để xóa nhấn vào
+                video cần xóa)
               </label>
               <label className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-blue-200 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group">
                 <VideoIcon className="w-6 h-6 text-blue-600 group-hover:text-blue-700" />
@@ -353,7 +357,11 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                   value={currentTag}
                   onChange={(e) => setCurrentTag(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && addTag()}
-                  placeholder="Nhập tag và nhấn Enter hoặc nút Thêm..."
+                  placeholder={
+                    window.innerWidth < 640
+                      ? "Nhập tag..."
+                      : "Nhập tag và nhấn Enter hoặc nút Thêm..."
+                  }
                   disabled={tags.length >= 6}
                   className="flex-1 px-4 py-2 border-2 border-amber-300 rounded-lg focus:border-orange-400 focus:outline-none transition-colors disabled:bg-gray-100"
                 />
@@ -376,10 +384,13 @@ export default function CreatePostModal({ onClose, onSubmit }) {
                       className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full flex items-center gap-2"
                     >
                       <Hash className="w-3 h-3" />
-                      {tag}
+                      <span className="max-w-[120px] sm:max-w-[200px] truncate">
+                        {tag}
+                      </span>
                       <button
                         onClick={() => removeTag(tag)}
                         className="hover:text-red-600"
+                        title="Xóa tag"
                       >
                         <X className="w-3 h-3" />
                       </button>
